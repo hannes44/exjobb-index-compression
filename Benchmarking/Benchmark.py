@@ -1,32 +1,25 @@
 from opensearchpy import OpenSearch
-
-host = 'localhost'
-port = 9200
-
-# Create the client with SSL/TLS and hostname verification disabled.
-client = OpenSearch(
-    hosts = [{'host': host, 'port': port}],
-    http_compress = True, # enables gzip compression for request bodies
-    use_ssl = False,
-    verify_certs = False,
-    ssl_assert_hostname = False,
-    ssl_show_warn = False
-)
+import Types
+import Utils
+import DataParser
 
 
+# Creating the client and connecting to the OpenSearch server
+# If the server is not running, this will throw an exception
+# This will connect to port 9200 on localhost
+client = Utils.create_client()
 
-index_name = 'python-test-indegfsdgfdsfsdfgdgfxsdgf342'
-index_body = {
-  'settings': {
-    'index': {
-      'number_of_shards': 1
-    }
-  }
-}
+# When we are running our complete tests, we first clean the server environment
+Utils.delete_all_indices(client)
 
-response = client.indices.create(index_name, body=index_body)
+# Now we create the new indices for all the datasets and measure their times. We will do this for all different compression types 
+#index_name = DataParser.insert_dataset_into_server(SearchDatasets.SMALL_UNSTRUCTURED, client)
+index_name = DataParser.insert_dataset_into_server(Types.SearchDatasets.SMALL_UNSTRUCTURED, client)
 
-#response = client.indices.create(index_name, body=index_body)
+
+print("Index name: " + index_name)
+
+
 # Extract the time taken from the response
 #time_taken_ms = response['took']
 #print(f"Request took {time_taken_ms} milliseconds on the server.")
@@ -46,5 +39,3 @@ def create_client():
         ssl_show_warn = False
     )
     
-
-def benchmark
