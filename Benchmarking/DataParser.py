@@ -9,23 +9,18 @@ class indexCreationData:
     index_name: str
     timeInNs = 0
 
-# This function is responsible for parsing the datasets and adding them to the OpenSearch server
-# Returns the name of the index created
-def insert_dataset_into_server(dataset: str, client: OpenSearch) -> str:
-    return ""
-            
 
 # Indexes all supported files in the given folder
-def index_dataset_folder(client: OpenSearch, folder_name: str) -> str:
+def index_dataset_folder(client: OpenSearch, folder_name: str, compression_type: Types.CompressionType) -> str:
   # Create the dataset index
-  index_name = folder_name.lower()
+  index_name = folder_name.lower() + "_" + compression_type.value
   index_body = {
     'settings': {
       'index': {
         'number_of_shards': 1,
          "merge.scheduler.max_thread_count": 1,
           "number_of_replicas": 0,
-          "codec": "best_compression"
+          "codec": compression_type.value,
       }
     }
   }
@@ -45,30 +40,6 @@ def index_dataset_folder(client: OpenSearch, folder_name: str) -> str:
             'content': file_content
           }
         )
-       # print(response)
-       # return index_name
     
-  return ""
+  return index_name
 
-
-def index_textfile(client: OpenSearch, file_path: str) -> str:
-    index_name = 'python-test-index'
-
-    with open(file_path, 'r') as file:
-      file_content = file.read()
-    
-    # Add a document to the index.
-    document = {
-      'title': 'Moneyball',
-      'content': file_content,
-    }
-    
-    id = '1'
-
-    response = client.index(
-        index = index_name,
-        body = document,
-        id = id,
-        refresh = True
-    )
-    return index_name

@@ -4,5 +4,6 @@ class SearchPerformance():
     compressionType = None
 
 
-class CompressionType(Enum):
-    NONE = 1
+class CompressionType(str, Enum):
+    DEFAULT = "default"
+    BEST_COMPRESSION = "best_compression"
