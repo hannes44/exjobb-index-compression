@@ -20,7 +20,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Accountable;
@@ -30,8 +29,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 import org.roaringbitmap.RoaringBitmap;
-
-import static org.opensearch.search.query.BitmapIndexQuery.checkArgs;
 
 /**
  * Filter with bitmap
@@ -46,7 +43,6 @@ public class BitmapDocValuesQuery extends Query implements Accountable {
     final long max;
 
     public BitmapDocValuesQuery(String field, RoaringBitmap bitmap) {
-        checkArgs(field, bitmap);
         this.field = field;
         this.bitmap = bitmap;
         if (!bitmap.isEmpty()) {
@@ -62,7 +58,7 @@ public class BitmapDocValuesQuery extends Query implements Accountable {
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new ConstantScoreWeight(this, boost) {
             @Override
-            public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+            public Scorer scorer(LeafReaderContext context) throws IOException {
                 SortedNumericDocValues values = DocValues.getSortedNumeric(context.reader(), field);
                 final NumericDocValues singleton = DocValues.unwrapSingleton(values);
                 final TwoPhaseIterator iterator;
@@ -103,8 +99,7 @@ public class BitmapDocValuesQuery extends Query implements Accountable {
                         }
                     };
                 }
-                final Scorer scorer = new ConstantScoreScorer(score(), scoreMode, iterator);
-                return new DefaultScorerSupplier(scorer);
+                return new ConstantScoreScorer(this, score(), scoreMode, iterator);
             }
 
             @Override
@@ -116,7 +111,8 @@ public class BitmapDocValuesQuery extends Query implements Accountable {
 
     @Override
     public String toString(String field) {
-        return "BitmapDocValuesQuery(field=" + this.field + ")";
+        // bitmap may contain high cardinality, so choose to not show the actual values in it
+        return field + " cardinality: " + bitmap.getLongCardinality();
     }
 
     @Override
@@ -143,8 +139,8 @@ public class BitmapDocValuesQuery extends Query implements Accountable {
 
     @Override
     public long ramBytesUsed() {
-        return RamUsageEstimator.shallowSizeOfInstance(BitmapIndexQuery.class) + RamUsageEstimator.sizeOf(field) + bitmap
-            .getLongSizeInBytes();
+        return RamUsageEstimator.shallowSizeOfInstance(BitmapDocValuesQuery.class) + RamUsageEstimator.sizeOfObject(field)
+            + RamUsageEstimator.sizeOfObject(bitmap);
     }
 
     @Override

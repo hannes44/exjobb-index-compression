@@ -18,7 +18,6 @@ import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.env.NodeEnvironment;
 import org.opensearch.index.IndexSettings;
 import org.opensearch.index.shard.ShardPath;
-import org.opensearch.index.store.IndexStoreListener;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -34,7 +33,7 @@ import static org.opensearch.index.store.remote.directory.RemoteSnapshotDirector
  *
  * @opensearch.internal
  */
-public class FileCacheCleaner implements IndexStoreListener {
+public class FileCacheCleaner implements NodeEnvironment.IndexStoreListener {
     private static final Logger logger = LogManager.getLogger(FileCacheCleaner.class);
 
     private final Provider<FileCache> fileCacheProvider;

@@ -37,10 +37,10 @@ public class DefaultCacheStatsHolder implements CacheStatsHolder {
     // Non-leaf nodes have stats matching the sum of their children.
     // We use a tree structure, rather than a map with concatenated keys, to save on memory usage. If there are many leaf
     // nodes that share a parent, that parent's dimension value will only be stored once, not many times.
-    protected final Node statsRoot;
+    private final Node statsRoot;
     // To avoid sync problems, obtain a lock before creating or removing nodes in the stats tree.
     // No lock is needed to edit stats on existing nodes.
-    protected final Lock lock = new ReentrantLock();
+    private final Lock lock = new ReentrantLock();
     // The name of the cache type using these stats
     private final String storeName;
 
@@ -188,10 +188,8 @@ public class DefaultCacheStatsHolder implements CacheStatsHolder {
     }
 
     // Returns a CacheStatsCounterSnapshot object for the stats to decrement if the removal happened, null otherwise.
-    protected ImmutableCacheStats removeDimensionsHelper(List<String> dimensionValues, Node node, int depth) {
+    private ImmutableCacheStats removeDimensionsHelper(List<String> dimensionValues, Node node, int depth) {
         if (depth == dimensionValues.size()) {
-            // Remove children, if present.
-            node.children.clear();
             // Pass up a snapshot of the original stats to avoid issues when the original is decremented by other fn invocations
             return node.getImmutableStats();
         }
@@ -210,14 +208,15 @@ public class DefaultCacheStatsHolder implements CacheStatsHolder {
         return statsToDecrement;
     }
 
-    public Node getStatsRoot() {
+    // pkg-private for testing
+    Node getStatsRoot() {
         return statsRoot;
     }
 
     /**
      * Nodes that make up the tree in the stats holder.
      */
-    public static class Node {
+    protected static class Node {
         private final String dimensionValue;
         // Map from dimensionValue to the DimensionNode for that dimension value.
         final Map<String, Node> children;
@@ -242,7 +241,7 @@ public class DefaultCacheStatsHolder implements CacheStatsHolder {
             return dimensionValue;
         }
 
-        public Map<String, Node> getChildren() {
+        protected Map<String, Node> getChildren() {
             // We can safely iterate over ConcurrentHashMap without worrying about thread issues.
             return children;
         }
@@ -281,7 +280,7 @@ public class DefaultCacheStatsHolder implements CacheStatsHolder {
             return this.stats.getItems();
         }
 
-        public ImmutableCacheStats getImmutableStats() {
+        ImmutableCacheStats getImmutableStats() {
             return this.stats.immutableSnapshot();
         }
 

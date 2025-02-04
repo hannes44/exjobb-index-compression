@@ -17,13 +17,10 @@ import org.apache.lucene.util.FixedBitSet;
 import org.opensearch.common.lucene.Lucene;
 import org.opensearch.index.codec.composite.CompositeIndexFieldInfo;
 import org.opensearch.index.codec.composite.CompositeIndexReader;
-import org.opensearch.index.compositeindex.datacube.DateDimension;
 import org.opensearch.index.compositeindex.datacube.Dimension;
 import org.opensearch.index.compositeindex.datacube.Metric;
 import org.opensearch.index.compositeindex.datacube.MetricStat;
 import org.opensearch.index.compositeindex.datacube.startree.index.StarTreeValues;
-import org.opensearch.index.compositeindex.datacube.startree.utils.date.DateTimeUnitAdapter;
-import org.opensearch.index.compositeindex.datacube.startree.utils.date.DateTimeUnitRounding;
 import org.opensearch.index.compositeindex.datacube.startree.utils.iterator.SortedNumericStarTreeValuesIterator;
 import org.opensearch.index.mapper.CompositeDataCubeFieldType;
 import org.opensearch.index.query.MatchAllQueryBuilder;
@@ -31,8 +28,7 @@ import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.TermQueryBuilder;
 import org.opensearch.search.aggregations.AggregatorFactory;
 import org.opensearch.search.aggregations.LeafBucketCollector;
-import org.opensearch.search.aggregations.StarTreeBucketCollector;
-import org.opensearch.search.aggregations.bucket.histogram.DateHistogramAggregatorFactory;
+import org.opensearch.search.aggregations.LeafBucketCollectorBase;
 import org.opensearch.search.aggregations.metrics.MetricAggregatorFactory;
 import org.opensearch.search.aggregations.support.ValuesSource;
 import org.opensearch.search.builder.SearchSourceBuilder;
@@ -41,10 +37,9 @@ import org.opensearch.search.startree.StarTreeFilter;
 import org.opensearch.search.startree.StarTreeQueryContext;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -79,16 +74,10 @@ public class StarTreeQueryHelper {
         );
 
         for (AggregatorFactory aggregatorFactory : context.aggregations().factories().getFactories()) {
-            // first check for aggregation is a metric aggregation
-            if (validateStarTreeMetricSupport(compositeMappedFieldType, aggregatorFactory)) {
-                continue;
+            MetricStat metricStat = validateStarTreeMetricSupport(compositeMappedFieldType, aggregatorFactory);
+            if (metricStat == null) {
+                return null;
             }
-
-            // if not a metric aggregation, check for applicable date histogram shape
-            if (validateDateHistogramSupport(compositeMappedFieldType, aggregatorFactory)) {
-                continue;
-            }
-            return null;
         }
 
         // need to cache star tree values only for multiple aggregations
@@ -110,85 +99,64 @@ public class StarTreeQueryHelper {
         Map<String, Long> queryMap;
         if (queryBuilder == null || queryBuilder instanceof MatchAllQueryBuilder) {
             queryMap = null;
-        } else if (queryBuilder instanceof TermQueryBuilder termQueryBuilder) {
+        } else if (queryBuilder instanceof TermQueryBuilder) {
             // TODO: Add support for keyword fields
-            Dimension matchedDimension = compositeFieldType.getDimensions()
-                .stream()
-                .filter(d -> (d.getField().equals(termQueryBuilder.fieldName()) && d.getDocValuesType() == DocValuesType.SORTED_NUMERIC))
-                .findFirst()
-                .orElse(null);
-            if (matchedDimension == null) {
+            if (compositeFieldType.getDimensions().stream().anyMatch(d -> d.getDocValuesType() != DocValuesType.SORTED_NUMERIC)) {
+                // return null for non-numeric fields
                 return null;
             }
-            queryMap = Map.of(termQueryBuilder.fieldName(), Long.parseLong(termQueryBuilder.value().toString()));
+
+            List<String> supportedDimensions = compositeFieldType.getDimensions()
+                .stream()
+                .map(Dimension::getField)
+                .collect(Collectors.toList());
+            queryMap = getStarTreePredicates(queryBuilder, supportedDimensions);
+            if (queryMap == null) {
+                return null;
+            }
         } else {
             return null;
         }
         return new StarTreeQueryContext(compositeIndexFieldInfo, queryMap, cacheStarTreeValuesSize);
     }
 
-    private static boolean validateStarTreeMetricSupport(
+    /**
+     * Parse query body to star-tree predicates
+     * @param queryBuilder to match star-tree supported query shape
+     * @return predicates to match
+     */
+    private static Map<String, Long> getStarTreePredicates(QueryBuilder queryBuilder, List<String> supportedDimensions) {
+        TermQueryBuilder tq = (TermQueryBuilder) queryBuilder;
+        String field = tq.fieldName();
+        if (!supportedDimensions.contains(field)) {
+            return null;
+        }
+        long inputQueryVal = Long.parseLong(tq.value().toString());
+
+        // Create a map with the field and the value
+        Map<String, Long> predicateMap = new HashMap<>();
+        predicateMap.put(field, inputQueryVal);
+        return predicateMap;
+    }
+
+    private static MetricStat validateStarTreeMetricSupport(
         CompositeDataCubeFieldType compositeIndexFieldInfo,
         AggregatorFactory aggregatorFactory
     ) {
-        if (aggregatorFactory instanceof MetricAggregatorFactory metricAggregatorFactory
-            && metricAggregatorFactory.getSubFactories().getFactories().length == 0) {
+        if (aggregatorFactory instanceof MetricAggregatorFactory && aggregatorFactory.getSubFactories().getFactories().length == 0) {
             String field;
             Map<String, List<MetricStat>> supportedMetrics = compositeIndexFieldInfo.getMetrics()
                 .stream()
                 .collect(Collectors.toMap(Metric::getField, Metric::getMetrics));
 
-            MetricStat metricStat = metricAggregatorFactory.getMetricStat();
-            field = metricAggregatorFactory.getField();
+            MetricStat metricStat = ((MetricAggregatorFactory) aggregatorFactory).getMetricStat();
+            field = ((MetricAggregatorFactory) aggregatorFactory).getField();
 
-            return supportedMetrics.containsKey(field) && supportedMetrics.get(field).contains(metricStat);
-        }
-        return false;
-    }
-
-    private static boolean validateDateHistogramSupport(
-        CompositeDataCubeFieldType compositeIndexFieldInfo,
-        AggregatorFactory aggregatorFactory
-    ) {
-        if (!(aggregatorFactory instanceof DateHistogramAggregatorFactory dateHistogramAggregatorFactory)
-            || aggregatorFactory.getSubFactories().getFactories().length < 1) {
-            return false;
-        }
-
-        // Find the DateDimension in the dimensions list
-        DateDimension starTreeDateDimension = null;
-        for (Dimension dimension : compositeIndexFieldInfo.getDimensions()) {
-            if (dimension instanceof DateDimension) {
-                starTreeDateDimension = (DateDimension) dimension;
-                break;
+            if (supportedMetrics.containsKey(field) && supportedMetrics.get(field).contains(metricStat)) {
+                return metricStat;
             }
         }
-
-        // If no DateDimension is found, validation fails
-        if (starTreeDateDimension == null) {
-            return false;
-        }
-
-        // Ensure the rounding is not null
-        if (dateHistogramAggregatorFactory.getRounding() == null) {
-            return false;
-        }
-
-        // Find the closest valid interval in the DateTimeUnitRounding class associated with star tree
-        DateTimeUnitRounding rounding = starTreeDateDimension.findClosestValidInterval(
-            new DateTimeUnitAdapter(dateHistogramAggregatorFactory.getRounding())
-        );
-        if (rounding == null) {
-            return false;
-        }
-
-        // Validate all sub-factories
-        for (AggregatorFactory subFactory : aggregatorFactory.getSubFactories().getFactories()) {
-            if (!validateStarTreeMetricSupport(compositeIndexFieldInfo, subFactory)) {
-                return false;
-            }
-        }
-        return true;
+        return null;
     }
 
     public static CompositeIndexFieldInfo getSupportedStarTree(SearchContext context) {
@@ -254,37 +222,11 @@ public class StarTreeQueryHelper {
         // Call the final consumer after processing all entries
         finalConsumer.run();
 
-        // Terminate after pre-computing aggregation
-        throw new CollectionTerminatedException();
-    }
-
-    public static StarTreeBucketCollector getStarTreeBucketMetricCollector(
-        CompositeIndexFieldInfo starTree,
-        String metric,
-        ValuesSource.Numeric valuesSource,
-        StarTreeBucketCollector parentCollector,
-        Consumer<Long> growArrays,
-        BiConsumer<Long, Long> updateBucket
-    ) throws IOException {
-        assert parentCollector != null;
-        return new StarTreeBucketCollector(parentCollector) {
-            String metricName = StarTreeUtils.fullyQualifiedFieldNameForStarTreeMetricsDocValues(
-                starTree.getField(),
-                ((ValuesSource.Numeric.FieldData) valuesSource).getIndexFieldName(),
-                metric
-            );
-            SortedNumericStarTreeValuesIterator metricValuesIterator = (SortedNumericStarTreeValuesIterator) starTreeValues
-                .getMetricValuesIterator(metricName);
-
+        // Return a LeafBucketCollector that terminates collection
+        return new LeafBucketCollectorBase(sub, valuesSource.doubleValues(ctx)) {
             @Override
-            public void collectStarTreeEntry(int starTreeEntryBit, long bucket) throws IOException {
-                growArrays.accept(bucket);
-                // Advance the valuesIterator to the current bit
-                if (!metricValuesIterator.advanceExact(starTreeEntryBit)) {
-                    return; // Skip if no entries for this document
-                }
-                long metricValue = metricValuesIterator.nextValue();
-                updateBucket.accept(bucket, metricValue);
+            public void collect(int doc, long bucket) {
+                throw new CollectionTerminatedException();
             }
         };
     }
@@ -298,7 +240,7 @@ public class StarTreeQueryHelper {
         throws IOException {
         FixedBitSet result = context.getStarTreeQueryContext().getStarTreeValues(ctx);
         if (result == null) {
-            result = StarTreeFilter.getStarTreeResult(starTreeValues, context.getStarTreeQueryContext().getQueryMap(), Set.of());
+            result = StarTreeFilter.getStarTreeResult(starTreeValues, context.getStarTreeQueryContext().getQueryMap());
             context.getStarTreeQueryContext().setStarTreeValues(ctx, result);
         }
         return result;

@@ -85,7 +85,6 @@ public class ClusterManagerDisruptionIT extends AbstractDisruptionTestCase {
             30000,
             60000
         );
-
         internalCluster().setDisruptionScheme(clusterManagerNodeDisruption);
         clusterManagerNodeDisruption.startDisrupting();
 

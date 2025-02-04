@@ -48,6 +48,7 @@ import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
 import org.opensearch.core.index.Index;
 import org.opensearch.core.index.shard.ShardId;
+import org.opensearch.index.translog.BufferedChecksumStreamOutput;
 import org.opensearch.node.ResponseCollectorService;
 
 import java.io.IOException;
@@ -133,23 +134,6 @@ public class IndexShardRoutingTable extends AbstractDiffable<IndexShardRoutingTa
             }
             if (shard.initializing()) {
                 allInitializingShards.add(shard);
-            }
-            if (shard.isSearchOnly()) {
-                // mark search only shards as initializing or assigned, but do not add to
-                // the allAllocationId set. Cluster Manager will filter out search replica allocationIds in
-                // the in-sync set that is sent to primaries, but they are still included in the routing table.
-                // This ensures the primaries do not validate these ids exist in tracking nor are included
-                // in the unavailableInSyncShards set.
-                if (shard.relocating()) {
-                    allInitializingShards.add(shard.getTargetRelocatingShard());
-                    assignedShards.add(shard.getTargetRelocatingShard());
-                }
-                if (shard.assignedToNode()) {
-                    assignedShards.add(shard);
-                }
-                assert shard.allocationId() == null || allAllocationIds.contains(shard.allocationId().getId()) == false
-                    : "Search replicas should not be part of the allAllocationId set";
-                continue;
             }
             if (shard.relocating()) {
                 // create the target initializing shard routing on the node the shard is relocating to
@@ -1198,7 +1182,7 @@ public class IndexShardRoutingTable extends AbstractDiffable<IndexShardRoutingTa
             }
         }
 
-        public static void writeVerifiableTo(IndexShardRoutingTable indexShard, StreamOutput out) throws IOException {
+        public static void writeVerifiableTo(IndexShardRoutingTable indexShard, BufferedChecksumStreamOutput out) throws IOException {
             out.writeVInt(indexShard.shardId.id());
             out.writeVInt(indexShard.shards.size());
             // Order allocated shards by allocationId

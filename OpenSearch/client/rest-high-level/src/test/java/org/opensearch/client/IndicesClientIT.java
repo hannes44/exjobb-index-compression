@@ -32,9 +32,9 @@
 
 package org.opensearch.client;
 
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.opensearch.OpenSearchException;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.admin.indices.alias.Alias;
@@ -65,7 +65,7 @@ import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.support.IndicesOptions;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.action.support.broadcast.BroadcastResponse;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.indices.AnalyzeRequest;
 import org.opensearch.client.indices.AnalyzeResponse;
 import org.opensearch.client.indices.CloseIndexRequest;
@@ -1437,7 +1437,8 @@ public class IndicesClientIT extends OpenSearchRestHighLevelClientTestCase {
         assertThat(
             exception.getMessage(),
             startsWith(
-                "OpenSearch exception [type=settings_exception, " + "reason=final index setting [index.number_of_shards], not updateable"
+                "OpenSearch exception [type=illegal_argument_exception, "
+                    + "reason=final index setting [index.number_of_shards], not updateable"
             )
         );
     }
@@ -1474,7 +1475,7 @@ public class IndicesClientIT extends OpenSearchRestHighLevelClientTestCase {
         assertThat(
             exception.getMessage(),
             equalTo(
-                "OpenSearch exception [type=settings_exception, "
+                "OpenSearch exception [type=illegal_argument_exception, "
                     + "reason=unknown setting [index.no_idea_what_you_are_talking_about] please check that any required plugins are installed, "
                     + "or check the breaking changes documentation for removed settings]"
             )

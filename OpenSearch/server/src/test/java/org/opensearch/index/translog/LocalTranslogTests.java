@@ -1003,6 +1003,10 @@ public class LocalTranslogTests extends OpenSearchTestCase {
         return new Term("_id", Uid.encodeId(doc.id()));
     }
 
+    private Term newUid(String id) {
+        return new Term("_id", Uid.encodeId(id));
+    }
+
     public void testVerifyTranslogIsNotDeleted() throws IOException {
         assertFileIsPresent(translog, 1);
         translog.add(new Translog.Index("1", 0, primaryTerm.get(), new byte[] { 1 }));

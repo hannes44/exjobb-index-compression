@@ -32,13 +32,14 @@
 
 package org.opensearch.action.admin.indices.mapping.put;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchGenerationException;
 import org.opensearch.Version;
 import org.opensearch.action.ActionRequestValidationException;
 import org.opensearch.action.IndicesRequest;
 import org.opensearch.action.support.IndicesOptions;
-import org.opensearch.action.support.clustermanager.AcknowledgedRequest;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedRequest;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentHelper;
@@ -119,9 +120,14 @@ public class PutMappingRequest extends AcknowledgedRequest<PutMappingRequest> im
             }
         }
         source = in.readString();
+        if (in.getVersion().before(LegacyESVersion.V_7_0_0)) {
+            in.readBoolean(); // updateAllTypes
+        }
         concreteIndex = in.readOptionalWriteable(Index::new);
         origin = in.readOptionalString();
-        writeIndexOnly = in.readBoolean();
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_9_0)) {
+            writeIndexOnly = in.readBoolean();
+        }
     }
 
     public PutMappingRequest() {}
@@ -346,9 +352,14 @@ public class PutMappingRequest extends AcknowledgedRequest<PutMappingRequest> im
             out.writeOptionalString(MapperService.SINGLE_MAPPING_NAME);
         }
         out.writeString(source);
+        if (out.getVersion().before(LegacyESVersion.V_7_0_0)) {
+            out.writeBoolean(true); // updateAllTypes
+        }
         out.writeOptionalWriteable(concreteIndex);
         out.writeOptionalString(origin);
-        out.writeBoolean(writeIndexOnly);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_9_0)) {
+            out.writeBoolean(writeIndexOnly);
+        }
     }
 
     @Override

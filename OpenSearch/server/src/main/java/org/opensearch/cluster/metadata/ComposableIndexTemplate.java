@@ -32,6 +32,7 @@
 
 package org.opensearch.cluster.metadata;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.cluster.AbstractDiffable;
 import org.opensearch.cluster.Diff;
@@ -183,7 +184,11 @@ public class ComposableIndexTemplate extends AbstractDiffable<ComposableIndexTem
         this.priority = in.readOptionalVLong();
         this.version = in.readOptionalVLong();
         this.metadata = in.readMap();
-        this.dataStreamTemplate = in.readOptionalWriteable(DataStreamTemplate::new);
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_9_0)) {
+            this.dataStreamTemplate = in.readOptionalWriteable(DataStreamTemplate::new);
+        } else {
+            this.dataStreamTemplate = null;
+        }
         if (in.getVersion().onOrAfter(Version.V_2_16_0)) {
             this.context = in.readOptionalWriteable(Context::new);
         } else {
@@ -247,7 +252,9 @@ public class ComposableIndexTemplate extends AbstractDiffable<ComposableIndexTem
         out.writeOptionalVLong(this.priority);
         out.writeOptionalVLong(this.version);
         out.writeMap(this.metadata);
-        out.writeOptionalWriteable(dataStreamTemplate);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_9_0)) {
+            out.writeOptionalWriteable(dataStreamTemplate);
+        }
         if (out.getVersion().onOrAfter(Version.V_2_16_0)) {
             out.writeOptionalWriteable(context);
         }
@@ -351,7 +358,11 @@ public class ComposableIndexTemplate extends AbstractDiffable<ComposableIndexTem
         }
 
         public DataStreamTemplate(StreamInput in) throws IOException {
-            this.timestampField = in.readOptionalWriteable(TimestampField::new);
+            if (in.getVersion().onOrAfter(Version.V_1_0_0)) {
+                this.timestampField = in.readOptionalWriteable(TimestampField::new);
+            } else {
+                this.timestampField = DataStreamFieldMapper.Defaults.TIMESTAMP_FIELD;
+            }
         }
 
         public TimestampField getTimestampField() {
@@ -373,7 +384,9 @@ public class ComposableIndexTemplate extends AbstractDiffable<ComposableIndexTem
 
         @Override
         public void writeTo(StreamOutput out) throws IOException {
-            out.writeOptionalWriteable(timestampField);
+            if (out.getVersion().onOrAfter(Version.V_1_0_0)) {
+                out.writeOptionalWriteable(timestampField);
+            }
         }
 
         @Override

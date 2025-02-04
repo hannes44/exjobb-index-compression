@@ -34,6 +34,7 @@ package org.opensearch.common.settings;
 import org.apache.logging.log4j.LogManager;
 import org.opensearch.action.admin.cluster.configuration.TransportAddVotingConfigExclusionsAction;
 import org.opensearch.action.admin.indices.close.TransportCloseIndexAction;
+import org.opensearch.action.main.TransportMainAction;
 import org.opensearch.action.search.CreatePitController;
 import org.opensearch.action.search.SearchRequestSlowLog;
 import org.opensearch.action.search.SearchRequestStats;
@@ -149,7 +150,6 @@ import org.opensearch.node.remotestore.RemoteStoreNodeService;
 import org.opensearch.node.resource.tracker.ResourceTrackerSettings;
 import org.opensearch.persistent.PersistentTasksClusterService;
 import org.opensearch.persistent.decider.EnableAssignmentDecider;
-import org.opensearch.plugins.NetworkPlugin;
 import org.opensearch.plugins.PluginsService;
 import org.opensearch.ratelimitting.admissioncontrol.AdmissionControlSettings;
 import org.opensearch.ratelimitting.admissioncontrol.settings.CpuBasedAdmissionControllerSettings;
@@ -277,7 +277,6 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 BalancedShardsAllocator.THRESHOLD_SETTING,
                 BalancedShardsAllocator.IGNORE_THROTTLE_FOR_REMOTE_RESTORE,
                 BalancedShardsAllocator.ALLOCATOR_TIMEOUT_SETTING,
-                BalancedShardsAllocator.PRIMARY_CONSTRAINT_THRESHOLD_SETTING,
                 BreakerSettings.CIRCUIT_BREAKER_LIMIT_SETTING,
                 BreakerSettings.CIRCUIT_BREAKER_OVERHEAD_SETTING,
                 BreakerSettings.CIRCUIT_BREAKER_TYPE,
@@ -363,7 +362,6 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 NetworkModule.TRANSPORT_SSL_DUAL_MODE_ENABLED,
                 NetworkModule.TRANSPORT_SSL_ENFORCE_HOSTNAME_VERIFICATION,
                 NetworkModule.TRANSPORT_SSL_ENFORCE_HOSTNAME_VERIFICATION_RESOLVE_HOST_NAME,
-                NetworkPlugin.AuxTransport.AUX_TRANSPORT_TYPES_SETTING,
                 HttpTransportSettings.SETTING_CORS_ALLOW_CREDENTIALS,
                 HttpTransportSettings.SETTING_CORS_ENABLED,
                 HttpTransportSettings.SETTING_CORS_MAX_AGE,
@@ -521,7 +519,6 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 IndicesRequestCache.INDICES_CACHE_QUERY_EXPIRE,
                 IndicesRequestCache.INDICES_REQUEST_CACHE_CLEANUP_INTERVAL_SETTING,
                 IndicesRequestCache.INDICES_REQUEST_CACHE_STALENESS_THRESHOLD_SETTING,
-                IndicesRequestCache.INDICES_REQUEST_CACHE_MAX_SIZE_ALLOWED_IN_CACHE_SETTING,
                 HunspellService.HUNSPELL_LAZY_LOAD,
                 HunspellService.HUNSPELL_IGNORE_CASE,
                 HunspellService.HUNSPELL_DICTIONARY_OPTIONS,
@@ -650,6 +647,7 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 FsHealthService.REFRESH_INTERVAL_SETTING,
                 FsHealthService.SLOW_PATH_LOGGING_THRESHOLD_SETTING,
                 FsHealthService.HEALTHY_TIMEOUT_SETTING,
+                TransportMainAction.OVERRIDE_MAIN_RESPONSE_VERSION,
                 NodeLoadAwareAllocationDecider.CLUSTER_ROUTING_ALLOCATION_LOAD_AWARENESS_PROVISIONED_CAPACITY_SETTING,
                 NodeLoadAwareAllocationDecider.CLUSTER_ROUTING_ALLOCATION_LOAD_AWARENESS_SKEW_FACTOR_SETTING,
                 NodeLoadAwareAllocationDecider.CLUSTER_ROUTING_ALLOCATION_LOAD_AWARENESS_ALLOW_UNASSIGNED_PRIMARIES_SETTING,
@@ -740,8 +738,6 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 RemoteClusterStateCleanupManager.REMOTE_CLUSTER_STATE_CLEANUP_INTERVAL_SETTING,
                 RemoteClusterStateService.REMOTE_CLUSTER_STATE_ENABLED_SETTING,
                 RemoteClusterStateService.REMOTE_PUBLICATION_SETTING,
-                RemoteClusterStateService.REMOTE_STATE_DOWNLOAD_TO_SERVE_READ_API,
-
                 INDEX_METADATA_UPLOAD_TIMEOUT_SETTING,
                 GLOBAL_METADATA_UPLOAD_TIMEOUT_SETTING,
                 METADATA_MANIFEST_UPLOAD_TIMEOUT_SETTING,
@@ -751,6 +747,7 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 RemoteIndexMetadataManager.REMOTE_INDEX_METADATA_PATH_HASH_ALGO_SETTING,
                 RemoteStoreNodeService.REMOTE_STORE_COMPATIBILITY_MODE_SETTING,
                 RemoteStoreNodeService.MIGRATION_DIRECTION_SETTING,
+
                 IndicesService.CLUSTER_REMOTE_INDEX_RESTRICT_ASYNC_DURABILITY_SETTING,
                 IndicesService.CLUSTER_INDEX_RESTRICT_REPLICATION_TYPE_SETTING,
                 RemoteRoutingTableBlobStore.REMOTE_ROUTING_TABLE_PATH_TYPE_SETTING,
@@ -758,7 +755,6 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 RemoteClusterStateService.REMOTE_CLUSTER_STATE_CHECKSUM_VALIDATION_MODE_SETTING,
                 RemoteRoutingTableBlobStore.CLUSTER_REMOTE_STORE_ROUTING_TABLE_PATH_PREFIX,
 
-                // Admission Control Settings
                 AdmissionControlSettings.ADMISSION_CONTROL_TRANSPORT_LAYER_MODE,
                 CpuBasedAdmissionControllerSettings.CPU_BASED_ADMISSION_CONTROLLER_TRANSPORT_LAYER_MODE,
                 CpuBasedAdmissionControllerSettings.INDEXING_CPU_USAGE_LIMIT,
@@ -789,9 +785,7 @@ public final class ClusterSettings extends AbstractScopedSettings {
 
                 // Snapshot related Settings
                 BlobStoreRepository.SNAPSHOT_SHARD_PATH_PREFIX_SETTING,
-                BlobStoreRepository.SNAPSHOT_REPOSITORY_DATA_CACHE_THRESHOLD,
-
-                SearchService.CLUSTER_ALLOW_DERIVED_FIELD_SETTING,
+                BlobStoreRepository.SNAPSHOT_ASYNC_DELETION_ENABLE_SETTING,
 
                 // Composite index settings
                 CompositeIndexSettings.STAR_TREE_INDEX_ENABLED_SETTING,
@@ -807,6 +801,11 @@ public final class ClusterSettings extends AbstractScopedSettings {
                 WorkloadManagementSettings.WLM_MODE_SETTING,
                 WorkloadManagementSettings.QUERYGROUP_SERVICE_RUN_INTERVAL_SETTING,
                 WorkloadManagementSettings.QUERYGROUP_SERVICE_DURESS_STREAK_SETTING,
+
+                SearchService.CLUSTER_ALLOW_DERIVED_FIELD_SETTING,
+
+                // Composite index settings
+                CompositeIndexSettings.STAR_TREE_INDEX_ENABLED_SETTING,
 
                 // Settings to be used for limiting rest requests
                 ResponseLimitSettings.CAT_INDICES_RESPONSE_LIMIT_SETTING,

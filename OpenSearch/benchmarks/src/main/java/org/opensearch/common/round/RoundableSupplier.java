@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class RoundableSupplier implements Supplier<Roundable> {
     private final Supplier<Roundable> delegate;
 
-    RoundableSupplier(String type, long[] values, int size) {
+    RoundableSupplier(String type, long[] values, int size) throws ClassNotFoundException {
         switch (type) {
             case "binary":
                 delegate = () -> new BinarySearcher(values, size);
@@ -22,8 +22,7 @@ public class RoundableSupplier implements Supplier<Roundable> {
                 delegate = () -> new BidirectionalLinearSearcher(values, size);
                 break;
             case "btree":
-                delegate = () -> new BtreeSearcher(values, size);
-                break;
+                throw new ClassNotFoundException("BtreeSearcher is not supported below JDK 20");
             default:
                 throw new IllegalArgumentException("invalid type: " + type);
         }

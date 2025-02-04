@@ -52,8 +52,6 @@ import org.opensearch.search.aggregations.Aggregator;
 import org.opensearch.search.aggregations.InternalAggregation;
 import org.opensearch.search.aggregations.LeafBucketCollector;
 import org.opensearch.search.aggregations.LeafBucketCollectorBase;
-import org.opensearch.search.aggregations.StarTreeBucketCollector;
-import org.opensearch.search.aggregations.StarTreePreComputeCollector;
 import org.opensearch.search.aggregations.support.ValuesSource;
 import org.opensearch.search.aggregations.support.ValuesSourceConfig;
 import org.opensearch.search.internal.SearchContext;
@@ -71,7 +69,7 @@ import static org.opensearch.index.compositeindex.datacube.startree.utils.StarTr
  *
  * @opensearch.internal
  */
-class MaxAggregator extends NumericMetricsAggregator.SingleValue implements StarTreePreComputeCollector {
+class MaxAggregator extends NumericMetricsAggregator.SingleValue {
 
     final ValuesSource.Numeric valuesSource;
     final DocValueFormat formatter;
@@ -132,11 +130,6 @@ class MaxAggregator extends NumericMetricsAggregator.SingleValue implements Star
 
         CompositeIndexFieldInfo supportedStarTree = getSupportedStarTree(this.context);
         if (supportedStarTree != null) {
-            if (parent != null && subAggregators.length == 0) {
-                // If this a child aggregator, then the parent will trigger star-tree pre-computation.
-                // Returning NO_OP_COLLECTOR explicitly because the getLeafCollector() are invoked starting from innermost aggregators
-                return LeafBucketCollector.NO_OP_COLLECTOR;
-            }
             return getStarTreeCollector(ctx, sub, supportedStarTree);
         }
         return getDefaultLeafCollector(ctx, sub);
@@ -255,28 +248,5 @@ class MaxAggregator extends NumericMetricsAggregator.SingleValue implements Star
             }
         });
         return result[0] != null ? converter.apply(result[0]) : null;
-    }
-
-    /**
-     * The parent aggregator invokes this method to get a StarTreeBucketCollector,
-     * which exposes collectStarTreeEntry() to be evaluated on filtered star tree entries
-     */
-    public StarTreeBucketCollector getStarTreeBucketCollector(
-        LeafReaderContext ctx,
-        CompositeIndexFieldInfo starTree,
-        StarTreeBucketCollector parentCollector
-    ) throws IOException {
-        return StarTreeQueryHelper.getStarTreeBucketMetricCollector(
-            starTree,
-            MetricStat.MAX.getTypeName(),
-            valuesSource,
-            parentCollector,
-            (bucket) -> {
-                long from = maxes.size();
-                maxes = context.bigArrays().grow(maxes, bucket + 1);
-                maxes.fill(from, maxes.size(), Double.NEGATIVE_INFINITY);
-            },
-            (bucket, metricValue) -> maxes.set(bucket, Math.max(maxes.get(bucket), (NumericUtils.sortableLongToDouble(metricValue))))
-        );
     }
 }

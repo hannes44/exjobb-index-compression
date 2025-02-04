@@ -11,11 +11,12 @@ package org.opensearch.geo.search.aggregations.bucket.composite;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.SortedNumericDocValuesField;
-import org.apache.lucene.search.FieldExistsQuery;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.opensearch.common.geo.GeoPoint;
 import org.opensearch.geo.GeoModulePlugin;
 import org.opensearch.geo.search.aggregations.bucket.geogrid.GeoTileGridAggregationBuilder;
+import org.opensearch.geo.search.aggregations.bucket.geogrid.GeoTileGridAggregator;
 import org.opensearch.index.mapper.GeoPointFieldMapper;
 import org.opensearch.plugins.SearchPlugin;
 import org.opensearch.search.aggregations.bucket.GeoTileUtils;
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Testing the geo tile grid as part of CompositeAggregation.
+ * Testing the {@link GeoTileGridAggregator} as part of CompositeAggregation.
  */
 public class GeoTileGridAggregationCompositeAggregatorTests extends BaseCompositeAggregatorTestCase {
 
@@ -60,7 +61,7 @@ public class GeoTileGridAggregationCompositeAggregatorTests extends BaseComposit
 
         // just unmapped = no results
         testSearchCase(
-            Arrays.asList(new MatchAllDocsQuery(), new FieldExistsQuery(mappedFieldName)),
+            Arrays.asList(new MatchAllDocsQuery(), new DocValuesFieldExistsQuery(mappedFieldName)),
             dataset,
             () -> new CompositeAggregationBuilder("name", Arrays.asList(new GeoTileGridValuesSourceBuilder("unmapped").field("unmapped"))),
             (result) -> assertEquals(0, result.getBuckets().size())
@@ -68,7 +69,7 @@ public class GeoTileGridAggregationCompositeAggregatorTests extends BaseComposit
 
         // unmapped missing bucket = one result
         testSearchCase(
-            Arrays.asList(new MatchAllDocsQuery(), new FieldExistsQuery(mappedFieldName)),
+            Arrays.asList(new MatchAllDocsQuery(), new DocValuesFieldExistsQuery(mappedFieldName)),
             dataset,
             () -> new CompositeAggregationBuilder(
                 "name",
@@ -84,7 +85,7 @@ public class GeoTileGridAggregationCompositeAggregatorTests extends BaseComposit
 
         // field + unmapped, no missing bucket = no results
         testSearchCase(
-            Arrays.asList(new MatchAllDocsQuery(), new FieldExistsQuery(mappedFieldName)),
+            Arrays.asList(new MatchAllDocsQuery(), new DocValuesFieldExistsQuery(mappedFieldName)),
             dataset,
             () -> new CompositeAggregationBuilder(
                 "name",
@@ -98,7 +99,7 @@ public class GeoTileGridAggregationCompositeAggregatorTests extends BaseComposit
 
         // field + unmapped with missing bucket = multiple results
         testSearchCase(
-            Arrays.asList(new MatchAllDocsQuery(), new FieldExistsQuery(mappedFieldName)),
+            Arrays.asList(new MatchAllDocsQuery(), new DocValuesFieldExistsQuery(mappedFieldName)),
             dataset,
             () -> new CompositeAggregationBuilder(
                 "name",
@@ -130,7 +131,7 @@ public class GeoTileGridAggregationCompositeAggregatorTests extends BaseComposit
                 createDocument("geo_point", new GeoPoint(90.0, 0.0))
             )
         );
-        testSearchCase(Arrays.asList(new MatchAllDocsQuery(), new FieldExistsQuery("geo_point")), dataset, () -> {
+        testSearchCase(Arrays.asList(new MatchAllDocsQuery(), new DocValuesFieldExistsQuery("geo_point")), dataset, () -> {
             GeoTileGridValuesSourceBuilder geoTile = new GeoTileGridValuesSourceBuilder("geo_point").field("geo_point");
             return new CompositeAggregationBuilder("name", Collections.singletonList(geoTile));
         }, (result) -> {
@@ -142,7 +143,7 @@ public class GeoTileGridAggregationCompositeAggregatorTests extends BaseComposit
             assertEquals(3L, result.getBuckets().get(1).getDocCount());
         });
 
-        testSearchCase(Arrays.asList(new MatchAllDocsQuery(), new FieldExistsQuery("geo_point")), dataset, () -> {
+        testSearchCase(Arrays.asList(new MatchAllDocsQuery(), new DocValuesFieldExistsQuery("geo_point")), dataset, () -> {
             GeoTileGridValuesSourceBuilder geoTile = new GeoTileGridValuesSourceBuilder("geo_point").field("geo_point");
             return new CompositeAggregationBuilder("name", Collections.singletonList(geoTile)).aggregateAfter(
                 Collections.singletonMap("geo_point", "7/32/56")

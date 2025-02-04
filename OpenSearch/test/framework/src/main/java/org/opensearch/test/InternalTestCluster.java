@@ -1749,7 +1749,7 @@ public final class InternalTestCluster extends TestCluster {
         for (HttpServerTransport httpServerTransport : getInstances(HttpServerTransport.class)) {
             addresses.add(httpServerTransport.boundAddress().publishAddress().address());
         }
-        return addresses.toArray(new InetSocketAddress[0]);
+        return addresses.toArray(new InetSocketAddress[addresses.size()]);
     }
 
     /**
@@ -1937,7 +1937,7 @@ public final class InternalTestCluster extends TestCluster {
                     .distinct()
                     .collect(Collectors.toList());
                 Set<Path> configPaths = Stream.concat(currentNodes.stream(), newNodes.stream())
-                    .map(nac -> nac.node.getEnvironment().configDir())
+                    .map(nac -> nac.node.getEnvironment().configFile())
                     .collect(Collectors.toSet());
                 logger.debug("configuring discovery with {} at {}", discoveryFileContents, configPaths);
                 for (final Path configPath : configPaths) {
@@ -2144,17 +2144,6 @@ public final class InternalTestCluster extends TestCluster {
     }
 
     /**
-     * Returns the name of all the cluster managers in the cluster
-     */
-    public Set<String> getClusterManagerNames() {
-        return nodes.entrySet()
-            .stream()
-            .filter(entry -> CLUSTER_MANAGER_NODE_PREDICATE.test(entry.getValue()))
-            .map(entry -> entry.getKey())
-            .collect(Collectors.toSet());
-    }
-
-    /**
      * Returns the name of the current cluster-manager node in the cluster.
      */
     public String getClusterManagerName() {
@@ -2325,21 +2314,7 @@ public final class InternalTestCluster extends TestCluster {
     /**
      * Starts multiple nodes with the given settings and returns their names
      */
-    public List<String> startNodes(int numOfNodes, Settings settings, Boolean waitForNodeJoin) {
-        return startNodes(waitForNodeJoin, Collections.nCopies(numOfNodes, settings).toArray(new Settings[0]));
-    }
-
-    /**
-     * Starts multiple nodes with the given settings and returns their names
-     */
     public synchronized List<String> startNodes(Settings... extraSettings) {
-        return startNodes(false, extraSettings);
-    }
-
-    /**
-     * Starts multiple nodes with the given settings and returns their names
-     */
-    public synchronized List<String> startNodes(Boolean waitForNodeJoin, Settings... extraSettings) {
         final int newClusterManagerCount = Math.toIntExact(Stream.of(extraSettings).filter(DiscoveryNode::isClusterManagerNode).count());
         final int defaultMinClusterManagerNodes;
         if (autoManageClusterManagerNodes) {
@@ -2391,7 +2366,7 @@ public final class InternalTestCluster extends TestCluster {
             nodes.add(nodeAndClient);
         }
         startAndPublishNodesAndClients(nodes);
-        if (autoManageClusterManagerNodes && !waitForNodeJoin) {
+        if (autoManageClusterManagerNodes) {
             validateClusterFormed();
         }
         return nodes.stream().map(NodeAndClient::getName).collect(Collectors.toList());
@@ -2434,10 +2409,6 @@ public final class InternalTestCluster extends TestCluster {
 
     public List<String> startDataOnlyNodes(int numNodes, Settings settings) {
         return startNodes(numNodes, Settings.builder().put(onlyRole(settings, DiscoveryNodeRole.DATA_ROLE)).build());
-    }
-
-    public List<String> startDataOnlyNodes(int numNodes, Settings settings, Boolean ignoreNodeJoin) {
-        return startNodes(numNodes, Settings.builder().put(onlyRole(settings, DiscoveryNodeRole.DATA_ROLE)).build(), ignoreNodeJoin);
     }
 
     public List<String> startSearchOnlyNodes(int numNodes) {

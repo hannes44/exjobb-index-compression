@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchException;
 import org.opensearch.ResourceAlreadyExistsException;
 import org.opensearch.Version;
@@ -229,10 +230,6 @@ public class MetadataCreateIndexService {
         remoteStoreCustomMetadataResolver = isRemoteDataAttributePresent(settings)
             ? new RemoteStoreCustomMetadataResolver(remoteStoreSettings, minNodeVersionSupplier, repositoriesServiceSupplier, settings)
             : null;
-    }
-
-    public IndexScopedSettings getIndexScopedSettings() {
-        return indexScopedSettings;
     }
 
     /**
@@ -438,14 +435,6 @@ public class MetadataCreateIndexService {
             // in which case templates don't apply, so create the index from the source metadata
             return applyCreateIndexRequestWithExistingMetadata(currentState, request, silent, sourceMetadata, metadataTransformer);
         } else {
-            // The backing index may have a different name or prefix than the data stream name.
-            final String name = request.dataStreamName() != null ? request.dataStreamName() : request.index();
-
-            // Do not apply any templates to system indices
-            if (systemIndices.isSystemIndex(name)) {
-                return applyCreateIndexRequestWithNoTemplates(currentState, request, silent, metadataTransformer);
-            }
-
             // Hidden indices apply templates slightly differently (ignoring wildcard '*'
             // templates), so we need to check to see if the request is creating a hidden index
             // prior to resolving which templates it matches
@@ -453,6 +442,8 @@ public class MetadataCreateIndexService {
                 ? IndexMetadata.INDEX_HIDDEN_SETTING.get(request.settings())
                 : null;
 
+            // The backing index may have a different name or prefix than the data stream name.
+            final String name = request.dataStreamName() != null ? request.dataStreamName() : request.index();
             // Check to see if a v2 template matched
             final String v2Template = MetadataIndexTemplateService.findV2Template(
                 currentState.metadata(),
@@ -636,9 +627,14 @@ public class MetadataCreateIndexService {
         final boolean isHiddenAfterTemplates = IndexMetadata.INDEX_HIDDEN_SETTING.get(aggregatedIndexSettings);
         final boolean isSystem = validateDotIndex(request.index(), isHiddenAfterTemplates);
 
+        // remove the setting it's temporary and is only relevant once we create the index
+        final Settings.Builder settingsBuilder = Settings.builder().put(aggregatedIndexSettings);
+        settingsBuilder.remove(IndexMetadata.INDEX_NUMBER_OF_ROUTING_SHARDS_SETTING.getKey());
+        final Settings indexSettings = settingsBuilder.build();
+
         final IndexMetadata.Builder tmpImdBuilder = IndexMetadata.builder(request.index());
         tmpImdBuilder.setRoutingNumShards(routingNumShards);
-        tmpImdBuilder.settings(aggregatedIndexSettings);
+        tmpImdBuilder.settings(indexSettings);
         tmpImdBuilder.system(isSystem);
         addRemoteStoreCustomMetadata(tmpImdBuilder, true);
 
@@ -684,17 +680,6 @@ public class MetadataCreateIndexService {
             () -> new ParameterizedMessage("Added newCustomData={}, replaced oldCustomData={}", remoteCustomData, existingCustomData)
         );
         tmpImdBuilder.putCustom(IndexMetadata.REMOTE_STORE_CUSTOM_KEY, remoteCustomData);
-    }
-
-    private ClusterState applyCreateIndexRequestWithNoTemplates(
-        final ClusterState currentState,
-        final CreateIndexClusterStateUpdateRequest request,
-        final boolean silent,
-        final BiConsumer<Metadata.Builder, IndexMetadata> metadataTransformer
-    ) throws Exception {
-        // Using applyCreateIndexRequestWithV1Templates with empty list instead of applyCreateIndexRequestWithV2Template
-        // with null template as applyCreateIndexRequestWithV2Template has assertions when template is null
-        return applyCreateIndexRequestWithV1Templates(currentState, request, silent, Collections.emptyList(), metadataTransformer);
     }
 
     private ClusterState applyCreateIndexRequestWithV1Templates(
@@ -1037,7 +1022,13 @@ public class MetadataCreateIndexService {
             indexSettingsBuilder.put(IndexMetadata.SETTING_INDEX_VERSION_CREATED.getKey(), createdVersion);
         }
         if (INDEX_NUMBER_OF_SHARDS_SETTING.exists(indexSettingsBuilder) == false) {
-            indexSettingsBuilder.put(SETTING_NUMBER_OF_SHARDS, INDEX_NUMBER_OF_SHARDS_SETTING.get(settings));
+            final int numberOfShards;
+            if (INDEX_NUMBER_OF_SHARDS_SETTING.exists(settings)) {
+                numberOfShards = INDEX_NUMBER_OF_SHARDS_SETTING.get(settings);
+            } else {
+                numberOfShards = getNumberOfShards(indexSettingsBuilder);
+            }
+            indexSettingsBuilder.put(SETTING_NUMBER_OF_SHARDS, numberOfShards);
         }
         if (INDEX_NUMBER_OF_REPLICAS_SETTING.exists(indexSettingsBuilder) == false
             || indexSettingsBuilder.get(SETTING_NUMBER_OF_REPLICAS) == null) {
@@ -1100,9 +1091,14 @@ public class MetadataCreateIndexService {
     private static void updateSearchOnlyReplicas(Settings requestSettings, Settings.Builder builder) {
         if (INDEX_NUMBER_OF_SEARCH_REPLICAS_SETTING.exists(builder) && builder.get(SETTING_NUMBER_OF_SEARCH_REPLICAS) != null) {
             if (INDEX_NUMBER_OF_SEARCH_REPLICAS_SETTING.get(requestSettings) > 0
-                && Boolean.parseBoolean(builder.get(SETTING_REMOTE_STORE_ENABLED)) == false) {
+                && ReplicationType.parseString(builder.get(INDEX_REPLICATION_TYPE_SETTING.getKey())).equals(ReplicationType.DOCUMENT)) {
                 throw new IllegalArgumentException(
-                    "To set " + SETTING_NUMBER_OF_SEARCH_REPLICAS + ", " + SETTING_REMOTE_STORE_ENABLED + " must be set to true"
+                    "To set "
+                        + SETTING_NUMBER_OF_SEARCH_REPLICAS
+                        + ", "
+                        + INDEX_REPLICATION_TYPE_SETTING.getKey()
+                        + " must be set to "
+                        + ReplicationType.SEGMENT
                 );
             }
             builder.put(SETTING_NUMBER_OF_SEARCH_REPLICAS, INDEX_NUMBER_OF_SEARCH_REPLICAS_SETTING.get(requestSettings));
@@ -1177,8 +1173,12 @@ public class MetadataCreateIndexService {
                 .findFirst();
 
             if (remoteNode.isPresent()) {
-                translogRepo = RemoteStoreNodeAttribute.getTranslogRepoName(remoteNode.get().getAttributes());
-                segmentRepo = RemoteStoreNodeAttribute.getSegmentRepoName(remoteNode.get().getAttributes());
+                translogRepo = remoteNode.get()
+                    .getAttributes()
+                    .get(RemoteStoreNodeAttribute.REMOTE_STORE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEY);
+                segmentRepo = remoteNode.get()
+                    .getAttributes()
+                    .get(RemoteStoreNodeAttribute.REMOTE_STORE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEY);
                 if (segmentRepo != null && translogRepo != null) {
                     settingsBuilder.put(SETTING_REMOTE_STORE_ENABLED, true)
                         .put(SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, segmentRepo)
@@ -1203,6 +1203,21 @@ public class MetadataCreateIndexService {
                     + "or other file systems instead."
             );
         }
+    }
+
+    static int getNumberOfShards(final Settings.Builder indexSettingsBuilder) {
+        // TODO: this logic can be removed when the current major version is 8
+        assert Version.CURRENT.major == 1 || Version.CURRENT.major == 2;
+        final int numberOfShards;
+        final Version indexVersionCreated = Version.fromId(
+            Integer.parseInt(indexSettingsBuilder.get(IndexMetadata.SETTING_INDEX_VERSION_CREATED.getKey()))
+        );
+        if (indexVersionCreated.before(LegacyESVersion.V_7_0_0)) {
+            numberOfShards = 5;
+        } else {
+            numberOfShards = INDEX_NUMBER_OF_SHARDS_SETTING.getDefault(Settings.EMPTY);
+        }
+        return numberOfShards;
     }
 
     /**
@@ -1489,7 +1504,7 @@ public class MetadataCreateIndexService {
         final boolean forbidPrivateIndexSettings,
         Optional<String> indexName
     ) {
-        List<String> validationErrors = validateIndexCustomPath(settings, env.sharedDataDir());
+        List<String> validationErrors = validateIndexCustomPath(settings, env.sharedDataFile());
         if (forbidPrivateIndexSettings) {
             validationErrors.addAll(validatePrivateSettingsNotExplicitlySet(settings, indexScopedSettings));
         }
@@ -1724,17 +1739,21 @@ public class MetadataCreateIndexService {
      * the less default split operations are supported
      */
     public static int calculateNumRoutingShards(int numShards, Version indexVersionCreated) {
-        // only select this automatically for indices that are created on or after 7.0 this will prevent this new behaviour
-        // until we have a fully upgraded cluster. Additionally it will make integratin testing easier since mixed clusters
-        // will always have the behavior of the min node in the cluster.
-        //
-        // We use as a default number of routing shards the higher number that can be expressed
-        // as {@code numShards * 2^x`} that is less than or equal to the maximum number of shards: 1024.
-        int log2MaxNumShards = 10; // logBase2(1024)
-        int log2NumShards = 32 - Integer.numberOfLeadingZeros(numShards - 1); // ceil(logBase2(numShards))
-        int numSplits = log2MaxNumShards - log2NumShards;
-        numSplits = Math.max(1, numSplits); // Ensure the index can be split at least once
-        return numShards * 1 << numSplits;
+        if (indexVersionCreated.onOrAfter(LegacyESVersion.V_7_0_0)) {
+            // only select this automatically for indices that are created on or after 7.0 this will prevent this new behaviour
+            // until we have a fully upgraded cluster. Additionally it will make integratin testing easier since mixed clusters
+            // will always have the behavior of the min node in the cluster.
+            //
+            // We use as a default number of routing shards the higher number that can be expressed
+            // as {@code numShards * 2^x`} that is less than or equal to the maximum number of shards: 1024.
+            int log2MaxNumShards = 10; // logBase2(1024)
+            int log2NumShards = 32 - Integer.numberOfLeadingZeros(numShards - 1); // ceil(logBase2(numShards))
+            int numSplits = log2MaxNumShards - log2NumShards;
+            numSplits = Math.max(1, numSplits); // Ensure the index can be split at least once
+            return numShards * 1 << numSplits;
+        } else {
+            return numShards;
+        }
     }
 
     public static void validateTranslogRetentionSettings(Settings indexSettings) {

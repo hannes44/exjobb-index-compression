@@ -7,7 +7,7 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
-    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+    if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
       - name: GitHub App token
         id: github_app_token
@@ -56,9 +56,9 @@ jobs:
           commit_options: '--signoff'
 
       - name: Update the changelog
-        uses: dangoslen/dependabot-changelog-helper@v3
+        uses: dangoslen/dependabot-changelog-helper@v1
         with:
-          version: 'Unreleased 2.x'
+          version: 'Unreleased'
 
       - name: Commit the changes
         uses: stefanzweifel/git-auto-commit-action@v5

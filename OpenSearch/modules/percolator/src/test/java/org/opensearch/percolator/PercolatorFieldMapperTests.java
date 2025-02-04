@@ -94,7 +94,7 @@ import org.opensearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.opensearch.index.query.functionscore.RandomScoreFunctionBuilder;
 import org.opensearch.index.query.functionscore.ScriptScoreFunctionBuilder;
 import org.opensearch.indices.TermsLookup;
-import org.opensearch.join.ParentJoinModulePlugin;
+import org.opensearch.join.ParentJoinPlugin;
 import org.opensearch.join.query.HasChildQueryBuilder;
 import org.opensearch.join.query.HasParentQueryBuilder;
 import org.opensearch.plugins.Plugin;
@@ -144,12 +144,7 @@ public class PercolatorFieldMapperTests extends OpenSearchSingleNodeTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return pluginList(
-            InternalSettingsPlugin.class,
-            PercolatorModulePlugin.class,
-            FoolMeScriptPlugin.class,
-            ParentJoinModulePlugin.class
-        );
+        return pluginList(InternalSettingsPlugin.class, PercolatorPlugin.class, FoolMeScriptPlugin.class, ParentJoinPlugin.class);
     }
 
     @Override
@@ -462,8 +457,8 @@ public class PercolatorFieldMapperTests extends OpenSearchSingleNodeTestCase {
         Tuple<BooleanQuery, Boolean> t = fieldType.createCandidateQuery(indexReader, Version.CURRENT);
         assertTrue(t.v2());
         assertEquals(2, t.v1().clauses().size());
-        assertThat(t.v1().clauses().get(0).query(), instanceOf(CoveringQuery.class));
-        assertThat(t.v1().clauses().get(1).query(), instanceOf(TermQuery.class));
+        assertThat(t.v1().clauses().get(0).getQuery(), instanceOf(CoveringQuery.class));
+        assertThat(t.v1().clauses().get(1).getQuery(), instanceOf(TermQuery.class));
 
         // Now push it over the edge, so that it falls back using TermInSetQuery
         memoryIndex.addField("field2", "value", new WhitespaceAnalyzer());
@@ -471,10 +466,10 @@ public class PercolatorFieldMapperTests extends OpenSearchSingleNodeTestCase {
         t = fieldType.createCandidateQuery(indexReader, Version.CURRENT);
         assertFalse(t.v2());
         assertEquals(3, t.v1().clauses().size());
-        TermInSetQuery terms = (TermInSetQuery) t.v1().clauses().get(0).query();
-        assertEquals(1023, terms.getTermsCount());
-        assertThat(t.v1().clauses().get(1).query().toString(), containsString(fieldName + ".range_field:<ranges:"));
-        assertThat(t.v1().clauses().get(2).query().toString(), containsString(fieldName + ".extraction_result:failed"));
+        TermInSetQuery terms = (TermInSetQuery) t.v1().clauses().get(0).getQuery();
+        assertEquals(1023, terms.getTermData().size());
+        assertThat(t.v1().clauses().get(1).getQuery().toString(), containsString(fieldName + ".range_field:<ranges:"));
+        assertThat(t.v1().clauses().get(2).getQuery().toString(), containsString(fieldName + ".extraction_result:failed"));
     }
 
     public void testCreateCandidateQuery_oldIndex() throws Exception {
@@ -487,8 +482,8 @@ public class PercolatorFieldMapperTests extends OpenSearchSingleNodeTestCase {
         Tuple<BooleanQuery, Boolean> t = fieldType.createCandidateQuery(indexReader, Version.CURRENT);
         assertTrue(t.v2());
         assertEquals(2, t.v1().clauses().size());
-        assertThat(t.v1().clauses().get(0).query(), instanceOf(CoveringQuery.class));
-        assertThat(t.v1().clauses().get(1).query(), instanceOf(TermQuery.class));
+        assertThat(t.v1().clauses().get(0).getQuery(), instanceOf(CoveringQuery.class));
+        assertThat(t.v1().clauses().get(1).getQuery(), instanceOf(TermQuery.class));
     }
 
     public void testExtractTermsAndRanges_numberFields() throws Exception {

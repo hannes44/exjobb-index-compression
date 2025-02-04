@@ -40,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.filter.RegexFilter;
+import org.apache.lucene.codecs.LiveDocsFormat;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.KeywordField;
 import org.apache.lucene.document.LongPoint;
@@ -271,7 +272,7 @@ public class InternalEngineTests extends EngineTestCase {
         try (Engine.Searcher searcher = engine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
             assertEquals(1, searcher.getIndexReader().numDocs());
             TopDocs search = searcher.search(new MatchAllDocsQuery(), 1);
-            org.apache.lucene.document.Document luceneDoc = searcher.storedFields().document(search.scoreDocs[0].doc);
+            org.apache.lucene.document.Document luceneDoc = searcher.doc(search.scoreDocs[0].doc);
             assertEquals("test", luceneDoc.get("value"));
         }
 
@@ -284,7 +285,7 @@ public class InternalEngineTests extends EngineTestCase {
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             assertEquals(1, searcher.getIndexReader().numDocs());
             TopDocs search = searcher.search(new MatchAllDocsQuery(), 1);
-            org.apache.lucene.document.Document luceneDoc = searcher.storedFields().document(search.scoreDocs[0].doc);
+            org.apache.lucene.document.Document luceneDoc = searcher.doc(search.scoreDocs[0].doc);
             assertEquals("updated", luceneDoc.get("value"));
         }
 
@@ -732,7 +733,7 @@ public class InternalEngineTests extends EngineTestCase {
             engine.refresh("test");
 
             segments = engine.segments(true);
-            assertThat(segments.size(), equalTo(1));
+            assertThat(segments.size(), equalTo(2));
         }
     }
 
@@ -923,7 +924,7 @@ public class InternalEngineTests extends EngineTestCase {
         } finally {
             IOUtils.close(engine);
         }
-        try (Engine recoveringEngine = new InternalEngine(engine.config())) {
+        try (InternalEngine recoveringEngine = new InternalEngine(engine.config())) {
             TranslogHandler translogHandler = createTranslogHandler(engine.config().getIndexSettings(), recoveringEngine);
             recoveringEngine.translogManager()
                 .recoverFromTranslog(translogHandler, recoveringEngine.getProcessedLocalCheckpoint(), Long.MAX_VALUE);
@@ -950,15 +951,15 @@ public class InternalEngineTests extends EngineTestCase {
             IOUtils.close(initialEngine);
         }
 
-        Engine recoveringEngine = null;
+        InternalEngine recoveringEngine = null;
         try {
             final AtomicBoolean committed = new AtomicBoolean();
             recoveringEngine = new InternalEngine(initialEngine.config()) {
 
                 @Override
-                protected void commitIndexWriter(IndexWriter writer, String translogUUID) throws IOException {
+                protected void commitIndexWriter(IndexWriter writer, Translog translog) throws IOException {
                     committed.set(true);
-                    super.commitIndexWriter(writer, translogUUID);
+                    super.commitIndexWriter(writer, translog);
                 }
             };
             assertThat(recoveringEngine.translogManager().getTranslogStats().getUncommittedOperations(), equalTo(docs));
@@ -976,7 +977,7 @@ public class InternalEngineTests extends EngineTestCase {
         final List<Long> seqNos = LongStream.range(0, docs).boxed().collect(Collectors.toList());
         Randomness.shuffle(seqNos);
         Engine initialEngine = null;
-        Engine recoveringEngine = null;
+        InternalEngine recoveringEngine = null;
         Store store = createStore();
         final AtomicInteger counter = new AtomicInteger();
         try {
@@ -1004,7 +1005,7 @@ public class InternalEngineTests extends EngineTestCase {
             recoveringEngine.refresh("test");
             try (Engine.Searcher searcher = recoveringEngine.acquireSearcher("test")) {
                 TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), docs);
-                assertEquals(docs, topDocs.totalHits.value());
+                assertEquals(docs, topDocs.totalHits.value);
             }
         } finally {
             IOUtils.close(initialEngine, recoveringEngine, store);
@@ -3290,10 +3291,22 @@ public class InternalEngineTests extends EngineTestCase {
         MockDirectoryWrapper wrapper = newMockDirectory();
         final CountDownLatch cleanupCompleted = new CountDownLatch(1);
         MockDirectoryWrapper.Failure fail = new MockDirectoryWrapper.Failure() {
+            public boolean didFail1;
+            public boolean didFail2;
+
             @Override
             public void eval(MockDirectoryWrapper dir) throws IOException {
-                // Fail segment merge with diskfull during merging terms
-                if (callStackContainsAnyOf("mergeTerms")) {
+                if (!doFail) {
+                    return;
+                }
+
+                // Fail segment merge with diskfull during merging terms.
+                if (callStackContainsAnyOf("mergeTerms") && !didFail1) {
+                    didFail1 = true;
+                    throw new IOException("No space left on device");
+                }
+                if (callStackContains(LiveDocsFormat.class, "writeLiveDocs") && !didFail2) {
+                    didFail2 = true;
                     throw new IOException("No space left on device");
                 }
             }
@@ -3369,6 +3382,7 @@ public class InternalEngineTests extends EngineTestCase {
             segments = engine.segments(false);
             assertThat(segments.size(), equalTo(2));
 
+            fail.setDoFail();
             // IndexWriter can throw either IOException or IllegalStateException depending on whether tragedy is set or not.
             expectThrowsAnyOf(
                 Arrays.asList(IOException.class, IllegalStateException.class),
@@ -3388,10 +3402,20 @@ public class InternalEngineTests extends EngineTestCase {
         MockDirectoryWrapper wrapper = newMockDirectory();
         final CountDownLatch cleanupCompleted = new CountDownLatch(1);
         MockDirectoryWrapper.Failure fail = new MockDirectoryWrapper.Failure() {
+            public boolean didFail1;
+            public boolean didFail2;
 
             @Override
             public void eval(MockDirectoryWrapper dir) throws IOException {
-                if (callStackContainsAnyOf("mergeTerms")) {
+                if (!doFail) {
+                    return;
+                }
+                if (callStackContainsAnyOf("mergeTerms") && !didFail1) {
+                    didFail1 = true;
+                    throw new IOException("No space left on device");
+                }
+                if (callStackContains(LiveDocsFormat.class, "writeLiveDocs") && !didFail2) {
+                    didFail2 = true;
                     throw new IOException("No space left on device");
                 }
             }
@@ -3472,6 +3496,7 @@ public class InternalEngineTests extends EngineTestCase {
             segments = engine.segments(false);
             assertThat(segments.size(), equalTo(2));
 
+            fail.setDoFail();
             // IndexWriter can throw either IOException or IllegalStateException depending on whether tragedy is set or not.
             expectThrowsAnyOf(
                 Arrays.asList(IOException.class, IllegalStateException.class),
@@ -3491,10 +3516,20 @@ public class InternalEngineTests extends EngineTestCase {
         MockDirectoryWrapper wrapper = newMockDirectory();
         final CountDownLatch cleanupCompleted = new CountDownLatch(1);
         MockDirectoryWrapper.Failure fail = new MockDirectoryWrapper.Failure() {
+            public boolean didFail1;
+            public boolean didFail2;
 
             @Override
             public void eval(MockDirectoryWrapper dir) throws IOException {
-                if (callStackContainsAnyOf("mergeTerms")) {
+                if (!doFail) {
+                    return;
+                }
+                if (callStackContainsAnyOf("mergeTerms") && !didFail1) {
+                    didFail1 = true;
+                    throw new IOException("No space left on device");
+                }
+                if (callStackContains(LiveDocsFormat.class, "writeLiveDocs") && !didFail2) {
+                    didFail2 = true;
                     throw new IOException("No space left on device");
                 }
             }
@@ -3560,6 +3595,7 @@ public class InternalEngineTests extends EngineTestCase {
             segments = engine.segments(false);
             assertThat(segments.size(), equalTo(2));
 
+            fail.setDoFail();
             // Close the store so that unreferenced file cleanup will fail.
             store.close();
 
@@ -3842,8 +3878,8 @@ public class InternalEngineTests extends EngineTestCase {
                 ) {
 
                     @Override
-                    protected void commitIndexWriter(IndexWriter writer, String translogUUID) throws IOException {
-                        super.commitIndexWriter(writer, translogUUID);
+                    protected void commitIndexWriter(IndexWriter writer, Translog translog) throws IOException {
+                        super.commitIndexWriter(writer, translog);
                         if (throwErrorOnCommit.get()) {
                             throw new RuntimeException("power's out");
                         }
@@ -3909,9 +3945,20 @@ public class InternalEngineTests extends EngineTestCase {
             engine.translogManager().skipTranslogRecovery();
             try (Engine.Searcher searcher = engine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
                 TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), randomIntBetween(numDocs, numDocs + 10));
-                assertThat(topDocs.totalHits.value(), equalTo(0L));
+                assertThat(topDocs.totalHits.value, equalTo(0L));
             }
         }
+    }
+
+    private Path[] filterExtraFSFiles(Path[] files) {
+        List<Path> paths = new ArrayList<>();
+        for (Path p : files) {
+            if (p.getFileName().toString().startsWith("extra")) {
+                continue;
+            }
+            paths.add(p);
+        }
+        return paths.toArray(new Path[0]);
     }
 
     public void testTranslogReplay() throws IOException {
@@ -4000,7 +4047,7 @@ public class InternalEngineTests extends EngineTestCase {
         assertThat(result.getVersion(), equalTo(2L));
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), numDocs + 1);
-            assertThat(topDocs.totalHits.value(), equalTo(numDocs + 1L));
+            assertThat(topDocs.totalHits.value, equalTo(numDocs + 1L));
         }
 
         engine.close();
@@ -4009,7 +4056,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("warm_up");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), numDocs + 1);
-            assertThat(topDocs.totalHits.value(), equalTo(numDocs + 1L));
+            assertThat(topDocs.totalHits.value, equalTo(numDocs + 1L));
         }
         assertEquals(flush ? 1 : 2, translogHandler.appliedOperations());
         engine.delete(new Engine.Delete(Integer.toString(randomId), newUid(doc), primaryTerm.get()));
@@ -4020,7 +4067,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), numDocs);
-            assertThat(topDocs.totalHits.value(), equalTo((long) numDocs));
+            assertThat(topDocs.totalHits.value, equalTo((long) numDocs));
         }
     }
 
@@ -4443,7 +4490,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
         operation = appendOnlyPrimary(doc, false, 1, create);
         retry = appendOnlyPrimary(doc, true, 1, create);
@@ -4478,7 +4525,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
     }
 
@@ -4536,7 +4583,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(0, topDocs.totalHits.value());
+            assertEquals(0, topDocs.totalHits.value);
         }
     }
 
@@ -4560,7 +4607,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
 
         final boolean create = randomBoolean();
@@ -4600,7 +4647,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
     }
 
@@ -4645,12 +4692,12 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
         if (engine.engineConfig.getIndexSettings().isSoftDeleteEnabled()) {
             List<Translog.Operation> ops = readAllOperationsInLucene(engine);
@@ -4725,7 +4772,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
 
         index = new Engine.Index(
@@ -4747,7 +4794,7 @@ public class InternalEngineTests extends EngineTestCase {
         replicaEngine.refresh("test");
         try (Engine.Searcher searcher = replicaEngine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
     }
 
@@ -4817,7 +4864,7 @@ public class InternalEngineTests extends EngineTestCase {
         engine.refresh("test");
         try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
 
         Engine.Index secondIndexRequestReplica = new Engine.Index(
@@ -4838,7 +4885,7 @@ public class InternalEngineTests extends EngineTestCase {
         replicaEngine.refresh("test");
         try (Engine.Searcher searcher = replicaEngine.acquireSearcher("test")) {
             TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), 10);
-            assertEquals(1, topDocs.totalHits.value());
+            assertEquals(1, topDocs.totalHits.value);
         }
     }
 
@@ -5857,8 +5904,7 @@ public class InternalEngineTests extends EngineTestCase {
             }
             try (InternalEngine engine = new InternalEngine(engineConfig)) {
                 engine.ensureOpen();
-                final long currentTranslogGeneration = assertAndGetInternalTranslogManager(engine.translogManager()).getTranslog()
-                    .currentFileGeneration();
+                final long currentTranslogGeneration = engine.translogManager().getTranslog().currentFileGeneration();
                 TranslogHandler translogHandler = createTranslogHandler(engineConfig.getIndexSettings(), engine);
                 engine.translogManager().recoverFromTranslog(translogHandler, engine.getProcessedLocalCheckpoint(), globalCheckpoint.get());
                 engine.translogManager().restoreLocalHistoryFromTranslog(engine.getProcessedLocalCheckpoint(), translogHandler);
@@ -6172,14 +6218,14 @@ public class InternalEngineTests extends EngineTestCase {
         final AtomicLong lastSyncedGlobalCheckpointBeforeCommit = new AtomicLong(Translog.readGlobalCheckpoint(translogPath, translogUUID));
         try (InternalEngine engine = new InternalEngine(engineConfig) {
             @Override
-            protected void commitIndexWriter(IndexWriter writer, String translogUUID) throws IOException {
+            protected void commitIndexWriter(IndexWriter writer, Translog translog) throws IOException {
                 lastSyncedGlobalCheckpointBeforeCommit.set(Translog.readGlobalCheckpoint(translogPath, translogUUID));
                 // Advance the global checkpoint during the flush to create a lag between a persisted global checkpoint in the translog
                 // (this value is visible to the deletion policy) and an in memory global checkpoint in the SequenceNumbersService.
                 if (rarely()) {
                     globalCheckpoint.set(randomLongBetween(globalCheckpoint.get(), getPersistedLocalCheckpoint()));
                 }
-                super.commitIndexWriter(writer, translogUUID);
+                super.commitIndexWriter(writer, translog);
             }
         }) {
             engine.translogManager().recoverFromTranslog(translogHandler, engine.getProcessedLocalCheckpoint(), Long.MAX_VALUE);
@@ -6277,7 +6323,7 @@ public class InternalEngineTests extends EngineTestCase {
         try (Engine.Searcher searcher = engine.acquireSearcher("test", Engine.SearcherScope.INTERNAL)) {
             TopDocs search = searcher.search(new MatchAllDocsQuery(), searcher.getIndexReader().numDocs());
             for (int i = 0; i < search.scoreDocs.length; i++) {
-                org.apache.lucene.document.Document luceneDoc = searcher.storedFields().document(search.scoreDocs[i].doc);
+                org.apache.lucene.document.Document luceneDoc = searcher.doc(search.scoreDocs[i].doc);
                 assertEquals("updated", luceneDoc.get("value"));
             }
             int totalNumDocs = numDocs - numDeletes.get();
@@ -6841,8 +6887,28 @@ public class InternalEngineTests extends EngineTestCase {
                 }
             }
             List<Translog.Operation> luceneOps = readAllOperationsBasedOnSource(engine);
+            // todo remove in next release
+            List<Translog.Operation> translogOps = readAllOperationsBasedOnTranslog(engine);
             assertThat(luceneOps.stream().map(o -> o.seqNo()).collect(Collectors.toList()), containsInAnyOrder(expectedSeqNos.toArray()));
+            assertThat(translogOps.stream().map(o -> o.seqNo()).collect(Collectors.toList()), containsInAnyOrder(expectedSeqNos.toArray()));
         }
+    }
+
+    /**
+     * Test creating new snapshot from translog file
+     *
+     * @deprecated reading history operations from the translog file is deprecated and will be removed in the next release
+     */
+    @Deprecated
+    private static List<Translog.Operation> readAllOperationsBasedOnTranslog(Engine engine) throws IOException {
+        final List<Translog.Operation> operations = new ArrayList<>();
+        try (Translog.Snapshot snapshot = engine.newChangesSnapshotFromTranslogFile("test", 0, Long.MAX_VALUE, false)) {
+            Translog.Operation op;
+            while ((op = snapshot.next()) != null) {
+                operations.add(op);
+            }
+        }
+        return operations;
     }
 
     public void testLuceneHistoryOnPrimary() throws Exception {
@@ -7294,7 +7360,7 @@ public class InternalEngineTests extends EngineTestCase {
                 engine.refresh("test");
                 try (Engine.Searcher searcher = engine.acquireSearcher("test")) {
                     LeafReader leafReader = getOnlyLeafReader(searcher.getIndexReader());
-                    assertEquals(createdVersion.luceneVersion.major, leafReader.getMetaData().createdVersionMajor());
+                    assertEquals(createdVersion.luceneVersion.major, leafReader.getMetaData().getCreatedVersionMajor());
                 }
             }
         }

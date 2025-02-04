@@ -39,6 +39,7 @@ import org.apache.lucene.index.MultiTerms;
 import org.apache.lucene.index.PointValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.search.SortField;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchParseException;
 import org.opensearch.common.logging.DeprecationLogger;
 import org.opensearch.common.time.DateMathParser;
@@ -164,7 +165,9 @@ public class FieldSortBuilder extends SortBuilder<FieldSortBuilder> implements W
         sortMode = in.readOptionalWriteable(SortMode::readFromStream);
         unmappedType = in.readOptionalString();
         nestedSort = in.readOptionalWriteable(NestedSortBuilder::new);
-        numericType = in.readOptionalString();
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_2_0)) {
+            numericType = in.readOptionalString();
+        }
     }
 
     @Override
@@ -177,7 +180,9 @@ public class FieldSortBuilder extends SortBuilder<FieldSortBuilder> implements W
         out.writeOptionalWriteable(sortMode);
         out.writeOptionalString(unmappedType);
         out.writeOptionalWriteable(nestedSort);
-        out.writeOptionalString(numericType);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_2_0)) {
+            out.writeOptionalString(numericType);
+        }
     }
 
     /** Returns the document field this sort should be based on. */

@@ -37,7 +37,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.tests.util.LuceneTestCase;
@@ -90,7 +89,7 @@ public class MinScoreScorerTests extends LuceneTestCase {
             }
 
             @Override
-            public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+            public Scorer scorer(LeafReaderContext context) throws IOException {
                 return null;
             }
 
@@ -103,7 +102,7 @@ public class MinScoreScorerTests extends LuceneTestCase {
 
     private static Scorer scorer(int maxDoc, final int[] docs, final float[] scores, final boolean twoPhase) {
         final DocIdSetIterator iterator = twoPhase ? DocIdSetIterator.all(maxDoc) : iterator(docs);
-        return new Scorer() {
+        return new Scorer(fakeWeight()) {
 
             int lastScoredDoc = -1;
 

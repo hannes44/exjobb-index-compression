@@ -171,7 +171,7 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
 
         logger.info("--> verifying count");
         refreshAndWaitForReplication();
-        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value(), equalTo(20L));
+        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value, equalTo(20L));
 
         logger.info("--> start another node");
         final String node_2 = internalCluster().startNode();
@@ -199,9 +199,10 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
 
         logger.info("--> verifying count again...");
         refreshAndWaitForReplication();
-        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value(), equalTo(20L));
+        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value, equalTo(20L));
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/opensearch-project/OpenSearch/issues/2063")
     public void testRelocationWhileIndexingRandom() throws Exception {
         int numberOfRelocations = scaledRandomIntBetween(1, rarely() ? 10 : 4);
         int numberOfReplicas = randomBoolean() ? 0 : 1;
@@ -290,7 +291,7 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
                     .actionGet()
                     .getHits();
                 ranOnce = true;
-                if (hits.getTotalHits().value() != indexer.totalIndexedDocs()) {
+                if (hits.getTotalHits().value != indexer.totalIndexedDocs()) {
                     int[] hitIds = new int[(int) indexer.totalIndexedDocs()];
                     for (int hit = 0; hit < indexer.totalIndexedDocs(); hit++) {
                         hitIds[hit] = hit + 1;
@@ -304,7 +305,7 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
                     }
                     set.forEach(value -> logger.error("Missing id [{}]", value));
                 }
-                assertThat(hits.getTotalHits().value(), equalTo(indexer.totalIndexedDocs()));
+                assertThat(hits.getTotalHits().value, equalTo(indexer.totalIndexedDocs()));
                 logger.info("--> DONE search test round {}", i + 1);
 
             }
@@ -425,9 +426,9 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
                 SearchResponse response = client.prepareSearch("test").setPreference("_local").setSize(0).get();
                 assertNoFailures(response);
                 if (expectedCount < 0) {
-                    expectedCount = response.getHits().getTotalHits().value();
+                    expectedCount = response.getHits().getTotalHits().value;
                 } else {
-                    assertEquals(expectedCount, response.getHits().getTotalHits().value());
+                    assertEquals(expectedCount, response.getHits().getTotalHits().value);
                 }
             }
 
@@ -600,7 +601,7 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
             logger.info(" --> checking iteration {}", i);
             SearchResponse afterRelocation = client().prepareSearch().setSize(ids.size()).get();
             assertNoFailures(afterRelocation);
-            assertSearchHits(afterRelocation, ids.toArray(new String[0]));
+            assertSearchHits(afterRelocation, ids.toArray(new String[ids.size()]));
         }
         stopped.set(true);
         for (Thread searchThread : searchThreads) {
@@ -663,7 +664,7 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
 
         logger.info("--> verifying count");
         refreshAndWaitForReplication();
-        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value(), equalTo(20L));
+        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value, equalTo(20L));
     }
 
     public void testRelocateWhileContinuouslyIndexingAndWaitingForRefresh() throws Exception {
@@ -742,7 +743,7 @@ public class RelocationIT extends ParameterizedStaticSettingsOpenSearchIntegTest
             assertTrue(pendingIndexResponses.stream().allMatch(ActionFuture::isDone));
         }, 1, TimeUnit.MINUTES);
 
-        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value(), equalTo(120L));
+        assertThat(client().prepareSearch("test").setSize(0).execute().actionGet().getHits().getTotalHits().value, equalTo(120L));
     }
 
     public void testRelocationEstablishedPeerRecoveryRetentionLeases() throws Exception {

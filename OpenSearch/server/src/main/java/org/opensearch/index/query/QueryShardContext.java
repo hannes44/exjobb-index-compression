@@ -43,6 +43,7 @@ import org.opensearch.client.Client;
 import org.opensearch.common.CheckedFunction;
 import org.opensearch.common.SetOnce;
 import org.opensearch.common.TriFunction;
+import org.opensearch.common.annotation.DeprecatedApi;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.lucene.search.Queries;
 import org.opensearch.common.util.BigArrays;
@@ -100,7 +101,7 @@ import static java.util.Collections.unmodifiableMap;
  * @opensearch.api
  */
 @PublicApi(since = "1.0.0")
-public class QueryShardContext extends BaseQueryRewriteContext {
+public class QueryShardContext extends QueryRewriteContext {
 
     private final ScriptService scriptService;
     private final IndexSettings indexSettings;
@@ -126,7 +127,6 @@ public class QueryShardContext extends BaseQueryRewriteContext {
     private BitSetProducer parentFilter;
     private DerivedFieldResolver derivedFieldResolver;
     private boolean keywordIndexOrDocValuesEnabled;
-    private boolean isInnerHitQuery;
 
     public QueryShardContext(
         int shardId,
@@ -467,6 +467,16 @@ public class QueryShardContext extends BaseQueryRewriteContext {
         this.derivedFieldResolver = derivedFieldResolver;
     }
 
+    @DeprecatedApi(since = "2.15.0")
+    public void setDerivedFieldTypes(Map<String, MappedFieldType> derivedFieldTypeMap) {
+        throw new UnsupportedOperationException("Use setDerivedFieldResolver() instead.");
+    }
+
+    @DeprecatedApi(since = "2.15.0")
+    public MappedFieldType getDerivedFieldType(String fieldName) {
+        throw new UnsupportedOperationException("Use resolveDerivedFieldType() instead.");
+    }
+
     public boolean keywordFieldIndexOrDocValuesEnabled() {
         return keywordIndexOrDocValuesEnabled;
     }
@@ -727,13 +737,5 @@ public class QueryShardContext extends BaseQueryRewriteContext {
 
     public void setParentFilter(BitSetProducer parentFilter) {
         this.parentFilter = parentFilter;
-    }
-
-    public boolean isInnerHitQuery() {
-        return isInnerHitQuery;
-    }
-
-    public void setInnerHitQuery(boolean isInnerHitQuery) {
-        this.isInnerHitQuery = isInnerHitQuery;
     }
 }

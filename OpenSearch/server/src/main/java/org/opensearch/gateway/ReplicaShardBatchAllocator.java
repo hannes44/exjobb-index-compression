@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.opensearch.cluster.node.DiscoveryNode;
 import org.opensearch.cluster.routing.RoutingNodes;
 import org.opensearch.cluster.routing.ShardRouting;
-import org.opensearch.cluster.routing.ShardRoutingState;
 import org.opensearch.cluster.routing.UnassignedInfo;
 import org.opensearch.cluster.routing.allocation.AllocateUnassignedDecision;
 import org.opensearch.cluster.routing.allocation.NodeAllocationResult;
@@ -52,12 +51,6 @@ public abstract class ReplicaShardBatchAllocator extends ReplicaShardAllocator {
      */
     public void processExistingRecoveries(RoutingAllocation allocation, List<List<ShardRouting>> shardBatches) {
         List<Runnable> shardCancellationActions = new ArrayList<>();
-        Map<ShardId, List<ShardRouting>> initReplicasFromRouting = new HashMap<>();
-        allocation.routingNodes().shardsWithState(ShardRoutingState.INITIALIZING).stream().filter(r -> !r.primary()).forEach(r -> {
-            initReplicasFromRouting.putIfAbsent(r.shardId(), new ArrayList<>());
-            initReplicasFromRouting.get(r.shardId()).add(r);
-        });
-
         // iterate through the batches, each batch needs to be processed together as fetch call should be made for shards from same batch
         for (List<ShardRouting> shardBatch : shardBatches) {
             List<ShardRouting> eligibleShards = new ArrayList<>();
@@ -65,12 +58,6 @@ public abstract class ReplicaShardBatchAllocator extends ReplicaShardAllocator {
             // iterate over shards to check for match for each of those
             for (ShardRouting shard : shardBatch) {
                 if (shard != null && !shard.primary()) {
-                    // check if the shard is in Initializing state in RoutingTable
-                    // as the batch is not refreshed yet
-                    if (!initReplicasFromRouting.containsKey(shard.shardId())) {
-                        logger.trace("skipping the shardRouting {} as the state is updated in routing table", shard);
-                        continue;
-                    }
                     // need to iterate over all the nodes to find matching shard
                     if (shouldSkipFetchForRecovery(shard)) {
                         // shard should just be skipped for fetchData, no need to remove from batch
@@ -85,19 +72,11 @@ public abstract class ReplicaShardBatchAllocator extends ReplicaShardAllocator {
                 continue; // still fetching
             }
             for (ShardRouting shard : eligibleShards) {
-                for (ShardRouting initShardsFromAllocation : initReplicasFromRouting.get(shard.shardId())) {
-                    Map<DiscoveryNode, StoreFilesMetadata> nodeShardStores = convertToNodeStoreFilesMetadataMap(
-                        initShardsFromAllocation,
-                        shardState
-                    );
-                    Runnable cancellationAction = cancelExistingRecoveryForBetterMatch(
-                        initShardsFromAllocation,
-                        allocation,
-                        nodeShardStores
-                    );
-                    if (cancellationAction != null) {
-                        shardCancellationActions.add(cancellationAction);
-                    }
+                Map<DiscoveryNode, StoreFilesMetadata> nodeShardStores = convertToNodeStoreFilesMetadataMap(shard, shardState);
+
+                Runnable cancellationAction = cancelExistingRecoveryForBetterMatch(shard, allocation, nodeShardStores);
+                if (cancellationAction != null) {
+                    shardCancellationActions.add(cancellationAction);
                 }
             }
         }

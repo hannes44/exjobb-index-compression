@@ -8,11 +8,10 @@
 
 package org.opensearch.client;
 
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.HttpResponse;
-import org.apache.hc.core5.http.Message;
-import org.apache.hc.core5.http.message.RequestLine;
-import org.apache.hc.core5.http.message.StatusLine;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.RequestLine;
+import org.apache.http.StatusLine;
 
 import java.util.List;
 
@@ -76,11 +75,10 @@ public class StreamingResponse<T> {
      * Returns the status line of the current response
      */
     public StatusLine getStatusLine() {
-        return new StatusLine(
-            publisher.map(Message::getHead)
-                .onErrorResume(ResponseException.class, e -> Mono.just(e.getResponse().getHttpResponse()))
-                .block()
-        );
+        return publisher.map(Message::getHead)
+            .onErrorResume(ResponseException.class, e -> Mono.just(e.getResponse().getHttpResponse()))
+            .map(HttpResponse::getStatusLine)
+            .block();
     }
 
     /**

@@ -33,6 +33,7 @@
 package org.opensearch.cluster.metadata;
 
 import org.opensearch.ExceptionsHelper;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.ResourceAlreadyExistsException;
 import org.opensearch.Version;
 import org.opensearch.action.admin.cluster.snapshots.restore.RestoreSnapshotRequest;
@@ -136,7 +137,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-import static org.opensearch.cluster.metadata.IndexMetadata.INDEX_NUMBER_OF_REPLICAS_SETTING;
 import static org.opensearch.cluster.metadata.IndexMetadata.INDEX_NUMBER_OF_ROUTING_SHARDS_SETTING;
 import static org.opensearch.cluster.metadata.IndexMetadata.INDEX_NUMBER_OF_SHARDS_SETTING;
 import static org.opensearch.cluster.metadata.IndexMetadata.INDEX_READ_ONLY_BLOCK;
@@ -276,6 +276,14 @@ public class MetadataCreateIndexServiceTests extends OpenSearchTestCase {
         int x = target / source;
         assert source < target : source + " >= " + target;
         return source * x == target;
+    }
+
+    public void testNumberOfShards() {
+        {
+            final Version versionCreated = VersionUtils.randomVersionBetween(random(), LegacyESVersion.V_7_0_0, Version.CURRENT);
+            final Settings.Builder indexSettingsBuilder = Settings.builder().put(SETTING_VERSION_CREATED, versionCreated);
+            assertThat(MetadataCreateIndexService.getNumberOfShards(indexSettingsBuilder), equalTo(1));
+        }
     }
 
     public void testValidateShrinkIndex() {
@@ -1820,42 +1828,6 @@ public class MetadataCreateIndexServiceTests extends OpenSearchTestCase {
     private void validateRemoteCustomData(Map<String, String> customData, String expectedKey, String expectedValue) {
         assertTrue(customData.containsKey(expectedKey));
         assertEquals(expectedValue, customData.get(expectedKey));
-    }
-
-    public void testNumberOfRoutingShardsShowsInIndexSettings() {
-        withTemporaryClusterService(((clusterService, threadPool) -> {
-            MetadataCreateIndexService checkerService = new MetadataCreateIndexService(
-                Settings.EMPTY,
-                clusterService,
-                indicesServices,
-                null,
-                null,
-                createTestShardLimitService(randomIntBetween(1, 1000), false, clusterService),
-                null,
-                null,
-                threadPool,
-                null,
-                new SystemIndices(Collections.emptyMap()),
-                false,
-                new AwarenessReplicaBalance(Settings.EMPTY, clusterService.getClusterSettings()),
-                DefaultRemoteStoreSettings.INSTANCE,
-                repositoriesServiceSupplier
-            );
-            final int routingNumberOfShards = 4;
-            Settings indexSettings = Settings.builder()
-                .put("index.version.created", Version.CURRENT)
-                .put(INDEX_NUMBER_OF_SHARDS_SETTING.getKey(), 2)
-                .put(INDEX_NUMBER_OF_REPLICAS_SETTING.getKey(), 0)
-                .put(INDEX_NUMBER_OF_ROUTING_SHARDS_SETTING.getKey(), routingNumberOfShards)
-                .build();
-            CreateIndexClusterStateUpdateRequest request = new CreateIndexClusterStateUpdateRequest("create index", "test", "test");
-            IndexMetadata indexMetadata = checkerService.buildAndValidateTemporaryIndexMetadata(
-                indexSettings,
-                request,
-                routingNumberOfShards
-            );
-            assertEquals(INDEX_NUMBER_OF_ROUTING_SHARDS_SETTING.get(indexMetadata.getSettings()).intValue(), routingNumberOfShards);
-        }));
     }
 
     public void testGetIndexNumberOfRoutingShardsWithNullSourceIndex() {

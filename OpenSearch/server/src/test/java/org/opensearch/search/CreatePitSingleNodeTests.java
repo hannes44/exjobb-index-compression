@@ -319,7 +319,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
         final int maxPitContexts = SearchService.MAX_OPEN_PIT_CONTEXT.get(Settings.EMPTY);
         validatePitStats("index", maxPitContexts, 0, 0);
         // deleteall
-        DeletePitRequest deletePITRequest = new DeletePitRequest(pitIds.toArray(new String[0]));
+        DeletePitRequest deletePITRequest = new DeletePitRequest(pitIds.toArray(new String[pitIds.size()]));
 
         /*
           When we invoke delete again, returns success after clearing the remaining readers. Asserting reader context
@@ -422,8 +422,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                 .setQuery(matchAllQuery())
                 .get()
                 .getHits()
-                .getTotalHits()
-                .value(),
+                .getTotalHits().value,
             Matchers.equalTo(50L)
         );
 
@@ -434,8 +433,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                 .setQuery(termQuery("message", "test"))
                 .get()
                 .getHits()
-                .getTotalHits()
-                .value(),
+                .getTotalHits().value,
             Matchers.equalTo(50L)
         );
         assertThat(
@@ -445,8 +443,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                 .setQuery(termQuery("message", "test"))
                 .get()
                 .getHits()
-                .getTotalHits()
-                .value(),
+                .getTotalHits().value,
             Matchers.equalTo(50L)
         );
         assertThat(
@@ -456,8 +453,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                 .setQuery(termQuery("message", "update"))
                 .get()
                 .getHits()
-                .getTotalHits()
-                .value(),
+                .getTotalHits().value,
             Matchers.equalTo(0L)
         );
         assertThat(
@@ -467,8 +463,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                 .setQuery(termQuery("message", "update"))
                 .get()
                 .getHits()
-                .getTotalHits()
-                .value(),
+                .getTotalHits().value,
             Matchers.equalTo(0L)
         );
 
@@ -491,7 +486,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
 
             client().admin().indices().prepareRefresh().get();
             assertThat(
-                client().prepareSearch().setSize(0).setQuery(matchAllQuery()).get().getHits().getTotalHits().value(),
+                client().prepareSearch().setSize(0).setQuery(matchAllQuery()).get().getHits().getTotalHits().value,
                 Matchers.equalTo(50L)
             );
             /*
@@ -499,19 +494,19 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
              */
 
             assertThat(
-                client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value(),
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
                 Matchers.equalTo(0L)
             );
             assertThat(
-                client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value(),
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "test")).get().getHits().getTotalHits().value,
                 Matchers.equalTo(0L)
             );
             assertThat(
-                client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value(),
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
                 Matchers.equalTo(50L)
             );
             assertThat(
-                client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value(),
+                client().prepareSearch().setSize(0).setQuery(termQuery("message", "update")).get().getHits().getTotalHits().value,
                 Matchers.equalTo(50L)
             );
             /*
@@ -524,8 +519,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                     .setQuery(termQuery("message", "test"))
                     .get()
                     .getHits()
-                    .getTotalHits()
-                    .value(),
+                    .getTotalHits().value,
                 Matchers.equalTo(50L)
             );
             assertThat(
@@ -535,8 +529,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                     .setQuery(termQuery("message", "test"))
                     .get()
                     .getHits()
-                    .getTotalHits()
-                    .value(),
+                    .getTotalHits().value,
                 Matchers.equalTo(50L)
             );
             assertThat(
@@ -546,8 +539,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                     .setQuery(termQuery("message", "update"))
                     .get()
                     .getHits()
-                    .getTotalHits()
-                    .value(),
+                    .getTotalHits().value,
                 Matchers.equalTo(0L)
             );
             assertThat(
@@ -557,8 +549,7 @@ public class CreatePitSingleNodeTests extends OpenSearchSingleNodeTestCase {
                     .setQuery(termQuery("message", "update"))
                     .get()
                     .getHits()
-                    .getTotalHits()
-                    .value(),
+                    .getTotalHits().value,
                 Matchers.equalTo(0L)
             );
             validatePitStats("test", 1, 0, 0);

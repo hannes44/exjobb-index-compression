@@ -164,7 +164,7 @@ public class GeoDistanceIT extends ParameterizedStaticSettingsOpenSearchIntegTes
                     .setSource(jsonBuilder().startObject().field("value", i * 2).field("location", "52.0945, 5.116").endObject())
             );
         }
-        indexRandom(true, builders.toArray(new IndexRequestBuilder[0]));
+        indexRandom(true, builders.toArray(new IndexRequestBuilder[builders.size()]));
         ensureSearchable();
     }
 
@@ -454,7 +454,7 @@ public class GeoDistanceIT extends ParameterizedStaticSettingsOpenSearchIntegTes
             )
             .get();
 
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(2L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(2L));
         Histogram histo = searchResponse.getAggregations().get("histo");
         assertThat(histo, Matchers.notNullValue());
         Histogram.Bucket bucket = histo.getBuckets().get(1);

@@ -32,7 +32,6 @@
 
 package org.opensearch.index.mapper;
 
-import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.SortedNumericDocValuesField;
 import org.apache.lucene.document.StoredField;
@@ -46,6 +45,7 @@ import org.opensearch.OpenSearchParseException;
 import org.opensearch.Version;
 import org.opensearch.common.Nullable;
 import org.opensearch.common.geo.ShapeRelation;
+import org.opensearch.common.joda.Joda;
 import org.opensearch.common.logging.DeprecationLogger;
 import org.opensearch.common.lucene.BytesRefs;
 import org.opensearch.common.time.DateFormatter;
@@ -123,7 +123,7 @@ public final class DateFieldMapper extends ParametrizedFieldMapper {
         MILLISECONDS(CONTENT_TYPE, NumericType.DATE) {
             @Override
             public long convert(Instant instant) {
-                return clampToValidRange(instant).toEpochMilli();
+                return instant.toEpochMilli();
             }
 
             @Override
@@ -133,7 +133,7 @@ public final class DateFieldMapper extends ParametrizedFieldMapper {
 
             @Override
             public Instant clampToValidRange(Instant instant) {
-                return DateUtils.clampToMillisRange(instant);
+                return instant;
             }
 
             @Override
@@ -143,7 +143,7 @@ public final class DateFieldMapper extends ParametrizedFieldMapper {
 
             @Override
             protected Query distanceFeatureQuery(String field, float boost, long origin, TimeValue pivot) {
-                return LongField.newDistanceFeatureQuery(field, boost, origin, pivot.getMillis());
+                return LongPoint.newDistanceFeatureQuery(field, boost, origin, pivot.getMillis());
             }
         },
         NANOSECONDS(DATE_NANOS_CONTENT_TYPE, NumericType.DATE_NANOSECONDS) {
@@ -169,7 +169,7 @@ public final class DateFieldMapper extends ParametrizedFieldMapper {
 
             @Override
             protected Query distanceFeatureQuery(String field, float boost, long origin, TimeValue pivot) {
-                return LongField.newDistanceFeatureQuery(field, boost, origin, pivot.getNanos());
+                return LongPoint.newDistanceFeatureQuery(field, boost, origin, pivot.getNanos());
             }
         };
 
@@ -287,11 +287,15 @@ public final class DateFieldMapper extends ParametrizedFieldMapper {
 
         private DateFormatter buildFormatter() {
             try {
+                if (Joda.isJodaPattern(indexCreatedVersion, format.getValue())) {
+                    return Joda.forPattern(format.getValue()).withLocale(locale.getValue());
+                }
                 if (format.isConfigured() && !printFormat.isConfigured()) {
                     return DateFormatter.forPattern(format.getValue(), null, !format.isConfigured()).withLocale(locale.getValue());
                 }
                 return DateFormatter.forPattern(format.getValue(), printFormat.getValue(), !format.isConfigured())
                     .withLocale(locale.getValue());
+
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Error parsing [format] on field [" + name() + "]: " + e.getMessage(), e);
             }

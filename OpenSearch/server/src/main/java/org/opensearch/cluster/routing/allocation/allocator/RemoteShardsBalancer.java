@@ -247,17 +247,11 @@ public final class RemoteShardsBalancer extends ShardsBalancer {
         final Map<String, Integer> nodePrimaryShardCount = calculateNodePrimaryShardCount(remoteRoutingNodes);
         int totalPrimaryShardCount = nodePrimaryShardCount.values().stream().reduce(0, Integer::sum);
 
-        int unassignedRemotePrimaryShardCount = 0;
-        for (ShardRouting shard : routingNodes.unassigned()) {
-            if (RoutingPool.REMOTE_CAPABLE.equals(RoutingPool.getShardPool(shard, allocation)) && shard.primary()) {
-                unassignedRemotePrimaryShardCount++;
-            }
-        }
-        totalPrimaryShardCount += unassignedRemotePrimaryShardCount;
-        final int avgPrimaryPerNode = (totalPrimaryShardCount + remoteRoutingNodes.size() - 1) / remoteRoutingNodes.size();
+        totalPrimaryShardCount += routingNodes.unassigned().getNumPrimaries();
+        int avgPrimaryPerNode = (totalPrimaryShardCount + routingNodes.size() - 1) / routingNodes.size();
 
-        final ArrayDeque<RoutingNode> sourceNodes = new ArrayDeque<>();
-        final ArrayDeque<RoutingNode> targetNodes = new ArrayDeque<>();
+        ArrayDeque<RoutingNode> sourceNodes = new ArrayDeque<>();
+        ArrayDeque<RoutingNode> targetNodes = new ArrayDeque<>();
         for (RoutingNode node : remoteRoutingNodes) {
             if (nodePrimaryShardCount.get(node.nodeId()) > avgPrimaryPerNode) {
                 sourceNodes.add(node);

@@ -264,26 +264,26 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
         indexRandomForConcurrentSearch("test");
 
         SearchResponse searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("field1").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field1").getValue().toString(), equalTo("value1"));
 
         // field2 is not stored, check that it is not extracted from source.
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("field2").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(0));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field2"), nullValue());
 
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("field3").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field3").getValue().toString(), equalTo("value3"));
 
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("*3").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field3").getValue().toString(), equalTo("value3"));
@@ -294,27 +294,27 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .addStoredField("field1")
             .addStoredField("field2")
             .get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(2));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field3").getValue().toString(), equalTo("value3"));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field1").getValue().toString(), equalTo("value1"));
 
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("field*").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(2));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field3").getValue().toString(), equalTo("value3"));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field1").getValue().toString(), equalTo("value1"));
 
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("f*3").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field3").getValue().toString(), equalTo("value3"));
 
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("*").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getSourceAsMap(), nullValue());
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(2));
@@ -322,7 +322,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
         assertThat(searchResponse.getHits().getAt(0).getFields().get("field3").getValue().toString(), equalTo("value3"));
 
         searchResponse = client().prepareSearch().setQuery(matchAllQuery()).addStoredField("*").addStoredField("_source").get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         assertThat(searchResponse.getHits().getAt(0).getSourceAsMap(), notNullValue());
         assertThat(searchResponse.getHits().getAt(0).getFields().size(), equalTo(2));
@@ -388,7 +388,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
 
         assertNoFailures(response);
 
-        assertThat(response.getHits().getTotalHits().value(), equalTo(3L));
+        assertThat(response.getHits().getTotalHits().value, equalTo(3L));
         assertFalse(response.getHits().getAt(0).hasSource());
         assertThat(response.getHits().getAt(0).getId(), equalTo("1"));
         Set<String> fields = new HashSet<>(response.getHits().getAt(0).getFields().keySet());
@@ -417,7 +417,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .addScriptField("sNum1", new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['num1'].value * factor", params))
             .get();
 
-        assertThat(response.getHits().getTotalHits().value(), equalTo(3L));
+        assertThat(response.getHits().getTotalHits().value, equalTo(3L));
         assertThat(response.getHits().getAt(0).getId(), equalTo("1"));
         fields = new HashSet<>(response.getHits().getAt(0).getFields().keySet());
         assertThat(fields, equalTo(singleton("sNum1")));
@@ -488,7 +488,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
         assertNoFailures(response);
 
         logger.info("running doc['unsigned_num1'].value");
-        assertThat(response.getHits().getTotalHits().value(), equalTo(3L));
+        assertThat(response.getHits().getTotalHits().value, equalTo(3L));
         assertFalse(response.getHits().getAt(0).hasSource());
         assertThat(response.getHits().getAt(0).getId(), equalTo("1"));
         Set<String> fields = new HashSet<>(response.getHits().getAt(0).getFields().keySet());
@@ -517,7 +517,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .addScriptField("sNum1", new Script(ScriptType.INLINE, CustomScriptPlugin.NAME, "doc['unsigned_num1'].value * factor", params))
             .get();
 
-        assertThat(response.getHits().getTotalHits().value(), equalTo(3L));
+        assertThat(response.getHits().getTotalHits().value, equalTo(3L));
         assertThat(response.getHits().getAt(0).getId(), equalTo("1"));
         fields = new HashSet<>(response.getHits().getAt(0).getFields().keySet());
         assertThat(fields, equalTo(singleton("sNum1")));
@@ -612,7 +612,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
 
         assertNoFailures(response);
 
-        assertThat(response.getHits().getTotalHits().value(), equalTo((long) numDocs));
+        assertThat(response.getHits().getTotalHits().value, equalTo((long) numDocs));
         for (int i = 0; i < numDocs; i++) {
             assertThat(response.getHits().getAt(i).getId(), equalTo(Integer.toString(i)));
             Set<String> fields = new HashSet<>(response.getHits().getAt(i).getFields().keySet());
@@ -827,7 +827,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .addStoredField("unsigned_long_field")
             .get();
 
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         Set<String> fields = new HashSet<>(searchResponse.getHits().getAt(0).getFields().keySet());
         assertThat(
@@ -873,7 +873,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
 
         SearchResponse searchResponse = client().prepareSearch("my-index").addStoredField("field1").addStoredField("_routing").get();
 
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getAt(0).field("field1"), nullValue());
         assertThat(searchResponse.getHits().getAt(0).field("_routing").getValue().toString(), equalTo("1"));
     }
@@ -956,7 +956,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
         String field = "field1.field2.field3.field4";
 
         SearchResponse searchResponse = client().prepareSearch("my-index").addStoredField(field).get();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getAt(0).field(field).getValues().size(), equalTo(2));
         assertThat(searchResponse.getHits().getAt(0).field(field).getValues().get(0).toString(), equalTo("value1"));
         assertThat(searchResponse.getHits().getAt(0).field(field).getValues().get(1).toString(), equalTo("value2"));
@@ -1023,7 +1023,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .startObject("ip_field")
             .field("type", "ip")
             .endObject()
-            .startObject("flat_object_field1")
+            .startObject("flat_object_field")
             .field("type", "flat_object")
             .endObject()
             .endObject()
@@ -1050,11 +1050,9 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
                     .field("boolean_field", true)
                     .field("binary_field", new byte[] { 42, 100 })
                     .field("ip_field", "::1")
-                    .field("flat_object_field1")
+                    .field("flat_object_field")
                     .startObject()
-                    .field("fooa", "bara")
                     .field("foo", "bar")
-                    .field("foob", "barb")
                     .endObject()
                     .endObject()
             )
@@ -1077,10 +1075,10 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .addDocValueField("boolean_field")
             .addDocValueField("binary_field")
             .addDocValueField("ip_field")
-            .addDocValueField("flat_object_field1.foo");
+            .addDocValueField("flat_object_field");
         SearchResponse searchResponse = builder.get();
 
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         Set<String> fields = new HashSet<>(searchResponse.getHits().getAt(0).getFields().keySet());
         assertThat(
@@ -1099,7 +1097,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
                     "keyword_field",
                     "binary_field",
                     "ip_field",
-                    "flat_object_field1.foo"
+                    "flat_object_field"
                 )
             )
         );
@@ -1118,69 +1116,12 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
         assertThat(searchResponse.getHits().getAt(0).getFields().get("keyword_field").getValue(), equalTo("foo"));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("binary_field").getValue(), equalTo("KmQ"));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("ip_field").getValue(), equalTo("::1"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("flat_object_field1.foo").getValue(), equalTo("bar"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("flat_object_field").getValue(), equalTo("flat_object_field.foo"));
 
         builder = client().prepareSearch().setQuery(matchAllQuery()).addDocValueField("*field");
         searchResponse = builder.get();
 
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
-        assertThat(searchResponse.getHits().getHits().length, equalTo(1));
-        fields = new HashSet<>(searchResponse.getHits().getAt(0).getFields().keySet());
-        assertThat(
-            fields,
-            equalTo(
-                newHashSet(
-                    "byte_field",
-                    "short_field",
-                    "integer_field",
-                    "long_field",
-                    "float_field",
-                    "double_field",
-                    "date_field",
-                    "boolean_field",
-                    "text_field",
-                    "keyword_field",
-                    "binary_field",
-                    "ip_field"
-                )
-            )
-        );
-
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("byte_field").getValue().toString(), equalTo("1"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("short_field").getValue().toString(), equalTo("2"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("integer_field").getValue(), equalTo((Object) 3L));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("long_field").getValue(), equalTo((Object) 4L));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("float_field").getValue(), equalTo((Object) 5.0));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("double_field").getValue(), equalTo((Object) 6.0d));
-        assertThat(
-            searchResponse.getHits().getAt(0).getFields().get("date_field").getValue(),
-            equalTo(DateFormatter.forPattern("date_optional_time").format(date))
-        );
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("boolean_field").getValue(), equalTo((Object) true));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("text_field").getValue(), equalTo("foo"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("keyword_field").getValue(), equalTo("foo"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("binary_field").getValue(), equalTo("KmQ"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("ip_field").getValue(), equalTo("::1"));
-
-        builder = client().prepareSearch()
-            .setQuery(matchAllQuery())
-            .addDocValueField("text_field", "use_field_mapping")
-            .addDocValueField("keyword_field", "use_field_mapping")
-            .addDocValueField("byte_field", "use_field_mapping")
-            .addDocValueField("short_field", "use_field_mapping")
-            .addDocValueField("integer_field", "use_field_mapping")
-            .addDocValueField("long_field", "use_field_mapping")
-            .addDocValueField("float_field", "use_field_mapping")
-            .addDocValueField("double_field", "use_field_mapping")
-            .addDocValueField("date_field", "use_field_mapping")
-            .addDocValueField("boolean_field", "use_field_mapping")
-            .addDocValueField("binary_field", "use_field_mapping")
-            .addDocValueField("ip_field", "use_field_mapping")
-            .addDocValueField("flat_object_field1.foo", null);
-        ;
-        searchResponse = builder.get();
-
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         fields = new HashSet<>(searchResponse.getHits().getAt(0).getFields().keySet());
         assertThat(
@@ -1199,7 +1140,66 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
                     "keyword_field",
                     "binary_field",
                     "ip_field",
-                    "flat_object_field1.foo"
+                    "flat_object_field"
+                )
+            )
+        );
+
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("byte_field").getValue().toString(), equalTo("1"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("short_field").getValue().toString(), equalTo("2"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("integer_field").getValue(), equalTo((Object) 3L));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("long_field").getValue(), equalTo((Object) 4L));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("float_field").getValue(), equalTo((Object) 5.0));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("double_field").getValue(), equalTo((Object) 6.0d));
+        assertThat(
+            searchResponse.getHits().getAt(0).getFields().get("date_field").getValue(),
+            equalTo(DateFormatter.forPattern("date_optional_time").format(date))
+        );
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("boolean_field").getValue(), equalTo((Object) true));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("text_field").getValue(), equalTo("foo"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("keyword_field").getValue(), equalTo("foo"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("binary_field").getValue(), equalTo("KmQ"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("ip_field").getValue(), equalTo("::1"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("flat_object_field").getValue(), equalTo("flat_object_field.foo"));
+
+        builder = client().prepareSearch()
+            .setQuery(matchAllQuery())
+            .addDocValueField("text_field", "use_field_mapping")
+            .addDocValueField("keyword_field", "use_field_mapping")
+            .addDocValueField("byte_field", "use_field_mapping")
+            .addDocValueField("short_field", "use_field_mapping")
+            .addDocValueField("integer_field", "use_field_mapping")
+            .addDocValueField("long_field", "use_field_mapping")
+            .addDocValueField("float_field", "use_field_mapping")
+            .addDocValueField("double_field", "use_field_mapping")
+            .addDocValueField("date_field", "use_field_mapping")
+            .addDocValueField("boolean_field", "use_field_mapping")
+            .addDocValueField("binary_field", "use_field_mapping")
+            .addDocValueField("ip_field", "use_field_mapping")
+            .addDocValueField("flat_object_field", "use_field_mapping");
+        ;
+        searchResponse = builder.get();
+
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
+        assertThat(searchResponse.getHits().getHits().length, equalTo(1));
+        fields = new HashSet<>(searchResponse.getHits().getAt(0).getFields().keySet());
+        assertThat(
+            fields,
+            equalTo(
+                newHashSet(
+                    "byte_field",
+                    "short_field",
+                    "integer_field",
+                    "long_field",
+                    "float_field",
+                    "double_field",
+                    "date_field",
+                    "boolean_field",
+                    "text_field",
+                    "keyword_field",
+                    "binary_field",
+                    "ip_field",
+                    "flat_object_field"
                 )
             )
         );
@@ -1219,7 +1219,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
         assertThat(searchResponse.getHits().getAt(0).getFields().get("keyword_field").getValue(), equalTo("foo"));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("binary_field").getValue(), equalTo("KmQ"));
         assertThat(searchResponse.getHits().getAt(0).getFields().get("ip_field").getValue(), equalTo("::1"));
-        assertThat(searchResponse.getHits().getAt(0).getFields().get("flat_object_field1.foo").getValue(), equalTo("bar"));
+        assertThat(searchResponse.getHits().getAt(0).getFields().get("flat_object_field").getValue(), equalTo("flat_object_field.foo"));
 
         builder = client().prepareSearch()
             .setQuery(matchAllQuery())
@@ -1232,7 +1232,7 @@ public class SearchFieldsIT extends ParameterizedStaticSettingsOpenSearchIntegTe
             .addDocValueField("date_field", "epoch_millis");
         searchResponse = builder.get();
 
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(1L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(1L));
         assertThat(searchResponse.getHits().getHits().length, equalTo(1));
         fields = new HashSet<>(searchResponse.getHits().getAt(0).getFields().keySet());
         assertThat(

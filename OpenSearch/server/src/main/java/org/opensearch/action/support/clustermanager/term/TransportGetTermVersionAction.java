@@ -98,7 +98,7 @@ public class TransportGetTermVersionAction extends TransportClusterManagerNodeRe
         ClusterStateTermVersion termVersion = new ClusterStateTermVersion(state);
         if (discovery instanceof Coordinator) {
             Coordinator coordinator = (Coordinator) discovery;
-            if (coordinator.canDownloadFullStateFromRemote()) {
+            if (coordinator.isRemotePublicationEnabled()) {
                 return new GetTermVersionResponse(termVersion, coordinator.isRemotePublicationEnabled());
             }
         }

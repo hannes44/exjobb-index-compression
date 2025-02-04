@@ -36,6 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.SparseFixedBitSet;
 import org.opensearch.ExceptionsHelper;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchParseException;
 import org.opensearch.ResourceAlreadyExistsException;
 import org.opensearch.Version;
@@ -66,7 +67,6 @@ import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
 import org.opensearch.cluster.metadata.MappingMetadata;
 import org.opensearch.cluster.metadata.Metadata;
 import org.opensearch.cluster.service.ClusterService;
-import org.opensearch.common.ValidationException;
 import org.opensearch.common.inject.Inject;
 import org.opensearch.common.lease.Releasable;
 import org.opensearch.common.unit.TimeValue;
@@ -472,7 +472,11 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
         createIndexRequest.index(index);
         createIndexRequest.cause("auto(bulk api)");
         createIndexRequest.clusterManagerNodeTimeout(timeout);
-        client.execute(AutoCreateAction.INSTANCE, createIndexRequest, listener);
+        if (minNodeVersion.onOrAfter(LegacyESVersion.V_7_8_0)) {
+            client.execute(AutoCreateAction.INSTANCE, createIndexRequest, listener);
+        } else {
+            client.admin().indices().create(createIndexRequest, listener);
+        }
     }
 
     private boolean setResponseFailureIfIndexMatches(
@@ -533,25 +537,18 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
             }
             final ConcreteIndices concreteIndices = new ConcreteIndices(clusterState, indexNameExpressionResolver);
             Metadata metadata = clusterState.metadata();
-            // go over all the requests and create a ShardId -> Operations mapping
-            Map<ShardId, List<BulkItemRequest>> requestsByShard = new HashMap<>();
             for (int i = 0; i < bulkRequest.requests.size(); i++) {
                 DocWriteRequest<?> docWriteRequest = bulkRequest.requests.get(i);
                 // the request can only be null because we set it to null in the previous step, so it gets ignored
                 if (docWriteRequest == null) {
                     continue;
                 }
-
                 if (addFailureIfRequiresAliasAndAliasIsMissing(docWriteRequest, i, metadata)) {
                     continue;
                 }
                 if (addFailureIfIndexIsUnavailable(docWriteRequest, i, concreteIndices, metadata)) {
                     continue;
                 }
-                if (addFailureIfAppendOnlyIndexAndOpsDeleteOrUpdate(docWriteRequest, i, concreteIndices, metadata)) {
-                    continue;
-                }
-
                 Index concreteIndex = concreteIndices.resolveIfAbsent(docWriteRequest);
                 try {
                     // The ConcreteIndices#resolveIfAbsent(...) method validates via IndexNameExpressionResolver whether
@@ -595,12 +592,6 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                         default:
                             throw new AssertionError("request type not supported: [" + docWriteRequest.opType() + "]");
                     }
-
-                    ShardId shardId = clusterService.operationRouting()
-                        .indexShards(clusterState, concreteIndex.getName(), docWriteRequest.id(), docWriteRequest.routing())
-                        .shardId();
-                    List<BulkItemRequest> shardRequests = requestsByShard.computeIfAbsent(shardId, shard -> new ArrayList<>());
-                    shardRequests.add(new BulkItemRequest(i, docWriteRequest));
                 } catch (OpenSearchParseException | IllegalArgumentException | RoutingMissingException e) {
                     BulkItemResponse.Failure failure = new BulkItemResponse.Failure(concreteIndex.getName(), docWriteRequest.id(), e);
                     BulkItemResponse bulkItemResponse = new BulkItemResponse(i, docWriteRequest.opType(), failure);
@@ -608,6 +599,21 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                     // make sure the request gets never processed again
                     bulkRequest.requests.set(i, null);
                 }
+            }
+
+            // first, go over all the requests and create a ShardId -> Operations mapping
+            Map<ShardId, List<BulkItemRequest>> requestsByShard = new HashMap<>();
+            for (int i = 0; i < bulkRequest.requests.size(); i++) {
+                DocWriteRequest<?> request = bulkRequest.requests.get(i);
+                if (request == null) {
+                    continue;
+                }
+                String concreteIndex = concreteIndices.getConcreteIndex(request.index()).getName();
+                ShardId shardId = clusterService.operationRouting()
+                    .indexShards(clusterState, concreteIndex, request.id(), request.routing())
+                    .shardId();
+                List<BulkItemRequest> shardRequests = requestsByShard.computeIfAbsent(shardId, shard -> new ArrayList<>());
+                shardRequests.add(new BulkItemRequest(i, request));
             }
 
             if (requestsByShard.isEmpty()) {
@@ -636,7 +642,7 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                 BulkShardRequest bulkShardRequest = new BulkShardRequest(
                     shardId,
                     bulkRequest.getRefreshPolicy(),
-                    requests.toArray(new BulkItemRequest[0])
+                    requests.toArray(new BulkItemRequest[requests.size()])
                 );
                 bulkShardRequest.waitForActiveShards(bulkRequest.waitForActiveShards());
                 bulkShardRequest.timeout(bulkRequest.timeout());
@@ -753,47 +759,6 @@ public class TransportBulkAction extends HandledTransportAction<BulkRequest, Bul
                     run();
                 }
             });
-        }
-
-        private boolean addFailureIfAppendOnlyIndexAndOpsDeleteOrUpdate(
-            DocWriteRequest<?> request,
-            int idx,
-            final ConcreteIndices concreteIndices,
-            Metadata metadata
-        ) {
-            Index concreteIndex = concreteIndices.resolveIfAbsent(request);
-            final IndexMetadata indexMetadata = metadata.index(concreteIndex);
-            if (indexMetadata.isAppendOnlyIndex()) {
-                if ((request.opType() == DocWriteRequest.OpType.UPDATE || request.opType() == DocWriteRequest.OpType.DELETE)) {
-                    ValidationException exception = new ValidationException();
-                    exception.addValidationError(
-                        "Operation ["
-                            + request.opType()
-                            + "] is not allowed as setting `"
-                            + IndexMetadata.INDEX_APPEND_ONLY_ENABLED_SETTING.getKey()
-                            + "` is enabled for this index: "
-                            + request.index()
-                    );
-                    addFailure(request, idx, exception);
-                    return true;
-                } else if (request.id() != null && request.opType() == DocWriteRequest.OpType.INDEX) {
-                    ValidationException exception = new ValidationException();
-                    exception.addValidationError(
-                        "Operation ["
-                            + request.opType()
-                            + "] is not allowed with a custom document id "
-                            + request.id()
-                            + " as setting `"
-                            + IndexMetadata.INDEX_APPEND_ONLY_ENABLED_SETTING.getKey()
-                            + "` is enabled for this index: "
-                            + request.index()
-                    );
-                    addFailure(request, idx, exception);
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private boolean addFailureIfRequiresAliasAndAliasIsMissing(DocWriteRequest<?> request, int idx, final Metadata metadata) {

@@ -13,7 +13,7 @@ import com.carrotsearch.randomizedtesting.RandomizedTest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.codecs.Codec;
-import org.apache.lucene.codecs.lucene101.Lucene101Codec;
+import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.SortedNumericDocValuesField;
 import org.apache.lucene.index.DirectoryReader;
@@ -28,27 +28,18 @@ import org.apache.lucene.tests.index.RandomIndexWriter;
 import org.opensearch.common.lucene.Lucene;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.util.FeatureFlags;
-import org.opensearch.common.util.MockBigArrays;
-import org.opensearch.common.util.MockPageCacheRecycler;
-import org.opensearch.core.indices.breaker.CircuitBreakerService;
-import org.opensearch.core.indices.breaker.NoneCircuitBreakerService;
 import org.opensearch.index.codec.composite.CompositeIndexFieldInfo;
 import org.opensearch.index.codec.composite.CompositeIndexReader;
-import org.opensearch.index.codec.composite.composite101.Composite101Codec;
+import org.opensearch.index.codec.composite.composite912.Composite912Codec;
 import org.opensearch.index.codec.composite912.datacube.startree.StarTreeDocValuesFormatTests;
 import org.opensearch.index.compositeindex.datacube.Dimension;
-import org.opensearch.index.compositeindex.datacube.Metric;
-import org.opensearch.index.compositeindex.datacube.MetricStat;
 import org.opensearch.index.compositeindex.datacube.NumericDimension;
 import org.opensearch.index.mapper.MappedFieldType;
 import org.opensearch.index.mapper.MapperService;
 import org.opensearch.index.mapper.NumberFieldMapper;
 import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.index.query.TermQueryBuilder;
 import org.opensearch.search.aggregations.AggregationBuilder;
-import org.opensearch.search.aggregations.AggregatorFactories;
-import org.opensearch.search.aggregations.AggregatorFactory;
 import org.opensearch.search.aggregations.AggregatorTestCase;
 import org.opensearch.search.aggregations.InternalAggregation;
 import org.opensearch.search.aggregations.metrics.AvgAggregationBuilder;
@@ -58,17 +49,14 @@ import org.opensearch.search.aggregations.metrics.InternalMin;
 import org.opensearch.search.aggregations.metrics.InternalSum;
 import org.opensearch.search.aggregations.metrics.InternalValueCount;
 import org.opensearch.search.aggregations.metrics.MaxAggregationBuilder;
-import org.opensearch.search.aggregations.metrics.MetricAggregatorFactory;
 import org.opensearch.search.aggregations.metrics.MinAggregationBuilder;
 import org.opensearch.search.aggregations.metrics.SumAggregationBuilder;
 import org.opensearch.search.aggregations.metrics.ValueCountAggregationBuilder;
-import org.opensearch.search.aggregations.support.ValuesSourceAggregatorFactory;
 import org.junit.After;
 import org.junit.Before;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -81,8 +69,6 @@ import static org.opensearch.search.aggregations.AggregationBuilders.max;
 import static org.opensearch.search.aggregations.AggregationBuilders.min;
 import static org.opensearch.search.aggregations.AggregationBuilders.sum;
 import static org.opensearch.test.InternalAggregationTestCase.DEFAULT_MAX_BUCKETS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class MetricAggregatorTests extends AggregatorTestCase {
 
@@ -104,11 +90,11 @@ public class MetricAggregatorTests extends AggregatorTestCase {
         final Logger testLogger = LogManager.getLogger(MetricAggregatorTests.class);
         MapperService mapperService;
         try {
-            mapperService = StarTreeDocValuesFormatTests.createMapperService(StarTreeFilterTests.getExpandedMapping(1, false));
+            mapperService = StarTreeDocValuesFormatTests.createMapperService(StarTreeDocValuesFormatTests.getExpandedMapping());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return new Composite101Codec(Lucene101Codec.Mode.BEST_SPEED, mapperService, testLogger);
+        return new Composite912Codec(Lucene912Codec.Mode.BEST_SPEED, mapperService, testLogger);
     }
 
     public void testStarTreeDocValues() throws IOException {
@@ -281,110 +267,6 @@ public class MetricAggregatorTests extends AggregatorTestCase {
             );
         }
 
-        CircuitBreakerService circuitBreakerService = new NoneCircuitBreakerService();
-
-        QueryShardContext queryShardContext = queryShardContextMock(
-            indexSearcher,
-            mapperServiceMock(),
-            createIndexSettings(),
-            circuitBreakerService,
-            new MockBigArrays(new MockPageCacheRecycler(Settings.EMPTY), circuitBreakerService).withCircuitBreaking()
-        );
-
-        MetricAggregatorFactory aggregatorFactory = mock(MetricAggregatorFactory.class);
-        when(aggregatorFactory.getSubFactories()).thenReturn(AggregatorFactories.EMPTY);
-        when(aggregatorFactory.getField()).thenReturn(FIELD_NAME);
-        when(aggregatorFactory.getMetricStat()).thenReturn(MetricStat.SUM);
-
-        // Case when field and metric type in aggregation are fully supported by star tree.
-        testCase(
-            indexSearcher,
-            query,
-            queryBuilder,
-            sumAggregationBuilder,
-            starTree,
-            supportedDimensions,
-            List.of(new Metric(FIELD_NAME, List.of(MetricStat.SUM, MetricStat.MAX, MetricStat.MIN, MetricStat.AVG))),
-            verifyAggregation(InternalSum::getValue),
-            aggregatorFactory,
-            true
-        );
-
-        // Case when the field is not supported by star tree
-        SumAggregationBuilder invalidFieldSumAggBuilder = sum("_name").field("hello");
-        testCase(
-            indexSearcher,
-            query,
-            queryBuilder,
-            invalidFieldSumAggBuilder,
-            starTree,
-            supportedDimensions,
-            Collections.emptyList(),
-            verifyAggregation(InternalSum::getValue),
-            invalidFieldSumAggBuilder.build(queryShardContext, null),
-            false // Invalid fields will return null StarTreeQueryContext which will not cause early termination by leaf collector
-        );
-
-        // Case when metric type in aggregation is not supported by star tree but the field is supported.
-        testCase(
-            indexSearcher,
-            query,
-            queryBuilder,
-            sumAggregationBuilder,
-            starTree,
-            supportedDimensions,
-            List.of(new Metric(FIELD_NAME, List.of(MetricStat.MAX, MetricStat.MIN, MetricStat.AVG))),
-            verifyAggregation(InternalSum::getValue),
-            aggregatorFactory,
-            false
-        );
-
-        // Case when field is not present in supported metrics
-        testCase(
-            indexSearcher,
-            query,
-            queryBuilder,
-            sumAggregationBuilder,
-            starTree,
-            supportedDimensions,
-            List.of(new Metric("hello", List.of(MetricStat.MAX, MetricStat.MIN, MetricStat.AVG))),
-            verifyAggregation(InternalSum::getValue),
-            aggregatorFactory,
-            false
-        );
-
-        AggregatorFactories aggregatorFactories = mock(AggregatorFactories.class);
-        when(aggregatorFactories.getFactories()).thenReturn(new AggregatorFactory[] { mock(MetricAggregatorFactory.class) });
-        when(aggregatorFactory.getSubFactories()).thenReturn(aggregatorFactories);
-
-        // Case when sub aggregations are present
-        testCase(
-            indexSearcher,
-            query,
-            queryBuilder,
-            sumAggregationBuilder,
-            starTree,
-            supportedDimensions,
-            List.of(new Metric("hello", List.of(MetricStat.MAX, MetricStat.MIN, MetricStat.AVG))),
-            verifyAggregation(InternalSum::getValue),
-            aggregatorFactory,
-            false
-        );
-
-        // Case when aggregation factory is not metric aggregation
-        testCase(
-            indexSearcher,
-            query,
-            queryBuilder,
-            sumAggregationBuilder,
-            starTree,
-            supportedDimensions,
-            List.of(new Metric("hello", List.of(MetricStat.MAX, MetricStat.MIN, MetricStat.AVG))),
-            verifyAggregation(InternalSum::getValue),
-            mock(ValuesSourceAggregatorFactory.class),
-            false
-        );
-
         ir.close();
         directory.close();
     }
@@ -406,21 +288,6 @@ public class MetricAggregatorTests extends AggregatorTestCase {
         List<Dimension> supportedDimensions,
         BiConsumer<V, V> verify
     ) throws IOException {
-        testCase(searcher, query, queryBuilder, aggBuilder, starTree, supportedDimensions, Collections.emptyList(), verify, null, true);
-    }
-
-    private <T extends AggregationBuilder, V extends InternalAggregation> void testCase(
-        IndexSearcher searcher,
-        Query query,
-        QueryBuilder queryBuilder,
-        T aggBuilder,
-        CompositeIndexFieldInfo starTree,
-        List<Dimension> supportedDimensions,
-        List<Metric> supportedMetrics,
-        BiConsumer<V, V> verify,
-        AggregatorFactory aggregatorFactory,
-        boolean assertCollectorEarlyTermination
-    ) throws IOException {
         V starTreeAggregation = searchAndReduceStarTree(
             createIndexSettings(),
             searcher,
@@ -429,11 +296,8 @@ public class MetricAggregatorTests extends AggregatorTestCase {
             aggBuilder,
             starTree,
             supportedDimensions,
-            supportedMetrics,
             DEFAULT_MAX_BUCKETS,
             false,
-            aggregatorFactory,
-            assertCollectorEarlyTermination,
             DEFAULT_MAPPED_FIELD
         );
         V expectedAggregation = searchAndReduceStarTree(
@@ -444,11 +308,8 @@ public class MetricAggregatorTests extends AggregatorTestCase {
             aggBuilder,
             null,
             null,
-            null,
             DEFAULT_MAX_BUCKETS,
             false,
-            aggregatorFactory,
-            assertCollectorEarlyTermination,
             DEFAULT_MAPPED_FIELD
         );
         verify.accept(expectedAggregation, starTreeAggregation);

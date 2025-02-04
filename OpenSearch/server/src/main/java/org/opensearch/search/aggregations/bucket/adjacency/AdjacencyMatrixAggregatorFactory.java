@@ -57,14 +57,11 @@ public class AdjacencyMatrixAggregatorFactory extends AggregatorFactory {
 
     private final String[] keys;
     private final Weight[] weights;
-
-    private final boolean showOnlyIntersecting;
     private final String separator;
 
     public AdjacencyMatrixAggregatorFactory(
         String name,
         List<KeyedFilter> filters,
-        boolean showOnlyIntersecting,
         String separator,
         QueryShardContext queryShardContext,
         AggregatorFactory parent,
@@ -82,7 +79,6 @@ public class AdjacencyMatrixAggregatorFactory extends AggregatorFactory {
             Query filter = keyedFilter.filter().toQuery(queryShardContext);
             weights[i] = contextSearcher.createWeight(contextSearcher.rewrite(filter), ScoreMode.COMPLETE_NO_SCORES, 1f);
         }
-        this.showOnlyIntersecting = showOnlyIntersecting;
     }
 
     @Override
@@ -92,17 +88,7 @@ public class AdjacencyMatrixAggregatorFactory extends AggregatorFactory {
         CardinalityUpperBound cardinality,
         Map<String, Object> metadata
     ) throws IOException {
-        return new AdjacencyMatrixAggregator(
-            name,
-            factories,
-            separator,
-            keys,
-            weights,
-            showOnlyIntersecting,
-            searchContext,
-            parent,
-            metadata
-        );
+        return new AdjacencyMatrixAggregator(name, factories, separator, keys, weights, searchContext, parent, metadata);
     }
 
     @Override

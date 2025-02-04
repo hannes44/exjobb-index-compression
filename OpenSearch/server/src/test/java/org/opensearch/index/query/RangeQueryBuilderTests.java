@@ -37,9 +37,10 @@ import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.SortedNumericDocValuesField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.ConstantScoreQuery;
-import org.apache.lucene.search.FieldExistsQuery;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.IndexOrDocValuesQuery;
 import org.apache.lucene.search.MatchNoDocsQuery;
+import org.apache.lucene.search.NormsFieldExistsQuery;
 import org.apache.lucene.search.PointRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -101,7 +102,7 @@ public class RangeQueryBuilderTests extends AbstractQueryTestCase<RangeQueryBuil
                 if (createShardContext().getMapperService().fieldType(DATE_FIELD_NAME) != null) {
                     if (randomBoolean()) {
                         // drawing a truly random zoneId here can rarely fail under the following conditons:
-                        // - index versionCreated before legacy V_7_0_0
+                        // - index versionCreated before V_7_0_0
                         // - no "forced" date parser through a format parameter
                         // - one of the SystemV* time zones that Jodas DateTimeZone parser doesn't know about
                         // thats why we exlude it here (see #58431)
@@ -171,9 +172,9 @@ public class RangeQueryBuilderTests extends AbstractQueryTestCase<RangeQueryBuil
         if (queryBuilder.from() == null && queryBuilder.to() == null) {
             final Query expectedQuery;
             if (context.getMapperService().fieldType(queryBuilder.fieldName()).hasDocValues()) {
-                expectedQuery = new ConstantScoreQuery(new FieldExistsQuery(expectedFieldName));
+                expectedQuery = new ConstantScoreQuery(new DocValuesFieldExistsQuery(expectedFieldName));
             } else if (context.getMapperService().fieldType(queryBuilder.fieldName()).getTextSearchInfo().hasNorms()) {
-                expectedQuery = new ConstantScoreQuery(new FieldExistsQuery(expectedFieldName));
+                expectedQuery = new ConstantScoreQuery(new NormsFieldExistsQuery(expectedFieldName));
             } else {
                 expectedQuery = new ConstantScoreQuery(new TermQuery(new Term(FieldNamesFieldMapper.NAME, expectedFieldName)));
             }
@@ -562,7 +563,7 @@ public class RangeQueryBuilderTests extends AbstractQueryTestCase<RangeQueryBuil
         Query luceneQuery = rewrittenRange.toQuery(queryShardContext);
         final Query expectedQuery;
         if (queryShardContext.fieldMapper(query.fieldName()).hasDocValues()) {
-            expectedQuery = new ConstantScoreQuery(new FieldExistsQuery(query.fieldName()));
+            expectedQuery = new ConstantScoreQuery(new DocValuesFieldExistsQuery(query.fieldName()));
         } else {
             expectedQuery = new ConstantScoreQuery(new TermQuery(new Term(FieldNamesFieldMapper.NAME, query.fieldName())));
         }

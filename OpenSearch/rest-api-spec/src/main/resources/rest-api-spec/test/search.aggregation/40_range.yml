@@ -672,8 +672,8 @@ setup:
 ---
 "Filter query w/ aggregation test":
   - skip:
-      version: " - 2.99.99"
-      reason: Backport fix to 2.16
+      version: " - 2.16.99"
+      reason: "Bugfix not backported to 2.16"
 
   - do:
       bulk:

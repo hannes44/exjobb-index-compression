@@ -34,7 +34,7 @@ package org.opensearch.repositories.blobstore;
 
 import org.opensearch.action.admin.cluster.repositories.get.GetRepositoriesResponse;
 import org.opensearch.action.admin.cluster.repositories.verify.VerifyRepositoryResponse;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.Client;
 import org.opensearch.cluster.metadata.RepositoryMetadata;
 import org.opensearch.common.settings.Settings;
@@ -78,7 +78,6 @@ import static org.hamcrest.Matchers.equalTo;
  * Tests for the {@link BlobStoreRepository} and its subclasses.
  */
 public class BlobStoreRepositoryRemoteIndexTests extends BlobStoreRepositoryHelperTests {
-
     @Override
     protected Settings nodeSettings() {
         Path tempDir = createTempDir();

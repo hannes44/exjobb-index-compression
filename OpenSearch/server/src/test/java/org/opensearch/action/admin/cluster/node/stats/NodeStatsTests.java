@@ -938,7 +938,6 @@ public class NodeStatsTests extends OpenSearchTestCase {
         if (frequently()) {
             segmentReplicationRejectionStats = new SegmentReplicationRejectionStats(randomNonNegativeLong());
         }
-
         ClusterManagerThrottlingStats clusterManagerThrottlingStats = null;
         if (frequently()) {
             clusterManagerThrottlingStats = new ClusterManagerThrottlingStats();

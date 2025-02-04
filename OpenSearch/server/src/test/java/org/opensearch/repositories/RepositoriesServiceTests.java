@@ -668,6 +668,11 @@ public class RepositoriesServiceTests extends OpenSearchTestCase {
         }
 
         @Override
+        public void initializeSnapshot(SnapshotId snapshotId, List<IndexId> indices, Metadata metadata) {
+
+        }
+
+        @Override
         public void finalizeSnapshot(
             ShardGenerations shardGenerations,
             long repositoryStateId,
@@ -675,7 +680,6 @@ public class RepositoriesServiceTests extends OpenSearchTestCase {
             SnapshotInfo snapshotInfo,
             Version repositoryMetaVersion,
             Function<ClusterState, ClusterState> stateTransformer,
-            Priority repositoryUpdatePriority,
             ActionListener<RepositoryData> listener
         ) {
             listener.onResponse(null);
@@ -689,6 +693,7 @@ public class RepositoriesServiceTests extends OpenSearchTestCase {
             SnapshotInfo snapshotInfo,
             Version repositoryMetaVersion,
             Function<ClusterState, ClusterState> stateTransformer,
+            Priority repositoryUpdatePriority,
             ActionListener<RepositoryData> listener
         ) {
             listener.onResponse(null);
@@ -774,9 +779,7 @@ public class RepositoriesServiceTests extends OpenSearchTestCase {
             String shardStateIdentifier,
             IndexShardSnapshotStatus snapshotStatus,
             long primaryTerm,
-            long commitGeneration,
             long startTime,
-            Map<String, Long> indexFilesToFileLengthMap,
             ActionListener<String> listener
         ) {
 

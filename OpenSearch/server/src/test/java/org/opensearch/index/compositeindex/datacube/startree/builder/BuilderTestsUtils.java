@@ -9,8 +9,7 @@
 package org.opensearch.index.compositeindex.datacube.startree.builder;
 
 import org.apache.lucene.codecs.DocValuesProducer;
-import org.apache.lucene.codecs.lucene101.Lucene101Codec;
-import org.apache.lucene.index.DocValuesSkipIndexType;
+import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
@@ -19,13 +18,11 @@ import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.SegmentWriteState;
 import org.apache.lucene.index.SortedNumericDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.VectorEncoding;
 import org.apache.lucene.index.VectorSimilarityFunction;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.InfoStream;
 import org.apache.lucene.util.Version;
 import org.opensearch.index.codec.composite.LuceneDocValuesProducerFactory;
@@ -120,65 +117,6 @@ public class BuilderTestsUtils {
             @Override
             public int docValueCount() {
                 return 0;
-            }
-
-            @Override
-            public boolean advanceExact(int target) {
-                return false;
-            }
-
-            @Override
-            public int docID() {
-                return index;
-            }
-
-            @Override
-            public int nextDoc() {
-                if (index == docsWithField.size() - 1) {
-                    return NO_MORE_DOCS;
-                }
-                index++;
-                return docsWithField.get(index);
-            }
-
-            @Override
-            public int advance(int target) {
-                return 0;
-            }
-
-            @Override
-            public long cost() {
-                return 0;
-            }
-        };
-    }
-
-    public static SortedSetDocValues getSortedSetMock(List<Long> dimList, List<Integer> docsWithField) {
-        return getSortedSetMock(dimList, docsWithField, 1);
-    }
-
-    public static SortedSetDocValues getSortedSetMock(List<Long> dimList, List<Integer> docsWithField, int valueCount) {
-        return new SortedSetDocValues() {
-            int index = -1;
-
-            @Override
-            public long nextOrd() throws IOException {
-                return dimList.get(index);
-            }
-
-            @Override
-            public int docValueCount() {
-                return 1;
-            }
-
-            @Override
-            public BytesRef lookupOrd(long l) throws IOException {
-                return new BytesRef("dummy" + l);
-            }
-
-            @Override
-            public long getValueCount() {
-                return valueCount;
             }
 
             @Override
@@ -448,7 +386,7 @@ public class BuilderTestsUtils {
 
     public static SegmentReadState getReadState(
         int numDocs,
-        Map<String, DocValuesType> dimensionFields,
+        List<String> dimensionFields,
         List<Metric> metrics,
         StarTreeField compositeField,
         SegmentWriteState writeState,
@@ -463,7 +401,7 @@ public class BuilderTestsUtils {
         FieldInfo[] fields = new FieldInfo[dimensionFields.size() + numMetrics];
 
         int i = 0;
-        for (String dimension : dimensionFields.keySet()) {
+        for (String dimension : dimensionFields) {
             fields[i] = new FieldInfo(
                 fullyQualifiedFieldNameForStarTreeDimensionsDocValues(compositeField.getName(), dimension),
                 i,
@@ -471,8 +409,7 @@ public class BuilderTestsUtils {
                 false,
                 true,
                 IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS,
-                dimensionFields.get(dimension),
-                DocValuesSkipIndexType.RANGE,
+                DocValuesType.SORTED_NUMERIC,
                 -1,
                 Collections.emptyMap(),
                 0,
@@ -501,7 +438,6 @@ public class BuilderTestsUtils {
                     true,
                     IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS,
                     DocValuesType.SORTED_NUMERIC,
-                    DocValuesSkipIndexType.RANGE,
                     -1,
                     Collections.emptyMap(),
                     0,
@@ -520,12 +456,12 @@ public class BuilderTestsUtils {
         SegmentInfo segmentInfo = new SegmentInfo(
             directory,
             Version.LATEST,
-            Version.LUCENE_10_1_0,
+            Version.LUCENE_9_11_0,
             "test_segment",
             numDocs,
             false,
             false,
-            new Lucene101Codec(),
+            new Lucene912Codec(),
             new HashMap<>(),
             writeState.segmentInfo.getId(),
             new HashMap<>(),
@@ -574,12 +510,12 @@ public class BuilderTestsUtils {
         SegmentInfo segmentInfo = new SegmentInfo(
             directory,
             Version.LATEST,
-            Version.LUCENE_10_1_0,
+            Version.LUCENE_9_11_0,
             "test_segment",
             numDocs,
             false,
             false,
-            new Lucene101Codec(),
+            new Lucene912Codec(),
             new HashMap<>(),
             id,
             new HashMap<>(),

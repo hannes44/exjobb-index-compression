@@ -44,6 +44,11 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
 
     private final ThreadPool threadPool;
 
+    // Added for passing breaking change check
+    public RemoteSegmentStoreDirectoryFactory(Supplier<RepositoriesService> repositoriesService, ThreadPool threadPool) {
+        this(repositoriesService, threadPool, null);
+    }
+
     public RemoteSegmentStoreDirectoryFactory(
         Supplier<RepositoriesService> repositoriesService,
         ThreadPool threadPool,
@@ -71,7 +76,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
             BlobPath repositoryBasePath = blobStoreRepository.basePath();
             String shardIdStr = String.valueOf(shardId.id());
 
-            RemoteStorePathStrategy.ShardDataPathInput dataPathInput = RemoteStorePathStrategy.ShardDataPathInput.builder()
+            RemoteStorePathStrategy.PathInput dataPathInput = RemoteStorePathStrategy.PathInput.builder()
                 .basePath(repositoryBasePath)
                 .indexUUID(indexUUID)
                 .shardId(shardIdStr)
@@ -88,7 +93,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
                 blobStoreRepository::maybeRateLimitRemoteDownloadTransfers
             );
 
-            RemoteStorePathStrategy.ShardDataPathInput mdPathInput = RemoteStorePathStrategy.ShardDataPathInput.builder()
+            RemoteStorePathStrategy.PathInput mdPathInput = RemoteStorePathStrategy.PathInput.builder()
                 .basePath(repositoryBasePath)
                 .indexUUID(indexUUID)
                 .shardId(shardIdStr)

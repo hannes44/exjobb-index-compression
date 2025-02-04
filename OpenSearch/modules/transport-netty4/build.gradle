@@ -49,8 +49,8 @@ apply plugin: 'opensearch.publish'
    * maybe figure out a way to run all tests from core with netty4/network?
  */
 opensearchplugin {
-  description = 'Netty 4 based transport implementation'
-  classname = 'org.opensearch.transport.Netty4ModulePlugin'
+  description 'Netty 4 based transport implementation'
+  classname 'org.opensearch.transport.Netty4Plugin'
   hasClientJar = true
 }
 
@@ -59,7 +59,6 @@ dependencies {
   api "io.netty:netty-buffer:${versions.netty}"
   api "io.netty:netty-codec:${versions.netty}"
   api "io.netty:netty-codec-http:${versions.netty}"
-  api "io.netty:netty-codec-http2:${versions.netty}"
   api "io.netty:netty-common:${versions.netty}"
   api "io.netty:netty-handler:${versions.netty}"
   api "io.netty:netty-resolver:${versions.netty}"
@@ -240,9 +239,6 @@ thirdPartyAudit {
     'io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueConsumerIndexField',
     'io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerIndexField',
     'io.netty.util.internal.shaded.org.jctools.queues.MpscArrayQueueProducerLimitField',
-    'io.netty.util.internal.shaded.org.jctools.queues.unpadded.MpscUnpaddedArrayQueueConsumerIndexField',
-    'io.netty.util.internal.shaded.org.jctools.queues.unpadded.MpscUnpaddedArrayQueueProducerIndexField',
-    'io.netty.util.internal.shaded.org.jctools.queues.unpadded.MpscUnpaddedArrayQueueProducerLimitField',
     'io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess',
     'io.netty.util.internal.shaded.org.jctools.util.UnsafeRefArrayAccess',
     'io.netty.util.internal.shaded.org.jctools.util.UnsafeLongArrayAccess',

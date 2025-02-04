@@ -15,8 +15,6 @@ import org.opensearch.action.search.SearchResponse;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.search.SearchPhaseResult;
 
-import java.util.List;
-
 /**
  * Groups a search pipeline based on a request and the request after being transformed by the pipeline.
  *
@@ -37,15 +35,7 @@ public final class PipelinedRequest extends SearchRequest {
     }
 
     public ActionListener<SearchResponse> transformResponseListener(ActionListener<SearchResponse> responseListener) {
-        return pipeline.transformResponseListener(this, ActionListener.wrap(response -> {
-            // Extract processor execution details
-            List<ProcessorExecutionDetail> details = requestContext.getProcessorExecutionDetails();
-            // Add details to the response's InternalResponse if available
-            if (!details.isEmpty() && response.getInternalResponse() != null) {
-                response.getInternalResponse().getProcessorResult().addAll(details);
-            }
-            responseListener.onResponse(response);
-        }, responseListener::onFailure), requestContext);
+        return pipeline.transformResponseListener(this, responseListener, requestContext);
     }
 
     public <Result extends SearchPhaseResult> void transformSearchPhaseResults(
@@ -60,9 +50,5 @@ public final class PipelinedRequest extends SearchRequest {
     // Visible for testing
     Pipeline getPipeline() {
         return pipeline;
-    }
-
-    public PipelineProcessingContext getPipelineProcessingContext() {
-        return requestContext;
     }
 }

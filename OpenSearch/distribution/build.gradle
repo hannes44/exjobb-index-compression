@@ -150,7 +150,7 @@ void copyModule(TaskProvider<Sync> copyTask, Project module) {
 
     dependsOn moduleConfig
     from({ zipTree(moduleConfig.singleFile) }) {
-      includeEmptyDirs = false
+      includeEmptyDirs false
 
       // these are handled separately in the log4j config tasks below
       exclude '*/config/log4j2.properties'
@@ -360,7 +360,7 @@ configure(subprojects.findAll { ['archives', 'packages'].contains(it.name) }) {
     modulesFiles = { platform ->
       copySpec {
         eachFile {
-          if (it.relativePath.segments[-2] == 'bin' || ((platform == 'darwin-x64' || platform == 'darwin-arm64') && it.relativePath.segments[-2] == 'MacOS')) {
+          if (it.relativePath.segments[-2] == 'bin' || (platform == 'darwin-x64' && it.relativePath.segments[-2] == 'MacOS')) {
             // bin files, wherever they are within modules (eg platform specific) should be executable
             // and MacOS is an alternative to bin on macOS
             it.permissions(perm -> perm.unix(0755))
@@ -663,7 +663,6 @@ subprojects {
 }
 
 ['archives:darwin-tar',
- 'archives:darwin-arm64-tar',
  'archives:integ-test-zip',
  'archives:linux-arm64-tar',
  'archives:linux-tar',

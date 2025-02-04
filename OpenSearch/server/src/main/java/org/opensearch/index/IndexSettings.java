@@ -34,6 +34,7 @@ package org.opensearch.index;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.MergePolicy;
 import org.apache.lucene.sandbox.index.MergeOnFlushMergePolicy;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.common.annotation.PublicApi;
@@ -289,11 +290,11 @@ public final class IndexSettings {
 
     /**
      * Index setting describing the maximum number of nested scopes in queries.
-     * The default maximum of 20. 1 means once nesting.
+     * The default maximum is 2<sup>31</sup>-1. 1 means once nesting.
      */
     public static final Setting<Integer> MAX_NESTED_QUERY_DEPTH_SETTING = Setting.intSetting(
         "index.query.max_nested_depth",
-        20,
+        Integer.MAX_VALUE,
         1,
         Property.Dynamic,
         Property.IndexScope
@@ -796,7 +797,6 @@ public final class IndexSettings {
     private volatile String remoteStoreRepository;
     private int remoteTranslogKeepExtraGen;
     private Version extendedCompatibilitySnapshotVersion;
-
     // volatile fields are updated via #updateIndexMetadata(IndexMetadata) under lock
     private volatile Settings settings;
     private volatile IndexMetadata indexMetadata;
@@ -1008,7 +1008,6 @@ public final class IndexSettings {
         } else {
             extendedCompatibilitySnapshotVersion = Version.CURRENT.minimumIndexCompatibilityVersion();
         }
-
         this.searchThrottled = INDEX_SEARCH_THROTTLED.get(settings);
         this.shouldCleanupUnreferencedFiles = INDEX_UNREFERENCED_FILE_CLEANUP.get(settings);
         this.queryStringLenient = QUERY_STRING_LENIENT_SETTING.get(settings);
@@ -1352,23 +1351,19 @@ public final class IndexSettings {
     }
 
     /**
+     * Returns remote store repository configured for this index.
+     */
+    public String getRemoteStoreRepository() {
+        return remoteStoreRepository;
+    }
+
+    /**
      * Returns if remote translog store is enabled for this index.
      */
     public boolean isRemoteTranslogStoreEnabled() {
         // Today enabling remote store automatically enables remote translog as well.
         // which is why isRemoteStoreEnabled is used to represent isRemoteTranslogStoreEnabled
         return isRemoteStoreEnabled;
-    }
-
-    /**
-     * Returns if remote store is enabled for this index.
-     */
-    public String getRemoteStoreRepository() {
-        return remoteStoreRepository;
-    }
-
-    public String getRemoteStoreTranslogRepository() {
-        return remoteStoreTranslogRepository;
     }
 
     /**
@@ -1393,6 +1388,10 @@ public final class IndexSettings {
      */
     public Version getExtendedCompatibilitySnapshotVersion() {
         return extendedCompatibilitySnapshotVersion;
+    }
+
+    public String getRemoteStoreTranslogRepository() {
+        return remoteStoreTranslogRepository;
     }
 
     /**
@@ -1559,7 +1558,8 @@ public final class IndexSettings {
     }
 
     private static boolean shouldDisableTranslogRetention(Settings settings) {
-        return INDEX_SOFT_DELETES_SETTING.get(settings);
+        return INDEX_SOFT_DELETES_SETTING.get(settings)
+            && IndexMetadata.SETTING_INDEX_VERSION_CREATED.get(settings).onOrAfter(LegacyESVersion.V_7_4_0);
     }
 
     /**

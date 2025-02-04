@@ -41,7 +41,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Weight;
 import org.opensearch.cluster.ClusterName;
 import org.opensearch.cluster.routing.allocation.DiskThresholdSettings;
@@ -112,18 +111,8 @@ public class IndicesServiceCloseTests extends OpenSearchTestCase {
         public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
             return new ConstantScoreWeight(this, boost) {
                 @Override
-                public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
-                    return new ScorerSupplier() {
-                        @Override
-                        public Scorer get(long l) throws IOException {
-                            return new ConstantScoreScorer(score(), scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
-                        }
-
-                        @Override
-                        public long cost() {
-                            return 0;
-                        }
-                    };
+                public Scorer scorer(LeafReaderContext context) throws IOException {
+                    return new ConstantScoreScorer(this, score(), scoreMode, DocIdSetIterator.all(context.reader().maxDoc()));
                 }
 
                 @Override

@@ -51,7 +51,7 @@ import org.opensearch.common.Booleans;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.lucene.Lucene;
 import org.opensearch.common.lucene.search.TopDocsAndMaxScore;
-import org.opensearch.common.util.concurrent.EWMATrackingThreadPoolExecutor;
+import org.opensearch.common.util.concurrent.QueueResizingOpenSearchThreadPoolExecutor;
 import org.opensearch.core.tasks.TaskCancelledException;
 import org.opensearch.lucene.queries.SearchAfterSortedDocQuery;
 import org.opensearch.search.DocValueFormat;
@@ -289,8 +289,8 @@ public class QueryPhase {
                 );
 
                 ExecutorService executor = searchContext.indexShard().getThreadPool().executor(ThreadPool.Names.SEARCH);
-                if (executor instanceof EWMATrackingThreadPoolExecutor) {
-                    final EWMATrackingThreadPoolExecutor rExecutor = (EWMATrackingThreadPoolExecutor) executor;
+                if (executor instanceof QueueResizingOpenSearchThreadPoolExecutor) {
+                    QueueResizingOpenSearchThreadPoolExecutor rExecutor = (QueueResizingOpenSearchThreadPoolExecutor) executor;
                     queryResult.nodeQueueSize(rExecutor.getCurrentQueueSize());
                     queryResult.serviceTimeEWMA((long) rExecutor.getTaskExecutionEWMA());
                 }
@@ -388,7 +388,7 @@ public class QueryPhase {
         }
         final Sort sort = sortAndFormats.sort;
         for (LeafReaderContext ctx : reader.leaves()) {
-            Sort indexSort = ctx.reader().getMetaData().sort();
+            Sort indexSort = ctx.reader().getMetaData().getSort();
             if (indexSort == null || Lucene.canEarlyTerminate(sort, indexSort) == false) {
                 return false;
             }

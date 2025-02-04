@@ -258,7 +258,7 @@ public class PublicationTransportHandler {
             }
 
             if (applyFullState == true) {
-                logger.info(
+                logger.debug(
                     () -> new ParameterizedMessage(
                         "Downloading full cluster state for term {}, version {}, stateUUID {}",
                         manifest.getClusterTerm(),
@@ -298,9 +298,9 @@ public class PublicationTransportHandler {
             }
         } catch (Exception e) {
             if (applyFullState) {
-                remoteClusterStateService.fullIncomingPublicationFailed();
+                remoteClusterStateService.fullDownloadFailed();
             } else {
-                remoteClusterStateService.diffIncomingPublicationFailed();
+                remoteClusterStateService.diffDownloadFailed();
             }
             throw e;
         }
@@ -367,6 +367,7 @@ public class PublicationTransportHandler {
     }
 
     private boolean validateRemotePublicationConfiguredOnAllNodes(DiscoveryNodes discoveryNodes) {
+        assert ClusterMetadataManifest.getCodecForVersion(discoveryNodes.getMinNodeVersion()) >= ClusterMetadataManifest.CODEC_V0;
         for (DiscoveryNode node : discoveryNodes.getNodes().values()) {
             // if a node is non-remote then created local publication context
             if (node.isRemoteStatePublicationEnabled() == false) {

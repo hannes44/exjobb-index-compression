@@ -50,7 +50,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
-import static org.opensearch.action.support.clustermanager.AcknowledgedRequest.DEFAULT_TASK_EXECUTION_TIMEOUT;
+import static org.opensearch.action.support.master.AcknowledgedRequest.DEFAULT_TASK_EXECUTION_TIMEOUT;
 import static org.opensearch.rest.RestRequest.Method.POST;
 
 /**
@@ -79,7 +79,7 @@ public class RestOpenIndexAction extends BaseRestHandler {
         openIndexRequest.clusterManagerNodeTimeout(
             request.paramAsTime("cluster_manager_timeout", openIndexRequest.clusterManagerNodeTimeout())
         );
-        parseDeprecatedMasterTimeoutParameter(openIndexRequest, request, deprecationLogger, getName());
+        parseDeprecatedMasterTimeoutParameter(openIndexRequest, request);
         openIndexRequest.indicesOptions(IndicesOptions.fromRequest(request, openIndexRequest.indicesOptions()));
         String waitForActiveShards = request.param("wait_for_active_shards");
         if (waitForActiveShards != null) {

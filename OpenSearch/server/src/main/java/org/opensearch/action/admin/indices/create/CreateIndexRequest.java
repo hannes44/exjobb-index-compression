@@ -32,6 +32,7 @@
 
 package org.opensearch.action.admin.indices.create;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchGenerationException;
 import org.opensearch.OpenSearchParseException;
 import org.opensearch.Version;
@@ -41,7 +42,7 @@ import org.opensearch.action.admin.indices.alias.Alias;
 import org.opensearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.opensearch.action.support.ActiveShardCount;
 import org.opensearch.action.support.IndicesOptions;
-import org.opensearch.action.support.clustermanager.AcknowledgedRequest;
+import org.opensearch.action.support.master.AcknowledgedRequest;
 import org.opensearch.cluster.metadata.Context;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.settings.Settings;
@@ -130,6 +131,9 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
         int aliasesSize = in.readVInt();
         for (int i = 0; i < aliasesSize; i++) {
             aliases.add(new Alias(in));
+        }
+        if (in.getVersion().before(LegacyESVersion.V_7_0_0)) {
+            in.readBoolean(); // updateAllTypes
         }
         waitForActiveShards = ActiveShardCount.readFrom(in);
         if (in.getVersion().onOrAfter(Version.V_2_17_0)) {
@@ -630,6 +634,9 @@ public class CreateIndexRequest extends AcknowledgedRequest<CreateIndexRequest> 
         out.writeVInt(aliases.size());
         for (Alias alias : aliases) {
             alias.writeTo(out);
+        }
+        if (out.getVersion().before(LegacyESVersion.V_7_0_0)) {
+            out.writeBoolean(true); // updateAllTypes
         }
         waitForActiveShards.writeTo(out);
         if (out.getVersion().onOrAfter(Version.V_2_17_0)) {

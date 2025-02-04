@@ -314,7 +314,7 @@ public class SearchBackpressureIT extends ParameterizedStaticSettingsOpenSearchI
         assertNull("SearchShardTask shouldn't have cancelled for monitor_only mode", caughtException);
     }
 
-    public static class ExceptionCatchingListener implements ActionListener<TestResponse> {
+    private static class ExceptionCatchingListener implements ActionListener<TestResponse> {
         private final CountDownLatch latch;
         private Exception exception = null;
 
@@ -333,11 +333,7 @@ public class SearchBackpressureIT extends ParameterizedStaticSettingsOpenSearchI
             latch.countDown();
         }
 
-        public CountDownLatch getLatch() {
-            return latch;
-        }
-
-        public Exception getException() {
+        private Exception getException() {
             return exception;
         }
     }
@@ -353,7 +349,7 @@ public class SearchBackpressureIT extends ParameterizedStaticSettingsOpenSearchI
         return () -> description;
     }
 
-    public interface TaskFactory<T extends Task> {
+    interface TaskFactory<T extends Task> {
         T createTask(long id, String type, String action, String description, TaskId parentTaskId, Map<String, String> headers);
     }
 

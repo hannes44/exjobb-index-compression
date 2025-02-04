@@ -50,7 +50,7 @@ public class IdentityService {
     }
 
     /**
-     * Gets the current Subject
+     * Gets the current subject
      */
     public Subject getCurrentSubject() {
         return identityPlugin.getCurrentSubject();

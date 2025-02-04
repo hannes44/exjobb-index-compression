@@ -32,6 +32,7 @@
 
 package org.opensearch.action.admin.cluster.stats;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.action.FailedNodeException;
 import org.opensearch.action.admin.cluster.stats.ClusterStatsRequest.IndexMetric;
 import org.opensearch.action.admin.cluster.stats.ClusterStatsRequest.Metric;
@@ -74,9 +75,11 @@ public class ClusterStatsResponse extends BaseNodesResponse<ClusterStatsNodeResp
         String clusterUUID = null;
         MappingStats mappingStats = null;
         AnalysisStats analysisStats = null;
-        clusterUUID = in.readOptionalString();
-        mappingStats = in.readOptionalWriteable(MappingStats::new);
-        analysisStats = in.readOptionalWriteable(AnalysisStats::new);
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_7_0)) {
+            clusterUUID = in.readOptionalString();
+            mappingStats = in.readOptionalWriteable(MappingStats::new);
+            analysisStats = in.readOptionalWriteable(AnalysisStats::new);
+        }
         this.clusterUUID = clusterUUID;
 
         // built from nodes rather than from the stream directly
@@ -152,13 +155,15 @@ public class ClusterStatsResponse extends BaseNodesResponse<ClusterStatsNodeResp
         super.writeTo(out);
         out.writeVLong(timestamp);
         out.writeOptionalWriteable(status);
-        out.writeOptionalString(clusterUUID);
-        if (indicesStats != null) {
-            out.writeOptionalWriteable(indicesStats.getMappings());
-            out.writeOptionalWriteable(indicesStats.getAnalysis());
-        } else {
-            out.writeOptionalWriteable(null);
-            out.writeOptionalWriteable(null);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_7_0)) {
+            out.writeOptionalString(clusterUUID);
+            if (indicesStats != null) {
+                out.writeOptionalWriteable(indicesStats.getMappings());
+                out.writeOptionalWriteable(indicesStats.getAnalysis());
+            } else {
+                out.writeOptionalWriteable(null);
+                out.writeOptionalWriteable(null);
+            }
         }
     }
 

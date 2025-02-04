@@ -71,7 +71,7 @@ import org.opensearch.action.search.ClearScrollResponse;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.support.IndicesOptions;
 import org.opensearch.action.support.WriteRequest;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.AdminClient;
 import org.opensearch.client.Client;
 import org.opensearch.client.ClusterAdminClient;
@@ -79,11 +79,16 @@ import org.opensearch.client.Requests;
 import org.opensearch.client.RestClient;
 import org.opensearch.cluster.ClusterModule;
 import org.opensearch.cluster.ClusterState;
+import org.opensearch.cluster.RestoreInProgress;
+import org.opensearch.cluster.SnapshotDeletionsInProgress;
+import org.opensearch.cluster.SnapshotsInProgress;
 import org.opensearch.cluster.coordination.OpenSearchNodeCommand;
 import org.opensearch.cluster.health.ClusterHealthStatus;
 import org.opensearch.cluster.metadata.Context;
+import org.opensearch.cluster.metadata.IndexGraveyard;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.cluster.metadata.Metadata;
+import org.opensearch.cluster.metadata.RepositoriesMetadata;
 import org.opensearch.cluster.routing.IndexRoutingTable;
 import org.opensearch.cluster.routing.IndexShardRoutingTable;
 import org.opensearch.cluster.routing.ShardRouting;
@@ -153,6 +158,7 @@ import org.opensearch.indices.IndicesService;
 import org.opensearch.indices.RemoteStoreSettings;
 import org.opensearch.indices.replication.common.ReplicationType;
 import org.opensearch.indices.store.IndicesStore;
+import org.opensearch.ingest.IngestMetadata;
 import org.opensearch.monitor.os.OsInfo;
 import org.opensearch.node.NodeMocksPlugin;
 import org.opensearch.node.remotestore.RemoteStoreNodeService;
@@ -163,6 +169,7 @@ import org.opensearch.repositories.blobstore.BlobStoreRepository;
 import org.opensearch.repositories.fs.FsRepository;
 import org.opensearch.repositories.fs.ReloadableFsRepository;
 import org.opensearch.script.MockScriptService;
+import org.opensearch.script.ScriptMetadata;
 import org.opensearch.search.MockSearchService;
 import org.opensearch.search.SearchHit;
 import org.opensearch.search.SearchService;
@@ -213,8 +220,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import reactor.util.annotation.NonNull;
 
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_NUMBER_OF_REPLICAS;
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_NUMBER_OF_SHARDS;
@@ -300,17 +305,6 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
      * Property that controls whether ThirdParty Integration tests are run (not the default).
      */
     public static final String SYSPROP_THIRDPARTY = "tests.thirdparty";
-
-    /**
-     * The lucene_default {@link Codec} is not added to the list as it internally maps to Asserting {@link Codec}.
-     * The override to fetch the {@link CompletionFieldMapper.CompletionFieldType} postings format is not available for this codec.
-     */
-    public static final List<String> CODECS = List.of(
-        CodecService.DEFAULT_CODEC,
-        CodecService.LZ4,
-        CodecService.BEST_COMPRESSION_CODEC,
-        CodecService.ZLIB
-    );
 
     /**
      * Annotation for third-party integration tests.
@@ -399,6 +393,23 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
 
     protected static final String REMOTE_BACKED_STORAGE_REPOSITORY_NAME = "test-remote-store-repo";
 
+    private Path remoteStoreRepositoryPath;
+
+    private ReplicationType randomReplicationType;
+
+    private String randomStorageType;
+
+    /**
+     * The lucene_default {@link Codec} is not added to the list as it internally maps to Asserting {@link Codec}.
+     * The override to fetch the {@link CompletionFieldMapper.CompletionFieldType} postings format is not available for this codec.
+     */
+    public static final List<String> CODECS = List.of(
+        CodecService.DEFAULT_CODEC,
+        CodecService.LZ4,
+        CodecService.BEST_COMPRESSION_CODEC,
+        CodecService.ZLIB
+    );
+
     private static Boolean prefixModeVerificationEnable;
 
     private static Boolean translogPathFixedPrefix;
@@ -406,12 +417,6 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
     private static Boolean segmentsPathFixedPrefix;
 
     protected static Boolean snapshotShardPathFixedPrefix;
-
-    private Path remoteStoreRepositoryPath;
-
-    private ReplicationType randomReplicationType;
-
-    private String randomStorageType;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -752,7 +757,7 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
                 success = true;
             } finally {
                 if (!success && !created.isEmpty()) {
-                    cluster().wipeIndices(created.toArray(new String[0]));
+                    cluster().wipeIndices(created.toArray(new String[created.size()]));
                 }
             }
         }
@@ -846,11 +851,9 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
     /** Ensures the result counts are as expected, and logs the results if different */
     public void assertResultsAndLogOnFailure(long expectedResults, SearchResponse searchResponse) {
         final TotalHits totalHits = searchResponse.getHits().getTotalHits();
-        if (totalHits.value() != expectedResults || totalHits.relation() != TotalHits.Relation.EQUAL_TO) {
+        if (totalHits.value != expectedResults || totalHits.relation != TotalHits.Relation.EQUAL_TO) {
             StringBuilder sb = new StringBuilder("search result contains [");
-            String value = Long.toString(totalHits.value()) + (totalHits.relation() == TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO
-                ? "+"
-                : "");
+            String value = Long.toString(totalHits.value) + (totalHits.relation == TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO ? "+" : "");
             sb.append(value).append("] results. expected [").append(expectedResults).append("]");
             String failMsg = sb.toString();
             for (SearchHit hit : searchResponse.getHits().getHits()) {
@@ -1045,8 +1048,7 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
                         .setQuery(matchAllQuery())
                         .get()
                         .getHits()
-                        .getTotalHits()
-                        .value();
+                        .getTotalHits().value;
 
                     if (count == lastKnownCount) {
                         // no progress - try to refresh for the next time
@@ -1261,6 +1263,37 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
                 );
             }
         }
+    }
+
+    private static final Set<String> SAFE_METADATA_CUSTOMS = Collections.unmodifiableSet(
+        new HashSet<>(Arrays.asList(IndexGraveyard.TYPE, IngestMetadata.TYPE, RepositoriesMetadata.TYPE, ScriptMetadata.TYPE))
+    );
+
+    private static final Set<String> SAFE_CUSTOMS = Collections.unmodifiableSet(
+        new HashSet<>(Arrays.asList(RestoreInProgress.TYPE, SnapshotDeletionsInProgress.TYPE, SnapshotsInProgress.TYPE))
+    );
+
+    /**
+     * Remove any customs except for customs that we know all clients understand.
+     *
+     * @param clusterState the cluster state to remove possibly-unknown customs from
+     * @return the cluster state with possibly-unknown customs removed
+     */
+    private ClusterState removePluginCustoms(final ClusterState clusterState) {
+        final ClusterState.Builder builder = ClusterState.builder(clusterState);
+        clusterState.customs().keySet().iterator().forEachRemaining(key -> {
+            if (SAFE_CUSTOMS.contains(key) == false) {
+                builder.removeCustom(key);
+            }
+        });
+        final Metadata.Builder mdBuilder = Metadata.builder(clusterState.metadata());
+        clusterState.metadata().customs().keySet().iterator().forEachRemaining(key -> {
+            if (SAFE_METADATA_CUSTOMS.contains(key) == false) {
+                mdBuilder.removeCustom(key);
+            }
+        });
+        builder.metadata(mdBuilder);
+        return builder.build();
     }
 
     /**
@@ -1948,11 +1981,15 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
             .put(SearchService.LOW_LEVEL_CANCELLATION_SETTING.getKey(), randomBoolean())
             .putList(DISCOVERY_SEED_HOSTS_SETTING.getKey()) // empty list disables a port scan for other nodes
             .putList(DISCOVERY_SEED_PROVIDERS_SETTING.getKey(), "file")
-            // By default, for tests we will put the target slice count of 2. This will increase the probability of having multiple slices
-            // when tests are run with concurrent segment search enabled
-            .put(SearchService.CONCURRENT_SEGMENT_SEARCH_TARGET_MAX_SLICE_COUNT_KEY, 2)
-            .put(featureFlagSettings());
-
+            .put(SearchService.CONCURRENT_SEGMENT_SEARCH_TARGET_MAX_SLICE_COUNT_KEY, 2);
+        // add all the featureFlagSettings set by the test
+        builder.put(featureFlagSettings);
+        if (rarely()) {
+            // Sometimes adjust the minimum search thread pool size, causing
+            // QueueResizingOpenSearchThreadPoolExecutor to be used instead of a regular
+            // fixed thread pool
+            builder.put("thread_pool.search.min_queue_size", 100);
+        }
         // Enable tracer only when Telemetry Setting is enabled
         if (featureFlagSettings().getAsBoolean(FeatureFlags.TELEMETRY_SETTING.getKey(), false)) {
             builder.put(TelemetrySettings.TRACER_FEATURE_ENABLED_SETTING.getKey(), true);
@@ -2355,6 +2392,7 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
      * The returned client gets automatically closed when needed, it shouldn't be closed as part of tests otherwise
      * it cannot be reused by other tests anymore.
      */
+
     protected static RestClient getRestClient() {
         return testClusterRule.getRestClient();
     }
@@ -2843,7 +2881,7 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
         );
     }
 
-    protected static Settings buildRemoteStoreNodeAttributes(
+    private static Settings buildRemoteStoreNodeAttributes(
         String segmentRepoName,
         Path segmentRepoPath,
         String segmentRepoType,
@@ -2913,48 +2951,11 @@ public abstract class OpenSearchIntegTestCase extends OpenSearchTestCase {
         }
         settings.put(RemoteStoreSettings.CLUSTER_REMOTE_STORE_PATH_TYPE_SETTING.getKey(), randomFrom(PathType.values()));
         settings.put(RemoteStoreSettings.CLUSTER_REMOTE_STORE_TRANSLOG_METADATA.getKey(), randomBoolean());
-        settings.put(RemoteStoreSettings.CLUSTER_REMOTE_STORE_PINNED_TIMESTAMP_ENABLED.getKey(), randomBoolean());
+        settings.put(RemoteStoreSettings.CLUSTER_REMOTE_STORE_PINNED_TIMESTAMP_ENABLED.getKey(), false);
         settings.put(RemoteStoreSettings.CLUSTER_REMOTE_STORE_SEGMENTS_PATH_PREFIX.getKey(), translogPathFixedPrefix ? "a" : "");
         settings.put(RemoteStoreSettings.CLUSTER_REMOTE_STORE_TRANSLOG_PATH_PREFIX.getKey(), segmentsPathFixedPrefix ? "b" : "");
         settings.put(BlobStoreRepository.SNAPSHOT_SHARD_PATH_PREFIX_SETTING.getKey(), snapshotShardPathFixedPrefix ? "c" : "");
         return settings.build();
-    }
-
-    protected Settings buildRemotePublicationNodeAttributes(
-        @NonNull String remoteStateRepoName,
-        @NonNull String remoteStateRepoType,
-        @NonNull String routingTableRepoName,
-        @NonNull String routingTableRepoType
-    ) {
-        String remoteStateRepositoryTypeAttributeKey = String.format(
-            Locale.getDefault(),
-            "node.attr." + REMOTE_STORE_REPOSITORY_TYPE_ATTRIBUTE_KEY_FORMAT,
-            remoteStateRepoName
-        );
-        String routingTableRepositoryTypeAttributeKey = String.format(
-            Locale.getDefault(),
-            "node.attr." + REMOTE_STORE_REPOSITORY_TYPE_ATTRIBUTE_KEY_FORMAT,
-            routingTableRepoName
-        );
-        String remoteStateRepositorySettingsAttributeKeyPrefix = String.format(
-            Locale.getDefault(),
-            "node.attr." + REMOTE_STORE_REPOSITORY_SETTINGS_ATTRIBUTE_KEY_PREFIX,
-            remoteStateRepoName
-        );
-        String routingTableRepositorySettingsAttributeKeyPrefix = String.format(
-            Locale.getDefault(),
-            "node.attr." + REMOTE_STORE_REPOSITORY_SETTINGS_ATTRIBUTE_KEY_PREFIX,
-            routingTableRepoName
-        );
-
-        return Settings.builder()
-            .put("node.attr." + REMOTE_STORE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEY, remoteStateRepoName)
-            .put("node.attr." + REMOTE_STORE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEY, routingTableRepoName)
-            .put(remoteStateRepositoryTypeAttributeKey, remoteStateRepoType)
-            .put(routingTableRepositoryTypeAttributeKey, routingTableRepoType)
-            .put(remoteStateRepositorySettingsAttributeKeyPrefix + "location", randomRepoPath().toAbsolutePath())
-            .put(routingTableRepositorySettingsAttributeKeyPrefix + "location", randomRepoPath().toAbsolutePath())
-            .build();
     }
 
     public static String resolvePath(IndexId indexId, String shardId) {

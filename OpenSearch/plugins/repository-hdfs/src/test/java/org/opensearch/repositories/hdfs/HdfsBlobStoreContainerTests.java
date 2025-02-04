@@ -75,7 +75,6 @@ public class HdfsBlobStoreContainerTests extends OpenSearchTestCase {
         return fileContext;
     }
 
-    @SuppressWarnings("removal")
     @SuppressForbidden(reason = "lesser of two evils (the other being a bunch of JNI/classloader nightmares)")
     private FileContext createContext(URI uri) {
         // mirrors HdfsRepository.java behaviour

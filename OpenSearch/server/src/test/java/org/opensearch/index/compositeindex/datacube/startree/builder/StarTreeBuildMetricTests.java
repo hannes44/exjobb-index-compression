@@ -10,8 +10,7 @@ package org.opensearch.index.compositeindex.datacube.startree.builder;
 
 import org.apache.lucene.codecs.DocValuesConsumer;
 import org.apache.lucene.codecs.DocValuesProducer;
-import org.apache.lucene.codecs.lucene101.Lucene101Codec;
-import org.apache.lucene.index.DocValuesSkipIndexType;
+import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
@@ -53,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -508,12 +506,12 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
         SegmentInfo segmentInfo = new SegmentInfo(
             directory,
             Version.LATEST,
-            Version.LUCENE_10_1_0,
+            Version.LUCENE_9_11_0,
             "test_segment",
             7,
             false,
             false,
-            new Lucene101Codec(),
+            new Lucene912Codec(),
             new HashMap<>(),
             UUID.randomUUID().toString().substring(0, 16).getBytes(StandardCharsets.UTF_8),
             new HashMap<>(),
@@ -531,7 +529,6 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
                 true,
                 IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS,
                 DocValuesType.SORTED_NUMERIC,
-                DocValuesSkipIndexType.RANGE,
                 -1,
                 Collections.emptyMap(),
                 0,
@@ -594,19 +591,13 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
         metaOut.close();
         dataOut.close();
 
-        LinkedHashMap<String, DocValuesType> fieldsMap = new LinkedHashMap<>();
-        fieldsMap.put("field1", DocValuesType.SORTED_NUMERIC);
-        fieldsMap.put("field3", DocValuesType.SORTED_NUMERIC);
-        fieldsMap.put("field5", DocValuesType.SORTED_NUMERIC);
-        fieldsMap.put("field8", DocValuesType.SORTED_NUMERIC);
-
         StarTreeMetadata starTreeMetadata = new StarTreeMetadata(
             "test",
             STAR_TREE,
             mock(IndexInput.class),
             VERSION_CURRENT,
             builder.numStarTreeNodes,
-            fieldsMap,
+            List.of("field1", "field3", "field5", "field8"),
             List.of(
                 new Metric("field2", List.of(MetricStat.SUM)),
                 new Metric("field4", List.of(MetricStat.SUM)),
@@ -623,18 +614,13 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
             330
         );
 
-        LinkedHashMap<String, DocValuesType> fieldsMap1 = new LinkedHashMap<>();
-        fieldsMap1.put("fieldC", DocValuesType.SORTED_NUMERIC);
-        fieldsMap1.put("fieldB", DocValuesType.SORTED_NUMERIC);
-        fieldsMap1.put("fieldL", DocValuesType.SORTED_NUMERIC);
-
         StarTreeMetadata starTreeMetadata2 = new StarTreeMetadata(
             "test",
             STAR_TREE,
             mock(IndexInput.class),
             VERSION_CURRENT,
             builder.numStarTreeNodes,
-            fieldsMap1,
+            List.of("fieldC", "fieldB", "fieldL"),
             List.of(new Metric("fieldI", List.of(MetricStat.SUM))),
             7,
             27,
@@ -645,8 +631,9 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
             1287
         );
 
-        LinkedHashMap<String, DocValuesType> totalDimensionFields = new LinkedHashMap<>(starTreeMetadata.getDimensionFields());
-        totalDimensionFields.putAll(starTreeMetadata2.getDimensionFields());
+        List<String> totalDimensionFields = new ArrayList<>();
+        totalDimensionFields.addAll(starTreeMetadata.getDimensionFields());
+        totalDimensionFields.addAll(starTreeMetadata2.getDimensionFields());
 
         List<Metric> metrics = new ArrayList<>();
         metrics.addAll(starTreeMetadata.getMetrics());
@@ -769,12 +756,12 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
         SegmentInfo segmentInfo = new SegmentInfo(
             directory,
             Version.LATEST,
-            Version.LUCENE_10_1_0,
+            Version.LUCENE_9_11_0,
             "test_segment",
             7,
             false,
             false,
-            new Lucene101Codec(),
+            new Lucene912Codec(),
             new HashMap<>(),
             UUID.randomUUID().toString().substring(0, 16).getBytes(StandardCharsets.UTF_8),
             new HashMap<>(),
@@ -792,7 +779,6 @@ public class StarTreeBuildMetricTests extends StarTreeBuilderTestCase {
                 true,
                 IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS,
                 DocValuesType.SORTED_NUMERIC,
-                DocValuesSkipIndexType.RANGE,
                 -1,
                 Collections.emptyMap(),
                 0,

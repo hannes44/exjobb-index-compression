@@ -325,7 +325,7 @@ public abstract class AbstractTermVectorsTestCase extends ParameterizedStaticSet
 
         refresh();
 
-        return configs.toArray(new TestConfig[0]);
+        return configs.toArray(new TestConfig[configs.size()]);
     }
 
     protected TestFieldSetting[] getFieldSettings() {
@@ -464,6 +464,6 @@ public abstract class AbstractTermVectorsTestCase extends ParameterizedStaticSet
 
         ScoreDoc[] scoreDocs = search.scoreDocs;
         assertEquals(1, scoreDocs.length);
-        return directoryReader.termVectors().get(scoreDocs[0].doc);
+        return directoryReader.getTermVectors(scoreDocs[0].doc);
     }
 }

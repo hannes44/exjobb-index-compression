@@ -37,15 +37,15 @@ import org.apache.lucene.queries.ExtendedCommonTermsQuery;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.FieldExistsQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.ScorerSupplier;
+import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.opensearch.OpenSearchException;
 import org.opensearch.common.Nullable;
@@ -87,11 +87,15 @@ public class Queries {
         return Queries.newMatchNoDocsQuery("failed [" + field + "] query, caused by " + message);
     }
 
+    public static Query newNestedFilter() {
+        return not(newNonNestedFilter());
+    }
+
     /**
      * Creates a new non-nested docs query
      */
     public static Query newNonNestedFilter() {
-        return new FieldExistsQuery(SeqNoFieldMapper.PRIMARY_TERM_NAME);
+        return new DocValuesFieldExistsQuery(SeqNoFieldMapper.PRIMARY_TERM_NAME);
     }
 
     public static BooleanQuery filtered(@Nullable Query query, @Nullable Query filter) {
@@ -137,7 +141,7 @@ public class Queries {
         }
         int optionalClauses = 0;
         for (BooleanClause c : query.clauses()) {
-            if (c.occur() == BooleanClause.Occur.SHOULD) {
+            if (c.getOccur() == BooleanClause.Occur.SHOULD) {
                 optionalClauses++;
             }
         }
@@ -232,7 +236,7 @@ public class Queries {
                 }
 
                 @Override
-                public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+                public Scorer scorer(LeafReaderContext context) {
                     return null;
                 }
 

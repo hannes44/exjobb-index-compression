@@ -66,7 +66,7 @@ public class BinaryRangeAggregatorTests extends OpenSearchTestCase {
         @Override
         public long nextOrd() {
             if (i == ords.length) {
-                return NO_MORE_DOCS;
+                return NO_MORE_ORDS;
             }
             return ords[i++];
         }

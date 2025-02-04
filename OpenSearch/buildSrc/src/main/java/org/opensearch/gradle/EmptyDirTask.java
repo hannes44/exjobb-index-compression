@@ -32,7 +32,6 @@
 package org.opensearch.gradle;
 
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
@@ -49,12 +48,6 @@ public class EmptyDirTask extends DefaultTask {
 
     private File dir;
     private int dirMode = 0755;
-    private final Project project;
-
-    @Inject
-    public EmptyDirTask(Project project) {
-        this.project = project;
-    }
 
     /**
      * Creates an empty directory with the configured permissions.
@@ -91,7 +84,7 @@ public class EmptyDirTask extends DefaultTask {
      * @param dir The path of the directory to create. Takes a String and coerces it to a file.
      */
     public void setDir(String dir) {
-        this.dir = project.file(dir);
+        this.dir = getProject().file(dir);
     }
 
     @Input

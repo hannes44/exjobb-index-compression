@@ -12,6 +12,7 @@ import org.opensearch.OpenSearchException;
 import org.opensearch.action.ActionType;
 import org.opensearch.action.FailedNodeException;
 import org.opensearch.action.support.ActionFilters;
+import org.opensearch.action.support.nodes.BaseNodeRequest;
 import org.opensearch.action.support.nodes.BaseNodeResponse;
 import org.opensearch.action.support.nodes.BaseNodesRequest;
 import org.opensearch.action.support.nodes.BaseNodesResponse;
@@ -31,7 +32,6 @@ import org.opensearch.index.store.Store;
 import org.opensearch.indices.IndicesService;
 import org.opensearch.indices.store.TransportNodesListShardStoreMetadataHelper.StoreFilesMetadata;
 import org.opensearch.threadpool.ThreadPool;
-import org.opensearch.transport.TransportRequest;
 import org.opensearch.transport.TransportService;
 
 import java.io.IOException;
@@ -296,7 +296,7 @@ public class TransportNodesListShardStoreMetadataBatch extends TransportNodesAct
      * This is used in {@link TransportNodesAction}
      * @opensearch.internal
      */
-    public static class NodeRequest extends TransportRequest {
+    public static class NodeRequest extends BaseNodeRequest {
 
         private final Map<ShardId, ShardAttributes> shardAttributes;
 

@@ -245,7 +245,10 @@ public class MoreLikeThisQueryBuilderTests extends AbstractQueryTestCase<MoreLik
                 if (request.doc() != null) {
                     generatedFields = generateFields(randomFields, request.doc().utf8ToString());
                 } else {
-                    generatedFields = generateFields(request.selectedFields().toArray(new String[0]), request.id());
+                    generatedFields = generateFields(
+                        request.selectedFields().toArray(new String[request.selectedFields().size()]),
+                        request.id()
+                    );
                 }
                 EnumSet<TermVectorsRequest.Flag> flags = EnumSet.of(TermVectorsRequest.Flag.Positions, TermVectorsRequest.Flag.Offsets);
                 response.setFields(generatedFields, request.selectedFields(), flags, generatedFields);
@@ -276,8 +279,8 @@ public class MoreLikeThisQueryBuilderTests extends AbstractQueryTestCase<MoreLik
             assertThat(query, instanceOf(BooleanQuery.class));
             BooleanQuery booleanQuery = (BooleanQuery) query;
             for (BooleanClause booleanClause : booleanQuery) {
-                if (booleanClause.query() instanceof MoreLikeThisQuery) {
-                    MoreLikeThisQuery moreLikeThisQuery = (MoreLikeThisQuery) booleanClause.query();
+                if (booleanClause.getQuery() instanceof MoreLikeThisQuery) {
+                    MoreLikeThisQuery moreLikeThisQuery = (MoreLikeThisQuery) booleanClause.getQuery();
                     assertThat(moreLikeThisQuery.getLikeFields().length, greaterThan(0));
                 }
             }

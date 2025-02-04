@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.cluster.ClusterChangedEvent;
 import org.opensearch.cluster.ClusterManagerMetrics;
 import org.opensearch.cluster.ClusterName;
@@ -1003,7 +1004,7 @@ public class Coordinator extends AbstractLifecycleComponent implements Discovery
 
                 final boolean activePublication = currentPublication.map(CoordinatorPublication::isActiveForCurrentLeader).orElse(false);
                 if (becomingClusterManager && activePublication == false) {
-                    // cluster state update task to become cluster-manager is submitted to ClusterManagerService,
+                    // cluster state update task to become cluster-manager is submitted to MasterService,
                     // but publication has not started yet
                     assert followersChecker.getKnownFollowers().isEmpty() : followersChecker.getKnownFollowers();
                 } else {
@@ -1896,8 +1897,14 @@ public class Coordinator extends AbstractLifecycleComponent implements Discovery
     }
 
     // TODO: only here temporarily for BWC development, remove once complete
+    public static Settings.Builder addZen1Attribute(boolean isZen1Node, Settings.Builder builder) {
+        return builder.put("node.attr.zen1", isZen1Node);
+    }
+
+    // TODO: only here temporarily for BWC development, remove once complete
     public static boolean isZen1Node(DiscoveryNode discoveryNode) {
-        return Booleans.isTrue(discoveryNode.getAttributes().getOrDefault("zen1", "false"));
+        return discoveryNode.getVersion().before(LegacyESVersion.V_7_0_0)
+            || (Booleans.isTrue(discoveryNode.getAttributes().getOrDefault("zen1", "false")));
     }
 
     public boolean isRemotePublicationEnabled() {
@@ -1906,12 +1913,4 @@ public class Coordinator extends AbstractLifecycleComponent implements Discovery
         }
         return false;
     }
-
-    public boolean canDownloadFullStateFromRemote() {
-        if (remoteClusterStateService != null) {
-            return remoteClusterStateService.isRemotePublicationEnabled() && remoteClusterStateService.canDownloadFromRemoteForReadAPI();
-        }
-        return false;
-    }
-
 }

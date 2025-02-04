@@ -43,14 +43,18 @@ apply plugin: 'opensearch.yaml-rest-test'
 apply plugin: 'opensearch.internal-cluster-test'
 
 opensearchplugin {
-  description = 'The GCS repository plugin adds Google Cloud Storage support for repositories.'
-  classname = 'org.opensearch.repositories.gcs.GoogleCloudStoragePlugin'
+  description 'The GCS repository plugin adds Google Cloud Storage support for repositories.'
+  classname 'org.opensearch.repositories.gcs.GoogleCloudStoragePlugin'
 }
+
+versions << [
+  'google_auth': '1.7.0'
+]
 
 dependencies {
   api 'com.google.api:api-common:1.8.1'
-  api 'com.google.api:gax:2.35.0'
-  api 'com.google.api:gax-httpjson:2.42.0'
+  api 'com.google.api:gax:2.27.0'
+  api 'com.google.api:gax-httpjson:0.103.1'
 
   api 'com.google.apis:google-api-services-storage:v1-rev20230617-2.0.0'
 
@@ -63,7 +67,7 @@ dependencies {
   api "com.google.auth:google-auth-library-oauth2-http:${versions.google_auth}"
 
   api 'com.google.cloud:google-cloud-core:2.30.0'
-  api 'com.google.cloud:google-cloud-core-http:2.47.0'
+  api 'com.google.cloud:google-cloud-core-http:2.23.0'
   api 'com.google.cloud:google-cloud-storage:1.113.1'
 
   api 'com.google.code.gson:gson:2.11.0'
@@ -201,10 +205,7 @@ thirdPartyAudit {
     // commons-logging provided dependencies
     'javax.jms.Message',
     'javax.servlet.ServletContextEvent',
-    'javax.servlet.ServletContextListener',
-    // Bump for gax 2.42.0
-    'com.google.api.gax.rpc.EndpointContext',
-    'com.google.api.gax.rpc.RequestMutator'
+    'javax.servlet.ServletContextListener'
   )
 }
 
@@ -297,13 +298,6 @@ yamlRestTest {
 
 testClusters {
   all testClustersConfiguration
-}
-
-/**
- * Used for testing getting credentials from GCE
- */
-test {
-  environment 'NO_GCE_CHECK', 'true'
 }
 
 /*

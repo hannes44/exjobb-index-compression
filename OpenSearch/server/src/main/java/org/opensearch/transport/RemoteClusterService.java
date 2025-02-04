@@ -272,7 +272,7 @@ public final class RemoteClusterService extends RemoteClusterAware implements Cl
             // are on the cluster state thread and our custom future implementation will throw an
             // assertion.
             if (latch.await(10, TimeUnit.SECONDS) == false) {
-                logger.error("failed to connect to new remote cluster {} within {}", clusterAlias, TimeValue.timeValueSeconds(10));
+                logger.warn("failed to connect to new remote cluster {} within {}", clusterAlias, TimeValue.timeValueSeconds(10));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

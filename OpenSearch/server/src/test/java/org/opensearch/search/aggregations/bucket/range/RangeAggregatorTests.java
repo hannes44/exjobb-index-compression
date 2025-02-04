@@ -681,7 +681,6 @@ public class RangeAggregatorTests extends AggregatorTestCase {
     ) throws IOException {
         NumberType numberType = fieldType.numberType();
         String fieldName = numberType.typeName();
-
         try (Directory directory = newDirectory()) {
             try (IndexWriter indexWriter = new IndexWriter(directory, new IndexWriterConfig().setCodec(TestUtil.getDefaultCodec()))) {
                 for (Document doc : documents) {

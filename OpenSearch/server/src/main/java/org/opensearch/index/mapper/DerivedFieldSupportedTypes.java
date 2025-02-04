@@ -12,9 +12,11 @@ import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatField;
+import org.apache.lucene.document.InetAddressPoint;
 import org.apache.lucene.document.KeywordField;
 import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
@@ -68,7 +70,7 @@ public enum DerivedFieldSupportedTypes {
         );
         return builder.build(context);
     },
-        name -> o -> new LongField(name, (long) o, Field.Store.NO),
+        name -> o -> new LongPoint(name, (long) o),
         formatter -> o -> formatter == null
             ? DateFieldMapper.getDefaultDateTimeFormatter().formatMillis((long) o)
             : formatter.formatMillis((long) o)
@@ -93,7 +95,7 @@ public enum DerivedFieldSupportedTypes {
         } else {
             address = InetAddresses.forString(o.toString());
         }
-        return IpFieldMapper.buildInetAddressField(name, address);
+        return new InetAddressPoint(name, address);
     }, formatter -> o -> o),
     KEYWORD("keyword", (name, context, indexAnalyzers) -> {
         FieldType dummyFieldType = new FieldType();

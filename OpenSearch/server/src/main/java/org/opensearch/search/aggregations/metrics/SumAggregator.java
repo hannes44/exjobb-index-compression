@@ -46,8 +46,6 @@ import org.opensearch.search.aggregations.Aggregator;
 import org.opensearch.search.aggregations.InternalAggregation;
 import org.opensearch.search.aggregations.LeafBucketCollector;
 import org.opensearch.search.aggregations.LeafBucketCollectorBase;
-import org.opensearch.search.aggregations.StarTreeBucketCollector;
-import org.opensearch.search.aggregations.StarTreePreComputeCollector;
 import org.opensearch.search.aggregations.support.ValuesSource;
 import org.opensearch.search.aggregations.support.ValuesSourceConfig;
 import org.opensearch.search.internal.SearchContext;
@@ -62,7 +60,7 @@ import static org.opensearch.index.compositeindex.datacube.startree.utils.StarTr
  *
  * @opensearch.internal
  */
-public class SumAggregator extends NumericMetricsAggregator.SingleValue implements StarTreePreComputeCollector {
+public class SumAggregator extends NumericMetricsAggregator.SingleValue {
 
     private final ValuesSource.Numeric valuesSource;
     private final DocValueFormat format;
@@ -100,11 +98,6 @@ public class SumAggregator extends NumericMetricsAggregator.SingleValue implemen
 
         CompositeIndexFieldInfo supportedStarTree = getSupportedStarTree(this.context);
         if (supportedStarTree != null) {
-            if (parent != null && subAggregators.length == 0) {
-                // If this a child aggregator, then the parent will trigger star-tree pre-computation.
-                // Returning NO_OP_COLLECTOR explicitly because the getLeafCollector() are invoked starting from innermost aggregators
-                return LeafBucketCollector.NO_OP_COLLECTOR;
-            }
             return getStarTreeCollector(ctx, sub, supportedStarTree);
         }
         return getDefaultLeafCollector(ctx, sub);
@@ -142,8 +135,7 @@ public class SumAggregator extends NumericMetricsAggregator.SingleValue implemen
 
     public LeafBucketCollector getStarTreeCollector(LeafReaderContext ctx, LeafBucketCollector sub, CompositeIndexFieldInfo starTree)
         throws IOException {
-        final CompensatedSum kahanSummation = new CompensatedSum(sums.get(0), compensations.get(0));
-
+        final CompensatedSum kahanSummation = new CompensatedSum(sums.get(0), 0);
         return StarTreeQueryHelper.getStarTreeLeafCollector(
             context,
             valuesSource,
@@ -152,38 +144,7 @@ public class SumAggregator extends NumericMetricsAggregator.SingleValue implemen
             starTree,
             MetricStat.SUM.getTypeName(),
             value -> kahanSummation.add(NumericUtils.sortableLongToDouble(value)),
-            () -> {
-                sums.set(0, kahanSummation.value());
-                compensations.set(0, kahanSummation.delta());
-            }
-        );
-    }
-
-    /**
-     * The parent aggregator invokes this method to get a StarTreeBucketCollector,
-     * which exposes collectStarTreeEntry() to be evaluated on filtered star tree entries
-     */
-    public StarTreeBucketCollector getStarTreeBucketCollector(
-        LeafReaderContext ctx,
-        CompositeIndexFieldInfo starTree,
-        StarTreeBucketCollector parentCollector
-    ) throws IOException {
-        final CompensatedSum kahanSummation = new CompensatedSum(0, 0);
-        return StarTreeQueryHelper.getStarTreeBucketMetricCollector(
-            starTree,
-            MetricStat.SUM.getTypeName(),
-            valuesSource,
-            parentCollector,
-            (bucket) -> {
-                sums = context.bigArrays().grow(sums, bucket + 1);
-                compensations = context.bigArrays().grow(compensations, bucket + 1);
-            },
-            (bucket, metricValue) -> {
-                kahanSummation.reset(sums.get(bucket), compensations.get(bucket));
-                kahanSummation.add(NumericUtils.sortableLongToDouble(metricValue));
-                sums.set(bucket, kahanSummation.value());
-                compensations.set(bucket, kahanSummation.delta());
-            }
+            () -> sums.set(0, kahanSummation.value())
         );
     }
 

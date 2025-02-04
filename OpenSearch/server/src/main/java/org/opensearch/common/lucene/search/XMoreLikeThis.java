@@ -65,7 +65,6 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
@@ -257,7 +256,7 @@ public final class XMoreLikeThis {
     /**
      * Return a Query with no more than this many terms.
      *
-     * @see IndexSearcher#getMaxClauseCount
+     * @see BooleanQuery#getMaxClauseCount
      * @see #getMaxQueryTerms
      * @see #setMaxQueryTerms
      */
@@ -622,7 +621,7 @@ public final class XMoreLikeThis {
         if (fieldNames == null) {
             // gather list of valid fields from lucene
             Collection<String> fields = FieldInfos.getIndexedFields(ir);
-            fieldNames = fields.toArray(new String[0]);
+            fieldNames = fields.toArray(new String[fields.size()]);
         }
 
         return createQuery(retrieveTerms(docNum));
@@ -712,7 +711,7 @@ public final class XMoreLikeThis {
 
             try {
                 query.add(tq, BooleanClause.Occur.SHOULD);
-            } catch (IndexSearcher.TooManyClauses ignore) {
+            } catch (BooleanQuery.TooManyClauses ignore) {
                 break;
             }
         }

@@ -50,7 +50,7 @@ public class MinHashFilterFactoryTests extends OpenSearchTokenStreamTestCase {
         int default_bucket_size = 512;
         int default_hash_set_size = 1;
         Settings settings = Settings.builder().put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString()).build();
-        OpenSearchTestCase.TestAnalysis analysis = getTestAnalysisFromSettings(settings);
+        OpenSearchTestCase.TestAnalysis analysis = AnalysisTestsHelper.createTestAnalysisFromSettings(settings, new CommonAnalysisPlugin());
         TokenFilterFactory tokenFilter = analysis.tokenFilter.get("min_hash");
         String source = "the quick brown fox";
         Tokenizer tokenizer = getTokenizer(source);
@@ -69,7 +69,7 @@ public class MinHashFilterFactoryTests extends OpenSearchTokenStreamTestCase {
             .put("index.analysis.filter.test_min_hash.with_rotation", false)
             .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
             .build();
-        OpenSearchTestCase.TestAnalysis analysis = getTestAnalysisFromSettings(settings);
+        OpenSearchTestCase.TestAnalysis analysis = AnalysisTestsHelper.createTestAnalysisFromSettings(settings, new CommonAnalysisPlugin());
         TokenFilterFactory tokenFilter = analysis.tokenFilter.get("test_min_hash");
         String source = "sushi";
         Tokenizer tokenizer = getTokenizer(source);
@@ -120,7 +120,7 @@ public class MinHashFilterFactoryTests extends OpenSearchTokenStreamTestCase {
     }
 
     private static OpenSearchTestCase.TestAnalysis getTestAnalysisFromSettings(Settings settingsWithBucketCount) throws IOException {
-        return AnalysisTestsHelper.createTestAnalysisFromSettings(settingsWithBucketCount, new CommonAnalysisModulePlugin());
+        return AnalysisTestsHelper.createTestAnalysisFromSettings(settingsWithBucketCount, new CommonAnalysisPlugin());
     }
 
     private static Tokenizer getTokenizer(String sourceWithBucketCount) {

@@ -33,12 +33,11 @@ package org.opensearch.snapshots;
 
 import org.opensearch.Version;
 import org.opensearch.action.admin.cluster.snapshots.create.CreateSnapshotResponse;
-import org.opensearch.action.admin.cluster.snapshots.restore.RestoreSnapshotRequestBuilder;
 import org.opensearch.action.admin.cluster.state.ClusterStateResponse;
 import org.opensearch.action.index.IndexRequestBuilder;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.support.PlainActionFuture;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.ClusterStateObserver;
 import org.opensearch.cluster.ClusterStateUpdateTask;
@@ -62,7 +61,6 @@ import org.opensearch.core.common.Strings;
 import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.core.common.unit.ByteSizeUnit;
 import org.opensearch.core.compress.CompressorRegistry;
-import org.opensearch.core.rest.RestStatus;
 import org.opensearch.core.xcontent.DeprecationHandler;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.core.xcontent.XContentBuilder;
@@ -469,7 +467,8 @@ public abstract class AbstractSnapshotIntegTestCase extends OpenSearchIntegTestC
                 DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
                 jsonBuilder.toString().replace(Version.CURRENT.toString(), version.toString())
             ),
-            repositoryData.getGenId()
+            repositoryData.getGenId(),
+            randomBoolean()
         );
         Files.write(
             repoPath.resolve(BlobStoreRepository.INDEX_FILE_PREFIX + repositoryData.getGenId()),
@@ -506,26 +505,6 @@ public abstract class AbstractSnapshotIntegTestCase extends OpenSearchIntegTestC
         assertThat(snapshotInfo.successfulShards(), greaterThan(0));
         assertThat(snapshotInfo.failedShards(), equalTo(0));
         return snapshotInfo;
-    }
-
-    protected void restoreSnapshot(
-        String repositoryName,
-        String snapshotName,
-        String indexName,
-        String restoredIndexName,
-        Settings indexSettings
-    ) {
-        logger.info("--> restoring snapshot [{}] of {} in [{}] to [{}]", snapshotName, indexName, repositoryName, restoredIndexName);
-        RestoreSnapshotRequestBuilder builder = client().admin()
-            .cluster()
-            .prepareRestoreSnapshot(repositoryName, snapshotName)
-            .setWaitForCompletion(false)
-            .setRenamePattern(indexName)
-            .setRenameReplacement(restoredIndexName);
-        if (indexSettings != null) {
-            builder.setIndexSettings(indexSettings);
-        }
-        assertEquals(builder.get().status(), RestStatus.ACCEPTED);
     }
 
     protected void createIndexWithRandomDocs(String indexName, int docCount) throws InterruptedException {
@@ -566,7 +545,7 @@ public abstract class AbstractSnapshotIntegTestCase extends OpenSearchIntegTestC
     protected long getCountForIndex(String indexName) {
         return client().search(
             new SearchRequest(new SearchRequest(indexName).source(new SearchSourceBuilder().size(0).trackTotalHits(true)))
-        ).actionGet().getHits().getTotalHits().value();
+        ).actionGet().getHits().getTotalHits().value;
     }
 
     protected void assertDocCount(String index, long count) {
@@ -619,7 +598,7 @@ public abstract class AbstractSnapshotIntegTestCase extends OpenSearchIntegTestC
             Collections.emptyList(),
             SnapshotState.FAILED,
             "failed on purpose",
-            Version.V_2_0_0,
+            SnapshotsService.OLD_SNAPSHOT_FORMAT,
             0L,
             0L,
             0,
@@ -636,7 +615,7 @@ public abstract class AbstractSnapshotIntegTestCase extends OpenSearchIntegTestC
                 getRepositoryData(repoName).getGenId(),
                 state.metadata(),
                 snapshotInfo,
-                Version.V_2_0_0,
+                SnapshotsService.OLD_SNAPSHOT_FORMAT,
                 Function.identity(),
                 Priority.NORMAL,
                 f

@@ -16,7 +16,7 @@ import org.jetbrains.gradle.ext.JUnit
 buildscript {
   repositories {
     maven {
-      url = "https://plugins.gradle.org/m2/"
+      url "https://plugins.gradle.org/m2/"
     }
   }
   dependencies {
@@ -81,7 +81,7 @@ if (System.getProperty('idea.active') == 'true') {
         }
         runConfigurations {
           defaults(JUnit) {
-            vmParameters = '-ea -Djava.locale.providers=SPI,CLDR'
+            vmParameters = '-ea -Djava.locale.providers=SPI,COMPAT'
             if (BuildParams.runtimeJavaVersion > JavaVersion.VERSION_17) {
               vmParameters += ' -Djava.security.manager=allow'
             }

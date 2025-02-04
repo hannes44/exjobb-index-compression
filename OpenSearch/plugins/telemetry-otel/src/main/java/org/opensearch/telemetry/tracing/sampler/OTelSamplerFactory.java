@@ -63,7 +63,6 @@ public class OTelSamplerFactory {
         return fallbackSampler;
     }
 
-    @SuppressWarnings("removal")
     private static Sampler instantiateSampler(
         Class<Sampler> samplerClassName,
         TelemetrySettings telemetrySettings,

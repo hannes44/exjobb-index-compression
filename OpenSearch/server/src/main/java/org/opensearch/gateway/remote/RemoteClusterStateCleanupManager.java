@@ -306,7 +306,7 @@ public class RemoteClusterStateCleanupManager implements Closeable {
                     staleEphemeralAttributePaths.add(clusterMetadataManifest.getHashesOfConsistentSettings().getUploadedFilename());
                 }
                 if (clusterMetadataManifest.getClusterStateCustomMap() != null) {
-                    clusterMetadataManifest.getClusterStateCustomMap()
+                    clusterMetadataManifest.getCustomMetadataMap()
                         .values()
                         .stream()
                         .filter(u -> !filesToKeep.contains(u.getUploadedFilename()))

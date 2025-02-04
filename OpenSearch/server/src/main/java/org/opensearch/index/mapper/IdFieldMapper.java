@@ -37,7 +37,6 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermInSetQuery;
@@ -66,9 +65,7 @@ import org.opensearch.search.sort.BucketedSort;
 import org.opensearch.search.sort.SortOrder;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -166,15 +163,15 @@ public class IdFieldMapper extends MetadataFieldMapper {
         @Override
         public Query termsQuery(List<?> values, QueryShardContext context) {
             failIfNotIndexed();
-            Collection<BytesRef> bytesRefs = new ArrayList<>(values.size());
-            for (int i = 0; i < values.size(); i++) {
+            BytesRef[] bytesRefs = new BytesRef[values.size()];
+            for (int i = 0; i < bytesRefs.length; i++) {
                 Object idObject = values.get(i);
                 if (idObject instanceof BytesRef) {
                     idObject = ((BytesRef) idObject).utf8ToString();
                 }
-                bytesRefs.add(Uid.encodeId(idObject.toString()));
+                bytesRefs[i] = Uid.encodeId(idObject.toString());
             }
-            return new TermInSetQuery(MultiTermQuery.CONSTANT_SCORE_BLENDED_REWRITE, name(), bytesRefs);
+            return new TermInSetQuery(name(), bytesRefs);
         }
 
         @Override

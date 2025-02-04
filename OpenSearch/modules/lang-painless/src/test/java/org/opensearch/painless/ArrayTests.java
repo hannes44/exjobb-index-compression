@@ -32,6 +32,7 @@
 
 package org.opensearch.painless;
 
+import org.apache.lucene.util.Constants;
 import org.hamcrest.Matcher;
 
 import java.lang.invoke.MethodHandle;
@@ -57,6 +58,7 @@ public class ArrayTests extends ArrayLikeObjectTestCase {
     }
 
     public void testArrayLengthHelper() throws Throwable {
+        assertEquals(Constants.JRE_IS_MINIMUM_JAVA9, Def.JAVA9_ARRAY_LENGTH_MH_FACTORY != null);
         assertArrayLength(2, new int[2]);
         assertArrayLength(3, new long[3]);
         assertArrayLength(4, new byte[4]);

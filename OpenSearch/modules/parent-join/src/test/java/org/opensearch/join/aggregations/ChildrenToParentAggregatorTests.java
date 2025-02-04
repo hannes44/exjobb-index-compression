@@ -61,7 +61,7 @@ import org.opensearch.index.mapper.MapperService;
 import org.opensearch.index.mapper.MappingLookup;
 import org.opensearch.index.mapper.NumberFieldMapper;
 import org.opensearch.index.mapper.Uid;
-import org.opensearch.join.ParentJoinModulePlugin;
+import org.opensearch.join.ParentJoinPlugin;
 import org.opensearch.join.mapper.MetaJoinFieldMapper;
 import org.opensearch.join.mapper.ParentJoinFieldMapper;
 import org.opensearch.plugins.SearchPlugin;
@@ -142,22 +142,18 @@ public class ChildrenToParentAggregatorTests extends AggregatorTestCase {
 
         // verify for each children
         for (String parent : expectedParentChildRelations.keySet()) {
-            testCase(
-                new TermInSetQuery(IdFieldMapper.NAME, Collections.singleton(Uid.encodeId("child0_" + parent))),
-                indexSearcher,
-                aggregation -> {
-                    assertEquals(
-                        "Expected one result for min-aggregation for parent: " + parent + ", but had aggregation-results: " + aggregation,
-                        1,
-                        aggregation.getDocCount()
-                    );
-                    assertEquals(
-                        expectedParentChildRelations.get(parent).v2(),
-                        ((InternalMin) aggregation.getAggregations().get("in_parent")).getValue(),
-                        Double.MIN_VALUE
-                    );
-                }
-            );
+            testCase(new TermInSetQuery(IdFieldMapper.NAME, Uid.encodeId("child0_" + parent)), indexSearcher, aggregation -> {
+                assertEquals(
+                    "Expected one result for min-aggregation for parent: " + parent + ", but had aggregation-results: " + aggregation,
+                    1,
+                    aggregation.getDocCount()
+                );
+                assertEquals(
+                    expectedParentChildRelations.get(parent).v2(),
+                    ((InternalMin) aggregation.getAggregations().get("in_parent")).getValue(),
+                    Double.MIN_VALUE
+                );
+            });
         }
 
         indexReader.close();
@@ -354,6 +350,6 @@ public class ChildrenToParentAggregatorTests extends AggregatorTestCase {
 
     @Override
     protected List<SearchPlugin> getSearchPlugins() {
-        return Collections.singletonList(new ParentJoinModulePlugin());
+        return Collections.singletonList(new ParentJoinPlugin());
     }
 }

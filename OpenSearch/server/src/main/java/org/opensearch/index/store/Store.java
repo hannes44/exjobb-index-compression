@@ -171,6 +171,13 @@ public class Store extends AbstractIndexShardComponent implements Closeable, Ref
         Property.IndexScope
     );
 
+    /**
+     * Specific {@link IOContext} used to verify Lucene files footer checksums.
+     * See {@link MetadataSnapshot#checksumFromLuceneFile(Directory, String, Map, Logger, Version, boolean)}
+     */
+    @Deprecated(forRemoval = true)
+    public static final IOContext READONCE_CHECKSUM = new IOContext(IOContext.READONCE.context);
+
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final StoreDirectory directory;
     private final ReentrantReadWriteLock metadataLock = new ReentrantReadWriteLock();
@@ -737,7 +744,7 @@ public class Store extends AbstractIndexShardComponent implements Closeable, Ref
         List<CorruptIndexException> ex = new ArrayList<>();
         for (String file : files) {
             if (file.startsWith(CORRUPTED_MARKER_NAME_PREFIX)) {
-                try (ChecksumIndexInput input = directory.openChecksumInput(file)) {
+                try (ChecksumIndexInput input = directory.openChecksumInput(file, IOContext.READONCE)) {
                     CodecUtil.checkHeader(input, CODEC, CORRUPTED_MARKER_CODEC_VERSION, CORRUPTED_MARKER_CODEC_VERSION);
                     final int size = input.readVInt();
                     final byte[] buffer = new byte[size];

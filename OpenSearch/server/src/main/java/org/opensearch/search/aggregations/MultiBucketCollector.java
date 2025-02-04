@@ -38,6 +38,7 @@ import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.MultiCollector;
 import org.apache.lucene.search.Scorable;
+import org.apache.lucene.search.ScoreCachingWrappingScorer;
 import org.apache.lucene.search.ScoreMode;
 
 import java.io.IOException;
@@ -175,54 +176,7 @@ public class MultiBucketCollector extends BucketCollector {
             case 1:
                 return leafCollectors.get(0);
             default:
-                LeafBucketCollector collector = new MultiLeafBucketCollector(leafCollectors, cacheScores);
-                if (cacheScores) {
-                    collector = new ScoreCachingLeafBucketCollector(collector);
-                }
-                return collector;
-        }
-    }
-
-    private static class ScoreCachingLeafBucketCollector extends LeafBucketCollector {
-        private final LeafBucketCollector in;
-        private ScoreCachingWrappingScorer scoreCachingWrappingScorer;
-
-        public ScoreCachingLeafBucketCollector(LeafBucketCollector in) {
-            this.in = in;
-        }
-
-        @Override
-        public void setScorer(Scorable scorer) throws IOException {
-            scoreCachingWrappingScorer = new ScoreCachingWrappingScorer(scorer);
-            in.setScorer(scoreCachingWrappingScorer);
-        }
-
-        @Override
-        public void collect(int doc, long owningBucketOrd) throws IOException {
-            if (scoreCachingWrappingScorer != null) {
-                scoreCachingWrappingScorer.curDoc = doc;
-            }
-            in.collect(doc, owningBucketOrd);
-        }
-    }
-
-    private static class ScoreCachingWrappingScorer extends Scorable {
-        private int lastDoc = -1;
-        private int curDoc = -1;
-        private float curScore;
-        private final Scorable in;
-
-        ScoreCachingWrappingScorer(Scorable in) {
-            this.in = in;
-        }
-
-        @Override
-        public float score() throws IOException {
-            if (lastDoc != curDoc) {
-                curScore = in.score();
-                lastDoc = curDoc;
-            }
-            return curScore;
+                return new MultiLeafBucketCollector(leafCollectors, cacheScores);
         }
     }
 
@@ -238,13 +192,16 @@ public class MultiBucketCollector extends BucketCollector {
         private int numCollectors;
 
         private MultiLeafBucketCollector(List<LeafBucketCollector> collectors, boolean cacheScores) {
-            this.collectors = collectors.toArray(new LeafBucketCollector[0]);
+            this.collectors = collectors.toArray(new LeafBucketCollector[collectors.size()]);
             this.cacheScores = cacheScores;
             this.numCollectors = this.collectors.length;
         }
 
         @Override
         public void setScorer(Scorable scorer) throws IOException {
+            if (cacheScores) {
+                scorer = ScoreCachingWrappingScorer.wrap(scorer);
+            }
             for (int i = 0; i < numCollectors; ++i) {
                 final LeafCollector c = collectors[i];
                 c.setScorer(scorer);

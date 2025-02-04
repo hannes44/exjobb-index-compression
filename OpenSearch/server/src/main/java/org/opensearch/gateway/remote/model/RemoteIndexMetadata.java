@@ -105,7 +105,7 @@ public class RemoteIndexMetadata extends AbstractClusterMetadataWriteableBlobEnt
         }
         assert pathHashAlgo != null;
         return pathType.path(
-            RemoteStorePathStrategy.PathInput.builder()
+            RemoteStorePathStrategy.BasePathInput.builder()
                 .fixedPrefix(fixedPrefix)
                 .basePath(blobPath)
                 .indexUUID(indexMetadata.getIndexUUID())

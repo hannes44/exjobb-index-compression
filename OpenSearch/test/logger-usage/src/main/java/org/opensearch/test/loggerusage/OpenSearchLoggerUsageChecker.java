@@ -201,7 +201,7 @@ public class OpenSearchLoggerUsageChecker {
         private final Predicate<String> methodsToCheck;
 
         ClassChecker(Consumer<WrongLoggerUsage> wrongUsageCallback, Predicate<String> methodsToCheck) {
-            super(Opcodes.ASM9);
+            super(Opcodes.ASM7);
             this.wrongUsageCallback = wrongUsageCallback;
             this.methodsToCheck = methodsToCheck;
         }

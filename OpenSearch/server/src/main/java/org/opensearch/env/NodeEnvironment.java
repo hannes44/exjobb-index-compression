@@ -71,7 +71,6 @@ import org.opensearch.gateway.PersistedClusterStateService;
 import org.opensearch.index.IndexSettings;
 import org.opensearch.index.shard.ShardPath;
 import org.opensearch.index.store.FsDirectoryFactory;
-import org.opensearch.index.store.IndexStoreListener;
 import org.opensearch.monitor.fs.FsInfo;
 import org.opensearch.monitor.fs.FsProbe;
 import org.opensearch.monitor.jvm.JvmInfo;
@@ -321,7 +320,7 @@ public final class NodeEnvironment implements Closeable {
         NodeLock nodeLock = null;
 
         try {
-            sharedDataPath = environment.sharedDataDir();
+            sharedDataPath = environment.sharedDataFile();
             IOException lastException = null;
             int maxLocalStorageNodes = MAX_LOCAL_STORAGE_NODES_SETTING.get(settings);
 
@@ -1063,7 +1062,7 @@ public final class NodeEnvironment implements Closeable {
                 paths.add(indexFolder);
             }
         }
-        return paths.toArray(new Path[0]);
+        return paths.toArray(new Path[paths.size()]);
     }
 
     /**
@@ -1412,5 +1411,19 @@ public final class NodeEnvironment implements Closeable {
                 throw new IOException("failed to test writes in data directory [" + path + "] write permission is required", ex);
             }
         }
+    }
+
+    /**
+     * A listener that is executed on per-index and per-shard store events, like deleting shard path
+     *
+     * @opensearch.internal
+     */
+    public interface IndexStoreListener {
+        default void beforeShardPathDeleted(ShardId shardId, IndexSettings indexSettings, NodeEnvironment env) {}
+
+        default void beforeIndexPathDeleted(Index index, IndexSettings indexSettings, NodeEnvironment env) {}
+
+        IndexStoreListener EMPTY = new IndexStoreListener() {
+        };
     }
 }

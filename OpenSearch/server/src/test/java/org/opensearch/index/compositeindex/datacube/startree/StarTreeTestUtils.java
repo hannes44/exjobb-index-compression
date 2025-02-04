@@ -99,7 +99,6 @@ public class StarTreeTestUtils {
     ) throws IOException {
         Long[] dims = new Long[dimensionReaders.length];
         int i = 0;
-
         for (SequentialDocValuesIterator dimensionDocValueIterator : dimensionReaders) {
             dimensionDocValueIterator.nextEntry(currentDocId);
             Long val = dimensionDocValueIterator.value(currentDocId);
@@ -118,9 +117,6 @@ public class StarTreeTestUtils {
 
     public static Double toAggregatorValueType(Long value, FieldValueConverter fieldValueConverter) {
         try {
-            if (value == null) {
-                return 0.0;
-            }
             return fieldValueConverter.toDoubleValue(value);
         } catch (Exception e) {
             throw new IllegalStateException("Cannot convert " + value + " to sortable aggregation type", e);

@@ -32,6 +32,7 @@
 
 package org.opensearch.transport;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
@@ -68,7 +69,11 @@ public class TransportStats implements Writeable, ToXContentFragment {
 
     public TransportStats(StreamInput in) throws IOException {
         serverOpen = in.readVLong();
-        totalOutboundConnections = in.readVLong();
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_10_0)) {
+            totalOutboundConnections = in.readVLong();
+        } else {
+            totalOutboundConnections = 0L;
+        }
         rxCount = in.readVLong();
         rxSize = in.readVLong();
         txCount = in.readVLong();
@@ -78,7 +83,9 @@ public class TransportStats implements Writeable, ToXContentFragment {
     @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeVLong(serverOpen);
-        out.writeVLong(totalOutboundConnections);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_10_0)) {
+            out.writeVLong(totalOutboundConnections);
+        }
         out.writeVLong(rxCount);
         out.writeVLong(rxSize);
         out.writeVLong(txCount);

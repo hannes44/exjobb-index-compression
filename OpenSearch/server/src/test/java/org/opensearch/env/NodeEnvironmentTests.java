@@ -45,7 +45,6 @@ import org.opensearch.core.index.Index;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.gateway.MetadataStateFormat;
 import org.opensearch.index.IndexSettings;
-import org.opensearch.index.store.IndexStoreListener;
 import org.opensearch.node.Node;
 import org.opensearch.test.IndexSettingsModule;
 import org.opensearch.test.NodeRoles;
@@ -267,7 +266,7 @@ public class NodeEnvironmentTests extends OpenSearchTestCase {
         }
         for (Map.Entry<String, List<Path>> actualIndexDataPathEntry : actualIndexDataPaths.entrySet()) {
             List<Path> actual = actualIndexDataPathEntry.getValue();
-            Path[] actualPaths = actual.toArray(new Path[0]);
+            Path[] actualPaths = actual.toArray(new Path[actual.size()]);
             assertThat(actualPaths, equalTo(env.resolveIndexFolder(actualIndexDataPathEntry.getKey())));
         }
         assertTrue("LockedShards: " + env.lockedShards(), env.lockedShards().isEmpty());
@@ -361,39 +360,24 @@ public class NodeEnvironmentTests extends OpenSearchTestCase {
     }
 
     public void testIndexStoreListener() throws Exception {
-        final AtomicInteger shardCounter1 = new AtomicInteger(0);
-        final AtomicInteger shardCounter2 = new AtomicInteger(0);
-        final AtomicInteger indexCounter1 = new AtomicInteger(0);
-        final AtomicInteger indexCounter2 = new AtomicInteger(0);
+        final AtomicInteger shardCounter = new AtomicInteger(0);
+        final AtomicInteger indexCounter = new AtomicInteger(0);
         final Index index = new Index("foo", "fooUUID");
         final ShardId shardId = new ShardId(index, 0);
-        final IndexStoreListener listener1 = new IndexStoreListener() {
+        final NodeEnvironment.IndexStoreListener listener = new NodeEnvironment.IndexStoreListener() {
             @Override
             public void beforeShardPathDeleted(ShardId inShardId, IndexSettings indexSettings, NodeEnvironment env) {
                 assertEquals(shardId, inShardId);
-                shardCounter1.incrementAndGet();
+                shardCounter.incrementAndGet();
             }
 
             @Override
             public void beforeIndexPathDeleted(Index inIndex, IndexSettings indexSettings, NodeEnvironment env) {
                 assertEquals(index, inIndex);
-                indexCounter1.incrementAndGet();
+                indexCounter.incrementAndGet();
             }
         };
-        final IndexStoreListener listener2 = new IndexStoreListener() {
-            @Override
-            public void beforeShardPathDeleted(ShardId inShardId, IndexSettings indexSettings, NodeEnvironment env) {
-                assertEquals(shardId, inShardId);
-                shardCounter2.incrementAndGet();
-            }
-
-            @Override
-            public void beforeIndexPathDeleted(Index inIndex, IndexSettings indexSettings, NodeEnvironment env) {
-                assertEquals(index, inIndex);
-                indexCounter2.incrementAndGet();
-            }
-        };
-        final NodeEnvironment env = newNodeEnvironment(new IndexStoreListener.CompositeIndexStoreListener(List.of(listener1, listener2)));
+        final NodeEnvironment env = newNodeEnvironment(listener);
 
         for (Path path : env.indexPaths(index)) {
             Files.createDirectories(path.resolve("0"));
@@ -402,30 +386,26 @@ public class NodeEnvironmentTests extends OpenSearchTestCase {
         for (Path path : env.indexPaths(index)) {
             assertTrue(Files.exists(path.resolve("0")));
         }
-        assertEquals(0, shardCounter1.get());
-        assertEquals(0, shardCounter2.get());
+        assertEquals(0, shardCounter.get());
 
         env.deleteShardDirectorySafe(new ShardId(index, 0), idxSettings);
 
         for (Path path : env.indexPaths(index)) {
             assertFalse(Files.exists(path.resolve("0")));
         }
-        assertEquals(1, shardCounter1.get());
-        assertEquals(1, shardCounter2.get());
+        assertEquals(1, shardCounter.get());
 
         for (Path path : env.indexPaths(index)) {
             assertTrue(Files.exists(path));
         }
-        assertEquals(0, indexCounter1.get());
-        assertEquals(0, indexCounter2.get());
+        assertEquals(0, indexCounter.get());
 
         env.deleteIndexDirectorySafe(index, 5000, idxSettings);
 
         for (Path path : env.indexPaths(index)) {
             assertFalse(Files.exists(path));
         }
-        assertEquals(1, indexCounter1.get());
-        assertEquals(1, indexCounter2.get());
+        assertEquals(1, indexCounter.get());
         assertTrue("LockedShards: " + env.lockedShards(), env.lockedShards().isEmpty());
         env.close();
     }
@@ -700,7 +680,7 @@ public class NodeEnvironmentTests extends OpenSearchTestCase {
         return newNodeEnvironment(Settings.EMPTY);
     }
 
-    public NodeEnvironment newNodeEnvironment(IndexStoreListener listener) throws IOException {
+    public NodeEnvironment newNodeEnvironment(NodeEnvironment.IndexStoreListener listener) throws IOException {
         Settings build = buildEnvSettings(Settings.EMPTY);
         return new NodeEnvironment(build, TestEnvironment.newEnvironment(build), listener);
     }

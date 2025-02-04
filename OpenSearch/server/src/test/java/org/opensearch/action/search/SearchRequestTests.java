@@ -32,6 +32,7 @@
 
 package org.opensearch.action.search;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.action.ActionRequestValidationException;
 import org.opensearch.action.support.IndicesOptions;
@@ -48,7 +49,6 @@ import org.opensearch.search.AbstractSearchTestCase;
 import org.opensearch.search.Scroll;
 import org.opensearch.search.builder.PointInTimeBuilder;
 import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.search.fetch.subphase.FetchSourceContext;
 import org.opensearch.search.rescore.QueryRescorerBuilder;
 import org.opensearch.test.OpenSearchTestCase;
 import org.opensearch.test.VersionUtils;
@@ -83,35 +83,6 @@ public class SearchRequestTests extends AbstractSearchTestCase {
         );
     }
 
-    public void testClone() throws IOException {
-        SearchRequest searchRequest = new SearchRequest();
-        SearchRequest clonedRequest = searchRequest.deepCopy();
-        assertEquals(searchRequest.hashCode(), clonedRequest.hashCode());
-        assertNotSame(searchRequest, clonedRequest);
-
-        String[] includes = new String[] { "field1.*" };
-        String[] excludes = new String[] { "field2.*" };
-        FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includes, excludes);
-        SearchSourceBuilder source = new SearchSourceBuilder().fetchSource(fetchSourceContext);
-        SearchRequest complexSearchRequest = createSearchRequest().source(source);
-        complexSearchRequest.requestCache(false);
-        complexSearchRequest.scroll(new TimeValue(1000));
-        SearchRequest clonedComplexRequest = complexSearchRequest.deepCopy();
-        assertEquals(complexSearchRequest.hashCode(), clonedComplexRequest.hashCode());
-        assertNotSame(complexSearchRequest, clonedComplexRequest);
-        assertEquals(fetchSourceContext, clonedComplexRequest.source().fetchSource());
-        assertNotSame(fetchSourceContext, clonedComplexRequest.source().fetchSource());
-        // Change the value of the original includes array and excludes array
-        includes[0] = "new_field1.*";
-        excludes[0] = "new_field2.*";
-        // Values in the original fetchSource object should be updated
-        assertEquals("new_field1.*", complexSearchRequest.source().fetchSource().includes()[0]);
-        assertEquals("new_field2.*", complexSearchRequest.source().fetchSource().excludes()[0]);
-        // Values in the cloned fetchSource object should not be updated
-        assertEquals("field1.*", clonedComplexRequest.source().fetchSource().includes()[0]);
-        assertEquals("field2.*", clonedComplexRequest.source().fetchSource().excludes()[0]);
-    }
-
     public void testWithLocalReduction() {
         expectThrows(NullPointerException.class, () -> SearchRequest.subSearchRequest(null, Strings.EMPTY_ARRAY, "", 0, randomBoolean()));
         SearchRequest request = new SearchRequest();
@@ -144,11 +115,20 @@ public class SearchRequestTests extends AbstractSearchTestCase {
         SearchRequest searchRequest = createSearchRequest();
         Version version = VersionUtils.randomVersion(random());
         SearchRequest deserializedRequest = copyWriteable(searchRequest, namedWriteableRegistry, SearchRequest::new, version);
-        assertEquals(searchRequest.isCcsMinimizeRoundtrips(), deserializedRequest.isCcsMinimizeRoundtrips());
+        if (version.before(LegacyESVersion.V_7_0_0)) {
+            assertTrue(deserializedRequest.isCcsMinimizeRoundtrips());
+        } else {
+            assertEquals(searchRequest.isCcsMinimizeRoundtrips(), deserializedRequest.isCcsMinimizeRoundtrips());
+        }
         assertEquals(searchRequest.getLocalClusterAlias(), deserializedRequest.getLocalClusterAlias());
         assertEquals(searchRequest.getAbsoluteStartMillis(), deserializedRequest.getAbsoluteStartMillis());
         assertEquals(searchRequest.isFinalReduce(), deserializedRequest.isFinalReduce());
-        assertEquals(searchRequest.getCancelAfterTimeInterval(), deserializedRequest.getCancelAfterTimeInterval());
+
+        if (version.onOrAfter(Version.V_1_1_0)) {
+            assertEquals(searchRequest.getCancelAfterTimeInterval(), deserializedRequest.getCancelAfterTimeInterval());
+        } else {
+            assertNull(deserializedRequest.getCancelAfterTimeInterval());
+        }
     }
 
     public void testIllegalArguments() {

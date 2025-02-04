@@ -45,7 +45,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.Weight;
@@ -92,8 +91,8 @@ public class SearchAfterSortedDocQuery extends Query {
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new ConstantScoreWeight(this, 1.0f) {
             @Override
-            public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
-                Sort segmentSort = context.reader().getMetaData().sort();
+            public Scorer scorer(LeafReaderContext context) throws IOException {
+                Sort segmentSort = context.reader().getMetaData().getSort();
                 if (segmentSort == null || Lucene.canEarlyTerminate(sort, segmentSort) == false) {
                     throw new IOException("search sort :[" + sort.getSort() + "] does not match the index sort:[" + segmentSort + "]");
                 }
@@ -105,8 +104,7 @@ public class SearchAfterSortedDocQuery extends Query {
                     return null;
                 }
                 final DocIdSetIterator disi = new MinDocQuery.MinDocIterator(firstDoc, maxDoc);
-                final Scorer scorer = new ConstantScoreScorer(score(), scoreMode, disi);
-                return new DefaultScorerSupplier(scorer);
+                return new ConstantScoreScorer(this, score(), scoreMode, disi);
             }
 
             @Override

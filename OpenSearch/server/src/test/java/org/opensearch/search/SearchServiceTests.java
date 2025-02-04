@@ -58,7 +58,6 @@ import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.UUIDs;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
-import org.opensearch.common.settings.SettingsException;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.common.Strings;
@@ -1204,15 +1203,15 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
             )
         ).actionGet();
 
-        SettingsException se = expectThrows(
-            SettingsException.class,
+        IllegalArgumentException iae = expectThrows(
+            IllegalArgumentException.class,
             () -> client().admin()
                 .indices()
                 .prepareUpdateSettings("throttled_threadpool_index")
                 .setSettings(Settings.builder().put(IndexSettings.INDEX_SEARCH_THROTTLED.getKey(), false))
                 .get()
         );
-        assertEquals("can not update private setting [index.search.throttled]; this setting is managed by OpenSearch", se.getMessage());
+        assertEquals("can not update private setting [index.search.throttled]; this setting is managed by OpenSearch", iae.getMessage());
         assertFalse(service.getIndicesService().indexServiceSafe(index).getIndexSettings().isSearchThrottled());
         SearchRequest searchRequest = new SearchRequest().allowPartialSearchResults(false);
         ShardSearchRequest req = new ShardSearchRequest(
@@ -1316,38 +1315,38 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
     public void testConcurrentSegmentSearchSearchContext() throws IOException {
         Object[][] scenarios = {
             // cluster setting, index setting, cluster mode setting, concurrent search enabled?, concurrent search executor null?
-            { null, null, null, false },
-            { null, false, null, false },
-            { null, true, null, true },
-            { true, null, null, true },
-            { true, false, null, false },
-            { true, true, null, true },
-            { false, null, null, false },
-            { false, false, null, false },
-            { false, true, null, true },
+            { null, null, null, false, true },
+            { null, false, null, false, true },
+            { null, true, null, true, false },
+            { true, null, null, true, false },
+            { true, false, null, false, true },
+            { true, true, null, true, false },
+            { false, null, null, false, true },
+            { false, false, null, false, true },
+            { false, true, null, true, false },
 
             // Adding cases with mode set to "none"
-            { null, null, "none", false },
-            { true, true, "none", false },
-            { false, false, "none", false },
-            { true, false, "none", false },
-            { false, true, "none", false },
+            { null, null, "none", false, true },
+            { true, true, "none", false, true },
+            { false, false, "none", false, true },
+            { true, false, "none", false, true },
+            { false, true, "none", false, true },
 
             // Adding cases with mode set to "all"
-            { null, null, "all", true },
-            { true, true, "all", true },
-            { false, false, "all", true },
-            { true, false, "all", true },
-            { false, true, "all", true },
+            { null, null, "all", true, false },
+            { true, true, "all", true, false },
+            { false, false, "all", true, false },
+            { true, false, "all", true, false },
+            { false, true, "all", true, false },
 
             // Adding cases with mode set to "auto"
             // auto mode concurrent search is false since request has no aggregation
             // however concurrentSearchExecutor will not be null
-            { null, null, "auto", false },
-            { true, true, "auto", false },
-            { false, false, "auto", false },
-            { true, false, "auto", false },
-            { false, true, "auto", false } };
+            { null, null, "auto", false, false },
+            { true, true, "auto", false, false },
+            { false, false, "auto", false, false },
+            { true, false, "auto", false, false },
+            { false, true, "auto", false, false } };
 
         String index = randomAlphaOfLengthBetween(5, 10).toLowerCase(Locale.ROOT);
         IndexService indexService = createIndex(index);
@@ -1374,6 +1373,7 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
             Boolean indexSetting = (Boolean) scenario[1];
             String mode = (String) scenario[2];
             Boolean concurrentSearchEnabled = (Boolean) scenario[3];
+            Boolean concurrentSearchExecutorNull = (Boolean) scenario[4];
 
             if (clusterSetting == null) {
                 client().admin()
@@ -1454,7 +1454,12 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
                 );
                 searchContext.evaluateRequestShouldUseConcurrentSearch();
                 assertEquals(concurrentSearchEnabled, searchContext.shouldUseConcurrentSearch());
-                assertThat(searchContext.searcher().getTaskExecutor(), is(notNullValue()));
+                // verify executor nullability
+                if (!concurrentSearchExecutorNull) {
+                    assertNotNull(searchContext.searcher().getExecutor());
+                } else {
+                    assertNull(searchContext.searcher().getExecutor());
+                }
             }
         }
         // Cleanup
@@ -1500,13 +1505,16 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
 
         // default to false in case mode setting is not set
         boolean concurrentSearchEnabled = false;
+        boolean nullExecutor = true;
 
         boolean aggregationSupportsConcurrent = randomBoolean();
 
         if (indexMode != null) {
             concurrentSearchEnabled = !indexMode.equals("none") && aggregationSupportsConcurrent;
+            nullExecutor = indexMode.equals("none");
         } else if (clusterMode != null) {
             concurrentSearchEnabled = !clusterMode.equals("none") && aggregationSupportsConcurrent;
+            nullExecutor = clusterMode.equals("none");
         }
 
         // Set the cluster setting for mode
@@ -1569,16 +1577,22 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
             searchContext.evaluateRequestShouldUseConcurrentSearch();
             // check concurrentSearchenabled based on mode and supportedAggregation is computed correctly
             assertEquals(concurrentSearchEnabled, searchContext.shouldUseConcurrentSearch());
-            assertThat(searchContext.searcher().getTaskExecutor(), is(notNullValue()));
-        } finally {
-            // Cleanup
-            client().admin()
-                .cluster()
-                .prepareUpdateSettings()
-                .setTransientSettings(Settings.builder().putNull(SearchService.CLUSTER_CONCURRENT_SEGMENT_SEARCH_MODE.getKey()))
-                .get();
 
+            // Verify executor nullability based on mode
+            if (!nullExecutor) {
+                assertNotNull(searchContext.searcher().getExecutor());
+            } else {
+                assertNull(searchContext.searcher().getExecutor());
+            }
         }
+
+        // Cleanup
+        client().admin()
+            .cluster()
+            .prepareUpdateSettings()
+            .setTransientSettings(Settings.builder().putNull(SearchService.CLUSTER_CONCURRENT_SEGMENT_SEARCH_MODE.getKey()))
+            .get();
+
     }
 
     /**
@@ -1721,7 +1735,7 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
                 searchContext.evaluateRequestShouldUseConcurrentSearch();
                 assertEquals(concurrentSearchSetting, searchContext.shouldUseConcurrentSearch());
                 // verify executor state in searcher
-                assertThat(searchContext.searcher().getTaskExecutor(), is(notNullValue()));
+                assertEquals(concurrentSearchSetting, (searchContext.searcher().getExecutor() != null));
 
                 // update cluster setting to flip the concurrent segment search state
                 client().admin()
@@ -1734,15 +1748,15 @@ public class SearchServiceTests extends OpenSearchSingleNodeTestCase {
 
                 // verify that concurrent segment search is still set to same expected value for the context
                 assertEquals(concurrentSearchSetting, searchContext.shouldUseConcurrentSearch());
-            } finally {
-                // Cleanup
-                client().admin()
-                    .cluster()
-                    .prepareUpdateSettings()
-                    .setTransientSettings(Settings.builder().putNull(SearchService.CLUSTER_CONCURRENT_SEGMENT_SEARCH_SETTING.getKey()))
-                    .get();
             }
         }
+
+        // Cleanup
+        client().admin()
+            .cluster()
+            .prepareUpdateSettings()
+            .setTransientSettings(Settings.builder().putNull(SearchService.CLUSTER_CONCURRENT_SEGMENT_SEARCH_SETTING.getKey()))
+            .get();
     }
 
     /**

@@ -61,6 +61,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.equalToIgnoringCase;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.hasSize;
 
 public class MatchBoolPrefixQueryBuilderTests extends AbstractQueryTestCase<MatchBoolPrefixQueryBuilder> {
 
@@ -124,7 +126,7 @@ public class MatchBoolPrefixQueryBuilderTests extends AbstractQueryTestCase<Matc
             // all queries except the last should be TermQuery or SynonymQuery
             final Set<Query> allQueriesExceptLast = IntStream.range(0, booleanQuery.clauses().size() - 1)
                 .mapToObj(booleanQuery.clauses()::get)
-                .map(BooleanClause::query)
+                .map(BooleanClause::getQuery)
                 .collect(Collectors.toSet());
             assertThat(
                 allQueriesExceptLast,
@@ -145,13 +147,13 @@ public class MatchBoolPrefixQueryBuilderTests extends AbstractQueryTestCase<Matc
             });
 
             // the last query should be PrefixQuery
-            final Query shouldBePrefixQuery = booleanQuery.clauses().get(booleanQuery.clauses().size() - 1).query();
+            final Query shouldBePrefixQuery = booleanQuery.clauses().get(booleanQuery.clauses().size() - 1).getQuery();
             assertThat(shouldBePrefixQuery, instanceOf(PrefixQuery.class));
 
             if (queryBuilder.minimumShouldMatch() != null) {
                 final int optionalClauses = (int) booleanQuery.clauses()
                     .stream()
-                    .filter(clause -> clause.occur() == BooleanClause.Occur.SHOULD)
+                    .filter(clause -> clause.getOccur() == BooleanClause.Occur.SHOULD)
                     .count();
                 final int expected = Queries.calculateMinShouldMatch(optionalClauses, queryBuilder.minimumShouldMatch());
                 assertThat(booleanQuery.getMinimumNumberShouldMatch(), equalTo(expected));
@@ -267,7 +269,7 @@ public class MatchBoolPrefixQueryBuilderTests extends AbstractQueryTestCase<Matc
             asList(
                 new TermQuery(new Term(TEXT_FIELD_NAME, "foo")),
                 new TermQuery(new Term(TEXT_FIELD_NAME, "bar")),
-                new PrefixQuery(new Term(TEXT_FIELD_NAME, "baz"), MultiTermQuery.CONSTANT_SCORE_BLENDED_REWRITE)
+                new PrefixQuery(new Term(TEXT_FIELD_NAME, "baz"), MultiTermQuery.CONSTANT_SCORE_REWRITE)
             )
         );
     }
@@ -284,7 +286,7 @@ public class MatchBoolPrefixQueryBuilderTests extends AbstractQueryTestCase<Matc
                 new SynonymQuery.Builder(TEXT_FIELD_NAME).addTerm(new Term(TEXT_FIELD_NAME, "dogs"))
                     .addTerm(new Term(TEXT_FIELD_NAME, "dog"))
                     .build(),
-                new PrefixQuery(new Term(TEXT_FIELD_NAME, "red"), MultiTermQuery.CONSTANT_SCORE_BLENDED_REWRITE)
+                new PrefixQuery(new Term(TEXT_FIELD_NAME, "red"), MultiTermQuery.CONSTANT_SCORE_REWRITE)
             )
         );
     }
@@ -292,18 +294,18 @@ public class MatchBoolPrefixQueryBuilderTests extends AbstractQueryTestCase<Matc
     public void testAnalysisSingleTerm() throws Exception {
         final MatchBoolPrefixQueryBuilder builder = new MatchBoolPrefixQueryBuilder(TEXT_FIELD_NAME, "foo");
         final Query query = builder.toQuery(createShardContext());
-        assertThat(query, equalTo(new PrefixQuery(new Term(TEXT_FIELD_NAME, "foo"), MultiTermQuery.CONSTANT_SCORE_BLENDED_REWRITE)));
+        assertThat(query, equalTo(new PrefixQuery(new Term(TEXT_FIELD_NAME, "foo"), MultiTermQuery.CONSTANT_SCORE_REWRITE)));
     }
 
     private static void assertBooleanQuery(Query actual, List<Query> expectedClauseQueries) {
-        assertTrue(actual instanceof BooleanQuery);
+        assertThat(actual, instanceOf(BooleanQuery.class));
         final BooleanQuery actualBooleanQuery = (BooleanQuery) actual;
-        assertEquals(expectedClauseQueries.size(), actualBooleanQuery.clauses().size());
+        assertThat(actualBooleanQuery.clauses(), hasSize(expectedClauseQueries.size()));
+        assertThat(actualBooleanQuery.clauses(), everyItem(hasProperty("occur", equalTo(BooleanClause.Occur.SHOULD))));
 
         for (int i = 0; i < actualBooleanQuery.clauses().size(); i++) {
-            BooleanClause actualClause = actualBooleanQuery.clauses().get(i);
-            assertEquals(BooleanClause.Occur.SHOULD, actualClause.occur());
-            assertEquals(expectedClauseQueries.get(i), actualClause.query());
+            final Query clauseQuery = actualBooleanQuery.clauses().get(i).getQuery();
+            assertThat(clauseQuery, equalTo(expectedClauseQueries.get(i)));
         }
     }
 }

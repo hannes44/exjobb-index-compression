@@ -142,7 +142,6 @@ import org.opensearch.index.translog.RemoteTranslogStats;
 import org.opensearch.index.translog.TestTranslog;
 import org.opensearch.index.translog.Translog;
 import org.opensearch.index.translog.TranslogStats;
-import org.opensearch.index.translog.listener.TranslogEventListener;
 import org.opensearch.indices.IndicesQueryCache;
 import org.opensearch.indices.fielddata.cache.IndicesFieldDataCache;
 import org.opensearch.indices.recovery.RecoveryState;
@@ -1223,67 +1222,6 @@ public class IndexShardTests extends IndexShardTestCase {
         closeShards(replica);
     }
 
-    public void testGetChangesSnapshotThrowsAssertForSegRep() throws IOException {
-        final ShardId shardId = new ShardId("index", "_na_", 0);
-        final ShardRouting shardRouting = TestShardRouting.newShardRouting(
-            shardId,
-            randomAlphaOfLength(8),
-            true,
-            ShardRoutingState.INITIALIZING,
-            RecoverySource.EmptyStoreRecoverySource.INSTANCE
-        );
-        final Settings settings = Settings.builder()
-            .put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 2)
-            .put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1)
-            .put(IndexMetadata.SETTING_REPLICATION_TYPE, ReplicationType.SEGMENT.toString())
-            .build();
-        final IndexMetadata.Builder indexMetadata = IndexMetadata.builder(shardRouting.getIndexName()).settings(settings).primaryTerm(0, 1);
-        final AtomicBoolean synced = new AtomicBoolean();
-        final IndexShard primaryShard = newShard(
-            shardRouting,
-            indexMetadata.build(),
-            null,
-            new InternalEngineFactory(),
-            () -> synced.set(true),
-            RetentionLeaseSyncer.EMPTY,
-            null
-        );
-        expectThrows(AssertionError.class, () -> primaryShard.getHistoryOperationsFromTranslog(0, 1));
-        closeShard(primaryShard, false);
-    }
-
-    public void testGetChangesSnapshotThrowsAssertForRemoteStore() throws IOException {
-        final ShardId shardId = new ShardId("index", "_na_", 0);
-        final ShardRouting shardRouting = TestShardRouting.newShardRouting(
-            shardId,
-            randomAlphaOfLength(8),
-            true,
-            ShardRoutingState.INITIALIZING,
-            RecoverySource.EmptyStoreRecoverySource.INSTANCE
-        );
-        final Settings settings = Settings.builder()
-            .put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put(IndexMetadata.SETTING_NUMBER_OF_REPLICAS, 2)
-            .put(IndexMetadata.SETTING_NUMBER_OF_SHARDS, 1)
-            .put(IndexMetadata.SETTING_REPLICATION_TYPE, ReplicationType.SEGMENT)
-            .put(IndexMetadata.SETTING_REMOTE_STORE_ENABLED, true)
-            .build();
-        final IndexMetadata.Builder indexMetadata = IndexMetadata.builder(shardRouting.getIndexName()).settings(settings).primaryTerm(0, 1);
-        final AtomicBoolean synced = new AtomicBoolean();
-        final IndexShard primaryShard = newShard(
-            shardRouting,
-            indexMetadata.build(),
-            null,
-            new InternalEngineFactory(),
-            () -> synced.set(true),
-            RetentionLeaseSyncer.EMPTY,
-            null
-        );
-        expectThrows(AssertionError.class, () -> primaryShard.getHistoryOperationsFromTranslog(0, 1));
-        closeShard(primaryShard, false);
-    }
-
     public void testGlobalCheckpointSync() throws IOException {
         // create the primary shard with a callback that sets a boolean when the global checkpoint sync is invoked
         final ShardId shardId = new ShardId("index", "_na_", 0);
@@ -2336,7 +2274,7 @@ public class IndexShardTests extends IndexShardTestCase {
         long primaryTerm = shard.getOperationPrimaryTerm();
         shard.advanceMaxSeqNoOfUpdatesOrDeletes(1); // manually advance msu for this delete
         shard.applyDeleteOperationOnReplica(1, primaryTerm, 2, "id");
-        shard.getEngine().translogManager().rollTranslogGeneration(); // isolate the delete in it's own generation
+        shard.getEngine().rollTranslogGeneration(); // isolate the delete in it's own generation
         shard.applyIndexOperationOnReplica(
             UUID.randomUUID().toString(),
             0,
@@ -2388,7 +2326,7 @@ public class IndexShardTests extends IndexShardTestCase {
             replayedOps = 3;
         } else {
             if (randomBoolean()) {
-                shard.getEngine().translogManager().rollTranslogGeneration();
+                shard.getEngine().rollTranslogGeneration();
             }
             translogOps = 5;
             replayedOps = 5;
@@ -2664,7 +2602,7 @@ public class IndexShardTests extends IndexShardTestCase {
         );
         flushShard(shard);
         assertThat(getShardDocUIDs(shard), containsInAnyOrder("doc-0", "doc-1"));
-        shard.getEngine().translogManager().rollTranslogGeneration();
+        shard.getEngine().rollTranslogGeneration();
         shard.markSeqNoAsNoop(1, primaryTerm, "test");
         shard.applyIndexOperationOnReplica(
             UUID.randomUUID().toString(),
@@ -3011,52 +2949,6 @@ public class IndexShardTests extends IndexShardTestCase {
         closeShards(target);
     }
 
-    public void testRestoreSearchOnlyShardFromStore() throws IOException {
-        // this test indexes docs on a primary, refreshes, then recovers a new Search Replica and asserts
-        // all docs are present
-        String remoteStorePath = createTempDir().toString();
-        Settings settings = Settings.builder()
-            .put(IndexMetadata.SETTING_REPLICATION_TYPE, ReplicationType.SEGMENT)
-            .put(IndexMetadata.SETTING_REMOTE_STORE_ENABLED, true)
-            .put(IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, remoteStorePath + "__test")
-            .put(IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY, remoteStorePath + "__test")
-            .build();
-        IndexShard primary = newStartedShard(true, settings, new InternalEngineFactory());
-        indexDoc(primary, "_doc", "1");
-        indexDoc(primary, "_doc", "2");
-        primary.refresh("test");
-        assertDocs(primary, "1", "2");
-
-        ShardRouting searchReplicaShardRouting = TestShardRouting.newShardRouting(
-            primary.shardId,
-            randomAlphaOfLength(10),
-            false,
-            true,
-            ShardRoutingState.INITIALIZING,
-            RecoverySource.EmptyStoreRecoverySource.INSTANCE
-        );
-        IndexShard replica = newShard(searchReplicaShardRouting, settings, new NRTReplicationEngineFactory());
-        recoverShardFromStore(replica);
-        searchReplicaShardRouting = replica.routingEntry();
-        assertDocs(replica, "1", "2");
-        assertEquals(
-            primary.getLatestReplicationCheckpoint().getSegmentInfosVersion(),
-            replica.getLatestReplicationCheckpoint().getSegmentInfosVersion()
-        );
-
-        // move to unassigned while the replica is active, then reinit from existing store.
-        searchReplicaShardRouting = ShardRoutingHelper.moveToUnassigned(
-            searchReplicaShardRouting,
-            new UnassignedInfo(UnassignedInfo.Reason.INDEX_CREATED, "because I say so")
-        );
-        searchReplicaShardRouting = ShardRoutingHelper.initialize(searchReplicaShardRouting, replica.routingEntry().currentNodeId());
-        assertEquals(RecoverySource.ExistingStoreRecoverySource.INSTANCE, searchReplicaShardRouting.recoverySource());
-        replica = reinitShard(replica, searchReplicaShardRouting);
-        recoverShardFromStore(replica);
-        assertDocs(replica, "1", "2");
-        closeShards(primary, replica);
-    }
-
     public void testReaderWrapperIsUsed() throws IOException {
         IndexShard shard = newStartedShard(true);
         indexDoc(shard, "_doc", "0", "{\"foo\" : \"bar\"}");
@@ -3069,9 +2961,9 @@ public class IndexShardTests extends IndexShardTestCase {
         }
         try (Engine.Searcher searcher = shard.acquireSearcher("test")) {
             TopDocs search = searcher.search(new TermQuery(new Term("foo", "bar")), 10);
-            assertEquals(search.totalHits.value(), 1);
+            assertEquals(search.totalHits.value, 1);
             search = searcher.search(new TermQuery(new Term("foobar", "bar")), 10);
-            assertEquals(search.totalHits.value(), 1);
+            assertEquals(search.totalHits.value, 1);
         }
         CheckedFunction<DirectoryReader, DirectoryReader, IOException> wrapper = reader -> new FieldMaskingReader("foo", reader);
         closeShards(shard);
@@ -3093,9 +2985,9 @@ public class IndexShardTests extends IndexShardTestCase {
 
         try (Engine.Searcher searcher = newShard.acquireSearcher("test")) {
             TopDocs search = searcher.search(new TermQuery(new Term("foo", "bar")), 10);
-            assertEquals(search.totalHits.value(), 0);
+            assertEquals(search.totalHits.value, 0);
             search = searcher.search(new TermQuery(new Term("foobar", "bar")), 10);
-            assertEquals(search.totalHits.value(), 1);
+            assertEquals(search.totalHits.value, 1);
         }
         try (
             Engine.GetResult getResult = newShard.get(new Engine.Get(false, false, "1", new Term(IdFieldMapper.NAME, Uid.encodeId("1"))))
@@ -4478,17 +4370,19 @@ public class IndexShardTests extends IndexShardTestCase {
     public void testCloseShardWhileResettingEngine() throws Exception {
         CountDownLatch readyToCloseLatch = new CountDownLatch(1);
         CountDownLatch closeDoneLatch = new CountDownLatch(1);
-        IndexShard shard = newStartedShard(false, Settings.EMPTY, config -> new InternalEngine(config, new TranslogEventListener() {
+        IndexShard shard = newStartedShard(false, Settings.EMPTY, config -> new InternalEngine(config) {
             @Override
-            public void onBeginTranslogRecovery() {
+            public InternalEngine recoverFromTranslog(TranslogRecoveryRunner translogRecoveryRunner, long recoverUpToSeqNo)
+                throws IOException {
                 readyToCloseLatch.countDown();
                 try {
                     closeDoneLatch.await();
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
+                return super.recoverFromTranslog(translogRecoveryRunner, recoverUpToSeqNo);
             }
-        }));
+        });
 
         Thread closeShardThread = new Thread(() -> {
             try {
@@ -4535,17 +4429,20 @@ public class IndexShardTests extends IndexShardTestCase {
     public void testSnapshotWhileResettingEngine() throws Exception {
         CountDownLatch readyToSnapshotLatch = new CountDownLatch(1);
         CountDownLatch snapshotDoneLatch = new CountDownLatch(1);
-        IndexShard shard = newStartedShard(false, Settings.EMPTY, config -> new InternalEngine(config, new TranslogEventListener() {
+        IndexShard shard = newStartedShard(false, Settings.EMPTY, config -> new InternalEngine(config) {
             @Override
-            public void onAfterTranslogRecovery() {
+            public InternalEngine recoverFromTranslog(TranslogRecoveryRunner translogRecoveryRunner, long recoverUpToSeqNo)
+                throws IOException {
+                InternalEngine engine = super.recoverFromTranslog(translogRecoveryRunner, recoverUpToSeqNo);
                 readyToSnapshotLatch.countDown();
                 try {
                     snapshotDoneLatch.await();
                 } catch (InterruptedException e) {
                     throw new AssertionError(e);
                 }
+                return engine;
             }
-        }));
+        });
 
         indexOnReplicaWithGaps(shard, between(0, 1000), Math.toIntExact(shard.getLocalCheckpoint()));
         final long globalCheckpoint = randomLongBetween(shard.getLastKnownGlobalCheckpoint(), shard.getLocalCheckpoint());

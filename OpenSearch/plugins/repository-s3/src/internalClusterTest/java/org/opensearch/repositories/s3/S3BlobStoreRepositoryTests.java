@@ -37,7 +37,9 @@ import com.sun.net.httpserver.HttpHandler;
 
 import software.amazon.awssdk.core.internal.http.pipeline.stages.ApplyTransactionIdStage;
 
+import org.opensearch.action.ActionRunnable;
 import org.opensearch.action.admin.indices.forcemerge.ForceMergeResponse;
+import org.opensearch.action.support.PlainActionFuture;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.cluster.metadata.RepositoryMetadata;
 import org.opensearch.cluster.service.ClusterService;
@@ -49,24 +51,30 @@ import org.opensearch.common.regex.Regex;
 import org.opensearch.common.settings.MockSecureSettings;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.core.common.bytes.BytesReference;
 import org.opensearch.core.common.unit.ByteSizeUnit;
 import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.indices.recovery.RecoverySettings;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.repositories.RepositoriesService;
 import org.opensearch.repositories.Repository;
+import org.opensearch.repositories.RepositoryData;
 import org.opensearch.repositories.RepositoryMissingException;
 import org.opensearch.repositories.RepositoryStats;
 import org.opensearch.repositories.blobstore.BlobStoreRepository;
 import org.opensearch.repositories.blobstore.OpenSearchMockAPIBasedRepositoryIntegTestCase;
-import org.opensearch.repositories.s3.async.AsyncTransferManager;
 import org.opensearch.repositories.s3.utils.AwsRequestSigner;
+import org.opensearch.snapshots.SnapshotId;
+import org.opensearch.snapshots.SnapshotsService;
 import org.opensearch.snapshots.mockstore.BlobStoreWrapper;
 import org.opensearch.test.BackgroundIndexer;
 import org.opensearch.test.OpenSearchIntegTestCase;
 import org.opensearch.threadpool.ThreadPool;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,11 +90,15 @@ import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertAcked;
 import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertHitCount;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 
 @SuppressForbidden(reason = "this test uses a HttpServer to emulate an S3 endpoint")
 // Need to set up a new cluster for each test because cluster settings use randomized authentication settings
 @OpenSearchIntegTestCase.ClusterScope(scope = OpenSearchIntegTestCase.Scope.TEST)
 public class S3BlobStoreRepositoryTests extends OpenSearchMockAPIBasedRepositoryIntegTestCase {
+
+    private static final TimeValue TEST_COOLDOWN_PERIOD = TimeValue.timeValueSeconds(10L);
 
     private final String region = "test-region";
     private String signerOverride;
@@ -154,6 +166,7 @@ public class S3BlobStoreRepositoryTests extends OpenSearchMockAPIBasedRepository
             // Disable request throttling because some random values in tests might generate too many failures for the S3 client
             .put(S3ClientSettings.USE_THROTTLE_RETRIES_SETTING.getConcreteSettingForNamespace("test").getKey(), false)
             .put(S3ClientSettings.PROXY_TYPE_SETTING.getConcreteSettingForNamespace("test").getKey(), ProxySettings.ProxyType.DIRECT)
+            .put(BlobStoreRepository.SNAPSHOT_ASYNC_DELETION_ENABLE_SETTING.getKey(), false)
             .put(super.nodeSettings(nodeOrdinal))
             .setSecureSettings(secureSettings);
 
@@ -163,6 +176,56 @@ public class S3BlobStoreRepositoryTests extends OpenSearchMockAPIBasedRepository
 
         builder.put(S3ClientSettings.REGION.getConcreteSettingForNamespace("test").getKey(), region);
         return builder.build();
+    }
+
+    public void testEnforcedCooldownPeriod() throws IOException {
+        final String repoName = createRepository(
+            randomName(),
+            Settings.builder().put(repositorySettings()).put(S3Repository.COOLDOWN_PERIOD.getKey(), TEST_COOLDOWN_PERIOD).build()
+        );
+
+        final SnapshotId fakeOldSnapshot = client().admin()
+            .cluster()
+            .prepareCreateSnapshot(repoName, "snapshot-old")
+            .setWaitForCompletion(true)
+            .setIndices()
+            .get()
+            .getSnapshotInfo()
+            .snapshotId();
+        final RepositoriesService repositoriesService = internalCluster().getCurrentClusterManagerNodeInstance(RepositoriesService.class);
+        final BlobStoreRepository repository = (BlobStoreRepository) repositoriesService.repository(repoName);
+        final RepositoryData repositoryData = getRepositoryData(repository);
+        final RepositoryData modifiedRepositoryData = repositoryData.withVersions(
+            Collections.singletonMap(fakeOldSnapshot, SnapshotsService.SHARD_GEN_IN_REPO_DATA_VERSION.minimumCompatibilityVersion())
+        );
+        final BytesReference serialized = BytesReference.bytes(
+            modifiedRepositoryData.snapshotsToXContent(XContentFactory.jsonBuilder(), SnapshotsService.OLD_SNAPSHOT_FORMAT)
+        );
+        PlainActionFuture.get(f -> repository.threadPool().generic().execute(ActionRunnable.run(f, () -> {
+            try (InputStream stream = serialized.streamInput()) {
+                repository.blobStore()
+                    .blobContainer(repository.basePath())
+                    .writeBlobAtomic(
+                        BlobStoreRepository.INDEX_FILE_PREFIX + modifiedRepositoryData.getGenId(),
+                        stream,
+                        serialized.length(),
+                        true
+                    );
+            }
+        })));
+
+        final String newSnapshotName = "snapshot-new";
+        final long beforeThrottledSnapshot = repository.threadPool().relativeTimeInNanos();
+        client().admin().cluster().prepareCreateSnapshot(repoName, newSnapshotName).setWaitForCompletion(true).setIndices().get();
+        assertThat(repository.threadPool().relativeTimeInNanos() - beforeThrottledSnapshot, greaterThan(TEST_COOLDOWN_PERIOD.getNanos()));
+
+        final long beforeThrottledDelete = repository.threadPool().relativeTimeInNanos();
+        client().admin().cluster().prepareDeleteSnapshot(repoName, newSnapshotName).get();
+        assertThat(repository.threadPool().relativeTimeInNanos() - beforeThrottledDelete, greaterThan(TEST_COOLDOWN_PERIOD.getNanos()));
+
+        final long beforeFastDelete = repository.threadPool().relativeTimeInNanos();
+        client().admin().cluster().prepareDeleteSnapshot(repoName, fakeOldSnapshot.getName()).get();
+        assertThat(repository.threadPool().relativeTimeInNanos() - beforeFastDelete, lessThan(TEST_COOLDOWN_PERIOD.getNanos()));
     }
 
     @Override
@@ -253,27 +316,22 @@ public class S3BlobStoreRepositoryTests extends OpenSearchMockAPIBasedRepository
             ClusterService clusterService,
             RecoverySettings recoverySettings
         ) {
-            AsyncTransferManager asyncUploadUtils = new AsyncTransferManager(
-                S3Repository.PARALLEL_MULTIPART_UPLOAD_MINIMUM_PART_SIZE_SETTING.get(clusterService.getSettings()).getBytes(),
-                normalExecutorBuilder.getStreamReader(),
-                priorityExecutorBuilder.getStreamReader(),
-                urgentExecutorBuilder.getStreamReader(),
-                transferSemaphoresHolder
-            );
+            GenericStatsMetricPublisher genericStatsMetricPublisher = new GenericStatsMetricPublisher(10000L, 10, 10000L, 10);
+
             return new S3Repository(
                 metadata,
                 registry,
                 service,
                 clusterService,
                 recoverySettings,
-                asyncUploadUtils,
-                urgentExecutorBuilder,
-                priorityExecutorBuilder,
-                normalExecutorBuilder,
-                s3AsyncService,
-                S3Repository.PARALLEL_MULTIPART_UPLOAD_ENABLED_SETTING.get(clusterService.getSettings()),
-                normalPrioritySizeBasedBlockingQ,
-                lowPrioritySizeBasedBlockingQ,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null,
                 genericStatsMetricPublisher
             ) {
 

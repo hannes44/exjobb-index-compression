@@ -85,7 +85,6 @@ import org.opensearch.search.pipeline.PipelinedRequest;
 import org.opensearch.search.pipeline.SearchPipelineService;
 import org.opensearch.search.profile.ProfileShardResult;
 import org.opensearch.search.profile.SearchProfileShardResults;
-import org.opensearch.search.slice.SliceBuilder;
 import org.opensearch.tasks.CancellableTask;
 import org.opensearch.tasks.Task;
 import org.opensearch.tasks.TaskResourceTrackingService;
@@ -476,7 +475,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
                 } else {
                     Rewriteable.rewriteAndFetch(
                         sr.source(),
-                        searchService.getRewriteContext(timeProvider::getAbsoluteStartMillis, searchRequest),
+                        searchService.getRewriteContext(timeProvider::getAbsoluteStartMillis),
                         rewriteListener
                     );
                 }
@@ -552,7 +551,6 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
                     );
                 } else {
                     AtomicInteger skippedClusters = new AtomicInteger(0);
-                    SliceBuilder slice = searchRequest.source() == null ? null : searchRequest.source().slice();
                     collectSearchShards(
                         searchRequest.indicesOptions(),
                         searchRequest.preference(),
@@ -561,7 +559,6 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
                         remoteClusterIndices,
                         remoteClusterService,
                         threadPool,
-                        slice,
                         ActionListener.wrap(searchShardsResponses -> {
                             final BiFunction<String, String, DiscoveryNode> clusterNodeLookup = getRemoteClusterNodeLookup(
                                 searchShardsResponses
@@ -790,7 +787,6 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         Map<String, OriginalIndices> remoteIndicesByCluster,
         RemoteClusterService remoteClusterService,
         ThreadPool threadPool,
-        SliceBuilder slice,
         ActionListener<Map<String, ClusterSearchShardsResponse>> listener
     ) {
         final CountDown responsesCountDown = new CountDown(remoteIndicesByCluster.size());
@@ -804,8 +800,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
             ClusterSearchShardsRequest searchShardsRequest = new ClusterSearchShardsRequest(indices).indicesOptions(indicesOptions)
                 .local(true)
                 .preference(preference)
-                .routing(routing)
-                .slice(slice);
+                .routing(routing);
             clusterClient.admin()
                 .cluster()
                 .searchShards(
@@ -1047,7 +1042,6 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
                 concreteLocalIndices[i] = indices[i].getName();
             }
             Map<String, Long> nodeSearchCounts = searchTransportService.getPendingSearchRequests();
-            SliceBuilder slice = searchRequest.source() == null ? null : searchRequest.source().slice();
             GroupShardsIterator<ShardIterator> localShardRoutings = clusterService.operationRouting()
                 .searchShards(
                     clusterState,
@@ -1055,8 +1049,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
                     routingMap,
                     searchRequest.preference(),
                     searchService.getResponseCollectorService(),
-                    nodeSearchCounts,
-                    slice
+                    nodeSearchCounts
                 );
             localShardIterators = StreamSupport.stream(localShardRoutings.spliterator(), false)
                 .map(it -> new SearchShardIterator(searchRequest.getLocalClusterAlias(), it.shardId(), it.getShardRoutings(), localIndices))

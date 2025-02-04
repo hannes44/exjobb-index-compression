@@ -33,6 +33,7 @@
 package org.opensearch.index.engine;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.index.DirectoryReader;
@@ -88,7 +89,6 @@ import org.opensearch.common.util.concurrent.ReleasableLock;
 import org.opensearch.common.util.io.IOUtils;
 import org.opensearch.core.Assertions;
 import org.opensearch.core.common.unit.ByteSizeValue;
-import org.opensearch.core.index.AppendOnlyIndexOperationRetryException;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.index.IndexSettings;
 import org.opensearch.index.VersionType;
@@ -110,7 +110,7 @@ import org.opensearch.index.translog.Translog;
 import org.opensearch.index.translog.TranslogCorruptedException;
 import org.opensearch.index.translog.TranslogDeletionPolicy;
 import org.opensearch.index.translog.TranslogException;
-import org.opensearch.index.translog.TranslogManager;
+import org.opensearch.index.translog.TranslogStats;
 import org.opensearch.index.translog.listener.CompositeTranslogEventListener;
 import org.opensearch.index.translog.listener.TranslogEventListener;
 import org.opensearch.search.suggest.completion.CompletionStats;
@@ -228,8 +228,7 @@ public class InternalEngine extends Engine {
         this(engineConfig, IndexWriter.MAX_DOCS, LocalCheckpointTracker::new, translogEventListener);
     }
 
-    @Override
-    public TranslogManager translogManager() {
+    public InternalTranslogManager translogManager() {
         return translogManager;
     }
 
@@ -259,7 +258,7 @@ public class InternalEngine extends Engine {
             try {
                 store.trimUnsafeCommits(engineConfig.getTranslogConfig().getTranslogPath());
                 final Map<String, String> userData = store.readLastCommittedSegmentsInfo().getUserData();
-                String translogUUID = Objects.requireNonNull(userData.get(Translog.TRANSLOG_UUID_KEY));
+                final String translogUUID = Objects.requireNonNull(userData.get(Translog.TRANSLOG_UUID_KEY));
                 TranslogEventListener internalTranslogEventListener = new TranslogEventListener() {
                     @Override
                     public void onAfterTranslogSync() {
@@ -486,6 +485,17 @@ public class InternalEngine extends Engine {
     }
 
     @Override
+    public int restoreLocalHistoryFromTranslog(TranslogRecoveryRunner translogRecoveryRunner) throws IOException {
+        try (ReleasableLock ignored = readLock.acquire()) {
+            ensureOpen();
+            final long localCheckpoint = localCheckpointTracker.getProcessedCheckpoint();
+            try (Translog.Snapshot snapshot = translogManager().getTranslog().newSnapshot(localCheckpoint + 1, Long.MAX_VALUE)) {
+                return translogRecoveryRunner.run(this, snapshot);
+            }
+        }
+    }
+
+    @Override
     public int fillSeqNoGaps(long primaryTerm) throws IOException {
         try (ReleasableLock ignored = writeLock.acquire()) {
             ensureOpen();
@@ -525,9 +535,89 @@ public class InternalEngine extends Engine {
         }
     }
 
+    @Override
+    public InternalEngine recoverFromTranslog(TranslogRecoveryRunner translogRecoveryRunner, long recoverUpToSeqNo) throws IOException {
+        try (ReleasableLock lock = readLock.acquire()) {
+            ensureOpen();
+            if (translogManager.getPendingTranslogRecovery().get() == false) {
+                throw new IllegalStateException("Engine has already been recovered");
+            }
+            try {
+                recoverFromTranslogInternal(translogRecoveryRunner, recoverUpToSeqNo);
+            } catch (Exception e) {
+                try {
+                    translogManager.getPendingTranslogRecovery().set(true); // just play safe and never allow commits on this see
+                                                                            // #ensureCanFlush
+                    failEngine("failed to recover from translog", e);
+                } catch (Exception inner) {
+                    e.addSuppressed(inner);
+                }
+                throw e;
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public void skipTranslogRecovery() {
+        translogManager.skipTranslogRecovery();
+    }
+
+    private void recoverFromTranslogInternal(TranslogRecoveryRunner translogRecoveryRunner, long recoverUpToSeqNo) throws IOException {
+        final int opsRecovered;
+        final long localCheckpoint = getProcessedLocalCheckpoint();
+        if (localCheckpoint < recoverUpToSeqNo) {
+            try (Translog.Snapshot snapshot = translogManager.getTranslog().newSnapshot(localCheckpoint + 1, recoverUpToSeqNo)) {
+                opsRecovered = translogRecoveryRunner.run(this, snapshot);
+            } catch (Exception e) {
+                throw new EngineException(shardId, "failed to recover from translog", e);
+            }
+        } else {
+            opsRecovered = 0;
+        }
+        // flush if we recovered something or if we have references to older translogs
+        // note: if opsRecovered == 0 and we have older translogs it means they are corrupted or 0 length.
+        assert translogManager.getPendingTranslogRecovery().get() : "translogRecovery is not pending but should be";
+        translogManager.getPendingTranslogRecovery().set(false); // we are good - now we can commit
+        logger.trace(
+            () -> new ParameterizedMessage(
+                "flushing post recovery from translog: ops recovered [{}], current translog generation [{}]",
+                opsRecovered,
+                translogManager.getTranslog().currentFileGeneration()
+            )
+        );
+        flush(false, true);
+        translogManager.trimUnreferencedReaders();
+    }
+
     // Package private for testing purposes only
     boolean hasSnapshottedCommits() {
         return combinedDeletionPolicy.hasSnapshottedCommits();
+    }
+
+    @Override
+    public boolean isTranslogSyncNeeded() {
+        return translogManager.isTranslogSyncNeeded();
+    }
+
+    @Override
+    public boolean ensureTranslogSynced(Stream<Translog.Location> locations) throws IOException {
+        return translogManager.ensureTranslogSynced(locations);
+    }
+
+    @Override
+    public void syncTranslog() throws IOException {
+        translogManager.syncTranslog();
+    }
+
+    @Override
+    public TranslogStats getTranslogStats() {
+        return translogManager.getTranslogStats();
+    }
+
+    @Override
+    public Translog.Location getTranslogLastWriteLocation() {
+        return translogManager.getTranslogLastWriteLocation();
     }
 
     private void revisitIndexDeletionPolicyOnTranslogSynced() {
@@ -933,21 +1023,19 @@ public class InternalEngine extends Engine {
                     final Translog.Location location;
                     if (indexResult.getResultType() == Result.Type.SUCCESS) {
                         location = translogManager.add(new Translog.Index(index, indexResult));
-                    } else if (indexResult.getSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO
-                        && indexResult.getFailure() != null
-                        && !(indexResult.getFailure() instanceof AppendOnlyIndexOperationRetryException)) {
-                            // if we have document failure, record it as a no-op in the translog and Lucene with the generated seq_no
-                            final NoOp noOp = new NoOp(
-                                indexResult.getSeqNo(),
-                                index.primaryTerm(),
-                                index.origin(),
-                                index.startTime(),
-                                indexResult.getFailure().toString()
-                            );
-                            location = innerNoOp(noOp).getTranslogLocation();
-                        } else {
-                            location = null;
-                        }
+                    } else if (indexResult.getSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO) {
+                        // if we have document failure, record it as a no-op in the translog and Lucene with the generated seq_no
+                        final NoOp noOp = new NoOp(
+                            indexResult.getSeqNo(),
+                            index.primaryTerm(),
+                            index.origin(),
+                            index.startTime(),
+                            indexResult.getFailure().toString()
+                        );
+                        location = innerNoOp(noOp).getTranslogLocation();
+                    } else {
+                        location = null;
+                    }
                     indexResult.setTranslogLocation(location);
                 }
                 if (plan.indexIntoLucene && indexResult.getResultType() == Result.Type.SUCCESS) {
@@ -958,9 +1046,7 @@ public class InternalEngine extends Engine {
                     );
                 }
                 localCheckpointTracker.markSeqNoAsProcessed(indexResult.getSeqNo());
-                if (indexResult.getTranslogLocation() == null
-                    && !(indexResult.getFailure() != null
-                        && (indexResult.getFailure() instanceof AppendOnlyIndexOperationRetryException))) {
+                if (indexResult.getTranslogLocation() == null) {
                     // the op is coming from the translog (and is hence persisted already) or it does not have a sequence number
                     assert index.origin().isFromTranslog() || indexResult.getSeqNo() == SequenceNumbers.UNASSIGNED_SEQ_NO;
                     localCheckpointTracker.markSeqNoAsPersisted(indexResult.getSeqNo());
@@ -1054,7 +1140,7 @@ public class InternalEngine extends Engine {
         } else {
             versionMap.enforceSafeAccess();
             // resolves incoming version
-            final VersionValue versionValue = resolveDocVersion(index, true);
+            final VersionValue versionValue = resolveDocVersion(index, index.getIfSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO);
             final long currentVersion;
             final boolean currentNotFoundOrDeleted;
             if (versionValue == null) {
@@ -1097,15 +1183,6 @@ public class InternalEngine extends Engine {
                     final Exception reserveError = tryAcquireInFlightDocs(index, reservingDocs);
                     if (reserveError != null) {
                         plan = IndexingStrategy.failAsTooManyDocs(reserveError);
-                    } else if (currentVersion >= 1 && engineConfig.getIndexSettings().getIndexMetadata().isAppendOnlyIndex()) {
-                        // Retry happens for indexing requests for append only indices, since we are rejecting update requests
-                        // at Transport layer itself. So for any retry, we are reconstructing response from already indexed
-                        // document version for append only index.
-                        AppendOnlyIndexOperationRetryException retryException = new AppendOnlyIndexOperationRetryException(
-                            "Indexing operation retried for append only indices"
-                        );
-                        final IndexResult result = new IndexResult(retryException, currentVersion, versionValue.term, versionValue.seqNo);
-                        plan = IndexingStrategy.failAsIndexAppendOnly(result, currentVersion, 0);
                     } else {
                         plan = IndexingStrategy.processNormally(
                             currentNotFoundOrDeleted,
@@ -1296,10 +1373,6 @@ public class InternalEngine extends Engine {
         static IndexingStrategy failAsTooManyDocs(Exception e) {
             final IndexResult result = new IndexResult(e, Versions.NOT_FOUND);
             return new IndexingStrategy(false, false, false, false, Versions.NOT_FOUND, 0, result);
-        }
-
-        static IndexingStrategy failAsIndexAppendOnly(IndexResult result, long versionForIndexing, int reservedDocs) {
-            return new IndexingStrategy(false, false, false, true, versionForIndexing, reservedDocs, result);
         }
     }
 
@@ -1889,7 +1962,7 @@ public class InternalEngine extends Engine {
                         final GatedCloseable<IndexCommit> latestCommit = engineConfig.getIndexSettings().isSegRepEnabledOrRemoteNode()
                             ? acquireLastIndexCommit(false)
                             : null;
-                        commitIndexWriter(indexWriter, translogManager.getTranslogUUID());
+                        commitIndexWriter(indexWriter, translogManager.getTranslog());
                         logger.trace("finished commit for flush");
 
                         // a temporary debugging to investigate test failure - issue#32827. Remove when the issue is resolved
@@ -1955,6 +2028,52 @@ public class InternalEngine extends Engine {
             }
         } finally {
             store.decRef();
+        }
+    }
+
+    @Override
+    public void rollTranslogGeneration() throws EngineException, IOException {
+        translogManager().rollTranslogGeneration();
+    }
+
+    @Override
+    public void trimUnreferencedTranslogFiles() throws EngineException {
+        try (ReleasableLock lock = readLock.acquire()) {
+            ensureOpen();
+            translogManager().getTranslog().trimUnreferencedReaders();
+        } catch (AlreadyClosedException e) {
+            failOnTragicEvent(e);
+            throw e;
+        } catch (Exception e) {
+            try {
+                failEngine("translog trimming failed", e);
+            } catch (Exception inner) {
+                e.addSuppressed(inner);
+            }
+            throw new EngineException(shardId, "failed to trim translog", e);
+        }
+    }
+
+    @Override
+    public boolean shouldRollTranslogGeneration() {
+        return translogManager().getTranslog().shouldRollGeneration();
+    }
+
+    @Override
+    public void trimOperationsFromTranslog(long belowTerm, long aboveSeqNo) throws EngineException {
+        try (ReleasableLock lock = readLock.acquire()) {
+            ensureOpen();
+            translogManager().getTranslog().trimOperations(belowTerm, aboveSeqNo);
+        } catch (AlreadyClosedException e) {
+            failOnTragicEvent(e);
+            throw e;
+        } catch (Exception e) {
+            try {
+                failEngine("translog operations trimming failed", e);
+            } catch (Exception inner) {
+                e.addSuppressed(inner);
+            }
+            throw new EngineException(shardId, "failed to trim translog operations", e);
         }
     }
 
@@ -2519,9 +2638,9 @@ public class InternalEngine extends Engine {
      * Commits the specified index writer.
      *
      * @param writer   the index writer to commit
-     * @param translogUUID the translogUUID
+     * @param translog the translog
      */
-    protected void commitIndexWriter(final IndexWriter writer, final String translogUUID) throws IOException {
+    protected void commitIndexWriter(final IndexWriter writer, final Translog translog) throws IOException {
         translogManager.ensureCanFlush();
         try {
             final long localCheckpoint = localCheckpointTracker.getProcessedCheckpoint();
@@ -2536,7 +2655,7 @@ public class InternalEngine extends Engine {
                  * of invocation of the commit data iterator (which occurs after all documents have been flushed to Lucene).
                  */
                 final Map<String, String> commitData = new HashMap<>(7);
-                commitData.put(Translog.TRANSLOG_UUID_KEY, translogUUID);
+                commitData.put(Translog.TRANSLOG_UUID_KEY, translog.getTranslogUUID());
                 commitData.put(SequenceNumbers.LOCAL_CHECKPOINT_KEY, Long.toString(localCheckpoint));
                 commitData.put(SequenceNumbers.MAX_SEQ_NO, Long.toString(localCheckpointTracker.getMaxSeqNo()));
                 commitData.put(MAX_UNSAFE_AUTO_ID_TIMESTAMP_COMMIT_ID, Long.toString(maxUnsafeAutoIdTimestamp.get()));
@@ -2607,7 +2726,6 @@ public class InternalEngine extends Engine {
         return translogManager.getLastSyncedGlobalCheckpoint();
     }
 
-    @Override
     public long getProcessedLocalCheckpoint() {
         return localCheckpointTracker.getProcessedCheckpoint();
     }
@@ -2731,6 +2849,20 @@ public class InternalEngine extends Engine {
         } finally {
             IOUtils.close(searcher);
         }
+    }
+
+    /**
+     * Creates a new history snapshot from the translog file instead of the lucene index
+     *
+     * @deprecated reading history operations from the translog file is deprecated and will be removed in the next release
+     *
+     * Use {@link Engine#newChangesSnapshot(String, long, long, boolean, boolean)} instead
+     */
+    @Deprecated
+    @Override
+    public Translog.Snapshot newChangesSnapshotFromTranslogFile(String source, long fromSeqNo, long toSeqNo, boolean requiredFullRange)
+        throws IOException {
+        return translogManager().getTranslog().newSnapshot(fromSeqNo, toSeqNo, requiredFullRange);
     }
 
     public int countNumberOfHistoryOperations(String source, long fromSeqNo, long toSeqNo) throws IOException {

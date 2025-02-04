@@ -59,7 +59,7 @@ tasks.named("preProcessFixture").configure {
   }
   doLast {
     // tests expect to have an empty repo
-    delete(
+    project.delete(
       "${buildDir}/repo"
     )
     createAndSetWritable(

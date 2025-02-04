@@ -71,6 +71,7 @@ import org.opensearch.index.engine.InternalEngineFactory;
 import org.opensearch.index.mapper.KeywordFieldMapper;
 import org.opensearch.index.mapper.Mapper;
 import org.opensearch.index.mapper.MapperService;
+import org.opensearch.index.mapper.NestedPathFieldMapper;
 import org.opensearch.index.shard.IllegalIndexShardStateException;
 import org.opensearch.index.shard.IndexShard;
 import org.opensearch.index.shard.IndexShardState;
@@ -85,6 +86,7 @@ import org.opensearch.search.internal.ShardSearchRequest;
 import org.opensearch.test.IndexSettingsModule;
 import org.opensearch.test.OpenSearchSingleNodeTestCase;
 import org.opensearch.test.TestSearchContext;
+import org.opensearch.test.VersionUtils;
 import org.opensearch.test.hamcrest.RegexMatcher;
 
 import java.io.IOException;
@@ -570,9 +572,16 @@ public class IndicesServiceTests extends OpenSearchSingleNodeTestCase {
 
     public void testIsMetadataField() {
         IndicesService indicesService = getIndicesService();
-        assertFalse(indicesService.isMetadataField(randomAlphaOfLengthBetween(10, 15)));
+        final Version randVersion = VersionUtils.randomIndexCompatibleVersion(random());
+        assertFalse(indicesService.isMetadataField(randVersion, randomAlphaOfLengthBetween(10, 15)));
         for (String builtIn : IndicesModule.getBuiltInMetadataFields()) {
-            assertTrue(indicesService.isMetadataField(builtIn));
+            if (NestedPathFieldMapper.NAME.equals(builtIn) && randVersion.before(Version.V_2_0_0)) {
+                continue;   // nested field mapper does not exist prior to 2.0
+            }
+            assertTrue(
+                "Expected " + builtIn + " to be a metadata field for version " + randVersion,
+                indicesService.isMetadataField(randVersion, builtIn)
+            );
         }
     }
 
@@ -641,69 +650,25 @@ public class IndicesServiceTests extends OpenSearchSingleNodeTestCase {
         ShardSearchRequest request = mock(ShardSearchRequest.class);
         when(request.requestCache()).thenReturn(true);
 
-        TestSearchContext context = getTestContext(indexService, 0);
-        IndexReader.CacheHelper notDelegatingCacheHelper = mock(IndexReader.CacheHelper.class);
-        DelegatingCacheHelper delegatingCacheHelper = mock(DelegatingCacheHelper.class);
-        for (boolean useDelegatingCacheHelper : new boolean[] { true, false }) {
-            IndexReader.CacheHelper cacheHelper = useDelegatingCacheHelper ? delegatingCacheHelper : notDelegatingCacheHelper;
-            setupMocksForCanCache(context, cacheHelper);
-            assertEquals(useDelegatingCacheHelper, indicesService.canCache(request, context));
-        }
-    }
+        TestSearchContext context = new TestSearchContext(indexService.getBigArrays(), indexService) {
+            @Override
+            public SearchType searchType() {
+                return SearchType.QUERY_THEN_FETCH;
+            }
+        };
 
-    public void testCanCacheSizeNonzero() {
-        // Requests should only be cached if their size is <= INDICES_REQUEST_CACHE_MAX_SIZE_TO_CACHE_SETTING.
-        final IndexService indexService = createIndex("test");
-        ShardSearchRequest request = mock(ShardSearchRequest.class);
-        when(request.requestCache()).thenReturn(null);
-
-        TestSearchContext sizeZeroContext = getTestContext(indexService, 0);
-        TestSearchContext sizeNonzeroContext = getTestContext(indexService, 10);
-
-        // Test for an IndicesService with the default setting value of 0
-        IndicesService indicesService = getIndicesService();
-        DelegatingCacheHelper cacheHelper = mock(DelegatingCacheHelper.class);
-        Map<TestSearchContext, Boolean> expectedResultMap = Map.of(sizeZeroContext, true, sizeNonzeroContext, false);
-
-        for (Map.Entry<TestSearchContext, Boolean> entry : expectedResultMap.entrySet()) {
-            TestSearchContext context = entry.getKey();
-            setupMocksForCanCache(context, cacheHelper);
-            assertEquals(entry.getValue(), indicesService.canCache(request, context));
-        }
-        // Simulate the cluster setting update by manually calling setCanCacheSizeNonzeroRequests
-        int maxCacheableSize = 40;
-        indicesService.setMaxSizeInRequestCache(maxCacheableSize);
-        TestSearchContext sizeEqualsThresholdContext = getTestContext(indexService, maxCacheableSize);
-        TestSearchContext sizeAboveThresholdContext = getTestContext(indexService, maxCacheableSize + 5);
-        expectedResultMap = Map.of(sizeZeroContext, true, sizeEqualsThresholdContext, true, sizeAboveThresholdContext, false);
-
-        for (Map.Entry<TestSearchContext, Boolean> entry : expectedResultMap.entrySet()) {
-            TestSearchContext context = entry.getKey();
-            setupMocksForCanCache(context, cacheHelper);
-            assertEquals(entry.getValue(), indicesService.canCache(request, context));
-        }
-    }
-
-    private void setupMocksForCanCache(TestSearchContext context, IndexReader.CacheHelper cacheHelper) {
         ContextIndexSearcher searcher = mock(ContextIndexSearcher.class);
         context.setSearcher(searcher);
         DirectoryReader reader = mock(DirectoryReader.class);
         when(searcher.getDirectoryReader()).thenReturn(reader);
         when(searcher.getIndexReader()).thenReturn(reader);
-        when(reader.getReaderCacheHelper()).thenReturn(cacheHelper);
-    }
+        IndexReader.CacheHelper notDelegatingCacheHelper = mock(IndexReader.CacheHelper.class);
+        DelegatingCacheHelper delegatingCacheHelper = mock(DelegatingCacheHelper.class);
 
-    private TestSearchContext getTestContext(IndexService indexService, int size) {
-        return new TestSearchContext(indexService.getBigArrays(), indexService) {
-            @Override
-            public SearchType searchType() {
-                return SearchType.QUERY_THEN_FETCH;
-            }
-
-            @Override
-            public int size() {
-                return size;
-            }
-        };
+        for (boolean useDelegatingCacheHelper : new boolean[] { true, false }) {
+            IndexReader.CacheHelper cacheHelper = useDelegatingCacheHelper ? delegatingCacheHelper : notDelegatingCacheHelper;
+            when(reader.getReaderCacheHelper()).thenReturn(cacheHelper);
+            assertEquals(useDelegatingCacheHelper, indicesService.canCache(request, context));
+        }
     }
 }

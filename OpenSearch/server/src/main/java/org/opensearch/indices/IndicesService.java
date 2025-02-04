@@ -40,8 +40,10 @@ import org.apache.lucene.index.IndexReader.CacheHelper;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.util.CollectionUtil;
 import org.apache.lucene.util.RamUsageEstimator;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchException;
 import org.opensearch.ResourceAlreadyExistsException;
+import org.opensearch.Version;
 import org.opensearch.action.admin.indices.stats.CommonStats;
 import org.opensearch.action.admin.indices.stats.CommonStatsFlags;
 import org.opensearch.action.admin.indices.stats.CommonStatsFlags.Flag;
@@ -122,7 +124,6 @@ import org.opensearch.index.get.GetStats;
 import org.opensearch.index.mapper.IdFieldMapper;
 import org.opensearch.index.mapper.MapperService;
 import org.opensearch.index.merge.MergeStats;
-import org.opensearch.index.query.BaseQueryRewriteContext;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryRewriteContext;
 import org.opensearch.index.recovery.RecoveryStats;
@@ -206,7 +207,6 @@ import static org.opensearch.core.common.util.CollectionUtils.arrayAsArrayList;
 import static org.opensearch.index.IndexService.IndexCreationContext.CREATE_INDEX;
 import static org.opensearch.index.IndexService.IndexCreationContext.METADATA_VERIFICATION;
 import static org.opensearch.index.query.AbstractQueryBuilder.parseInnerQueryBuilder;
-import static org.opensearch.indices.IndicesRequestCache.INDICES_REQUEST_CACHE_MAX_SIZE_ALLOWED_IN_CACHE_SETTING;
 import static org.opensearch.node.remotestore.RemoteStoreNodeAttribute.isRemoteDataAttributePresent;
 import static org.opensearch.search.SearchService.ALLOW_EXPENSIVE_QUERIES;
 
@@ -362,7 +362,6 @@ public class IndicesService extends AbstractLifecycleComponent
     private final FileCache fileCache;
     private final CompositeIndexSettings compositeIndexSettings;
     private final Consumer<IndexShard> replicator;
-    private volatile int maxSizeInRequestCache;
 
     @Override
     protected void doStart() {
@@ -510,9 +509,70 @@ public class IndicesService extends AbstractLifecycleComponent
         this.compositeIndexSettings = compositeIndexSettings;
         this.fileCache = fileCache;
         this.replicator = replicator;
-        this.maxSizeInRequestCache = INDICES_REQUEST_CACHE_MAX_SIZE_ALLOWED_IN_CACHE_SETTING.get(clusterService.getSettings());
-        clusterService.getClusterSettings()
-            .addSettingsUpdateConsumer(INDICES_REQUEST_CACHE_MAX_SIZE_ALLOWED_IN_CACHE_SETTING, this::setMaxSizeInRequestCache);
+    }
+
+    public IndicesService(
+        Settings settings,
+        PluginsService pluginsService,
+        NodeEnvironment nodeEnv,
+        NamedXContentRegistry xContentRegistry,
+        AnalysisRegistry analysisRegistry,
+        IndexNameExpressionResolver indexNameExpressionResolver,
+        MapperRegistry mapperRegistry,
+        NamedWriteableRegistry namedWriteableRegistry,
+        ThreadPool threadPool,
+        IndexScopedSettings indexScopedSettings,
+        CircuitBreakerService circuitBreakerService,
+        BigArrays bigArrays,
+        ScriptService scriptService,
+        ClusterService clusterService,
+        Client client,
+        MetaStateService metaStateService,
+        Collection<Function<IndexSettings, Optional<EngineFactory>>> engineFactoryProviders,
+        Map<String, IndexStorePlugin.DirectoryFactory> directoryFactories,
+        ValuesSourceRegistry valuesSourceRegistry,
+        Map<String, IndexStorePlugin.RecoveryStateFactory> recoveryStateFactories,
+        IndexStorePlugin.DirectoryFactory remoteDirectoryFactory,
+        Supplier<RepositoriesService> repositoriesServiceSupplier,
+        SearchRequestStats searchRequestStats,
+        @Nullable RemoteStoreStatsTrackerFactory remoteStoreStatsTrackerFactory,
+        RecoverySettings recoverySettings,
+        CacheService cacheService,
+        RemoteStoreSettings remoteStoreSettings,
+        FileCache fileCache
+    ) {
+        this(
+            settings,
+            pluginsService,
+            nodeEnv,
+            xContentRegistry,
+            analysisRegistry,
+            indexNameExpressionResolver,
+            mapperRegistry,
+            namedWriteableRegistry,
+            threadPool,
+            indexScopedSettings,
+            circuitBreakerService,
+            bigArrays,
+            scriptService,
+            clusterService,
+            client,
+            metaStateService,
+            engineFactoryProviders,
+            directoryFactories,
+            valuesSourceRegistry,
+            recoveryStateFactories,
+            remoteDirectoryFactory,
+            repositoriesServiceSupplier,
+            searchRequestStats,
+            remoteStoreStatsTrackerFactory,
+            recoverySettings,
+            cacheService,
+            remoteStoreSettings,
+            fileCache,
+            null,
+            (s) -> {}
+        );
     }
 
     public IndicesService(
@@ -935,7 +995,8 @@ public class IndicesService extends AbstractLifecycleComponent
         IndexingOperationListener... indexingOperationListeners
     ) throws IOException {
         final IndexSettings idxSettings = new IndexSettings(indexMetadata, settings, indexScopedSettings);
-        if (EngineConfig.INDEX_OPTIMIZE_AUTO_GENERATED_IDS.exists(idxSettings.getSettings())) {
+        if (idxSettings.getIndexVersionCreated().onOrAfter(LegacyESVersion.V_7_0_0)
+            && EngineConfig.INDEX_OPTIMIZE_AUTO_GENERATED_IDS.exists(idxSettings.getSettings())) {
             throw new IllegalArgumentException(
                 "Setting [" + EngineConfig.INDEX_OPTIMIZE_AUTO_GENERATED_IDS.getKey() + "] was removed in version 7.0.0"
             );
@@ -1752,10 +1813,11 @@ public class IndicesService extends AbstractLifecycleComponent
         IndexSettings settings = context.indexShard().indexSettings();
         // if not explicitly set in the request, use the index setting, if not, use the request
         if (request.requestCache() == null) {
-            if (settings.getValue(IndicesRequestCache.INDEX_CACHE_REQUEST_ENABLED_SETTING) == false
-                || (context.size() > maxSizeInRequestCache)) {
+            if (settings.getValue(IndicesRequestCache.INDEX_CACHE_REQUEST_ENABLED_SETTING) == false) {
+                return false;
+            } else if (context.size() != 0) {
                 // If no request cache query parameter and shard request cache
-                // is enabled in settings, use cluster setting to check the maximum size allowed in the cache
+                // is enabled in settings don't cache for requests with size > 0
                 return false;
             }
         } else if (request.requestCache() == false) {
@@ -1938,7 +2000,7 @@ public class IndicesService extends AbstractLifecycleComponent
      * Returns a new {@link QueryRewriteContext} with the given {@code now} provider
      */
     private QueryRewriteContext getRewriteContext(LongSupplier nowInMillis, boolean validate) {
-        return new BaseQueryRewriteContext(xContentRegistry, namedWriteableRegistry, client, nowInMillis, validate);
+        return new QueryRewriteContext(xContentRegistry, namedWriteableRegistry, client, nowInMillis, validate);
     }
 
     /**
@@ -1969,8 +2031,8 @@ public class IndicesService extends AbstractLifecycleComponent
     /**
      * Returns true if the provided field is a registered metadata field (including ones registered via plugins), false otherwise.
      */
-    public boolean isMetadataField(String field) {
-        return mapperRegistry.isMetadataField(field);
+    public boolean isMetadataField(Version indexCreatedVersion, String field) {
+        return mapperRegistry.isMetadataField(indexCreatedVersion, field);
     }
 
     /**
@@ -2122,10 +2184,5 @@ public class IndicesService extends AbstractLifecycleComponent
 
     public CompositeIndexSettings getCompositeIndexSettings() {
         return this.compositeIndexSettings;
-    }
-
-    // Package-private for testing
-    void setMaxSizeInRequestCache(Integer maxSizeInRequestCache) {
-        this.maxSizeInRequestCache = maxSizeInRequestCache;
     }
 }

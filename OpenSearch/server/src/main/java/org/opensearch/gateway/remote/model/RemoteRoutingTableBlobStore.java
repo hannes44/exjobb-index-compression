@@ -102,7 +102,7 @@ public class RemoteRoutingTableBlobStore<IndexRoutingTable, U extends AbstractCl
         BlobPath indexRoutingPath = getBlobPathPrefix(obj.clusterUUID()).add(INDEX_ROUTING_TABLE);
 
         BlobPath path = pathType.path(
-            RemoteStorePathStrategy.PathInput.builder()
+            RemoteStorePathStrategy.BasePathInput.builder()
                 .fixedPrefix(pathPrefix)
                 .basePath(indexRoutingPath)
                 .indexUUID(String.join("", obj.getBlobPathParameters().getPathTokens()))

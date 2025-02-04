@@ -8,10 +8,8 @@
 package org.opensearch.index.compositeindex.datacube.startree.builder;
 
 import org.apache.lucene.codecs.DocValuesConsumer;
-import org.apache.lucene.index.OrdinalMap;
 import org.apache.lucene.index.SegmentWriteState;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.util.LongValues;
 import org.opensearch.common.annotation.ExperimentalApi;
 import org.opensearch.index.compositeindex.datacube.startree.StarTreeDocument;
 import org.opensearch.index.compositeindex.datacube.startree.StarTreeField;
@@ -23,9 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -117,7 +113,6 @@ public class OnHeapStarTreeBuilder extends BaseStarTreeBuilder {
      */
     @Override
     Iterator<StarTreeDocument> mergeStarTrees(List<StarTreeValues> starTreeValuesSubs) throws IOException {
-        this.isMerge = true;
         return sortAndAggregateStarTreeDocuments(getSegmentsStarTreeDocuments(starTreeValuesSubs), true);
     }
 
@@ -130,23 +125,17 @@ public class OnHeapStarTreeBuilder extends BaseStarTreeBuilder {
      */
     StarTreeDocument[] getSegmentsStarTreeDocuments(List<StarTreeValues> starTreeValuesSubs) throws IOException {
         List<StarTreeDocument> starTreeDocuments = new ArrayList<>();
-        Map<String, OrdinalMap> ordinalMaps = getOrdinalMaps(starTreeValuesSubs);
-        int seg = 0;
         for (StarTreeValues starTreeValues : starTreeValuesSubs) {
+
             SequentialDocValuesIterator[] dimensionReaders = new SequentialDocValuesIterator[numDimensions];
             List<SequentialDocValuesIterator> metricReaders = new ArrayList<>();
             AtomicInteger numSegmentDocs = new AtomicInteger();
-            setReadersAndNumSegmentDocsDuringMerge(dimensionReaders, metricReaders, numSegmentDocs, starTreeValues);
+            setReadersAndNumSegmentDocs(dimensionReaders, metricReaders, numSegmentDocs, starTreeValues);
             int currentDocId = 0;
-            Map<String, LongValues> longValuesMap = new LinkedHashMap<>();
-            for (Map.Entry<String, OrdinalMap> entry : ordinalMaps.entrySet()) {
-                longValuesMap.put(entry.getKey(), entry.getValue().getGlobalOrds(seg));
-            }
             while (currentDocId < numSegmentDocs.get()) {
-                starTreeDocuments.add(getStarTreeDocument(currentDocId, dimensionReaders, metricReaders, longValuesMap));
+                starTreeDocuments.add(getStarTreeDocument(currentDocId, dimensionReaders, metricReaders));
                 currentDocId++;
             }
-            seg++;
         }
         StarTreeDocument[] starTreeDocumentsArr = new StarTreeDocument[starTreeDocuments.size()];
         return starTreeDocuments.toArray(starTreeDocumentsArr);

@@ -132,7 +132,7 @@ public class TermVectorsUnitTests extends OpenSearchTestCase {
         TopDocs search = s.search(new TermQuery(new Term("id", "abc")), 1);
         ScoreDoc[] scoreDocs = search.scoreDocs;
         int doc = scoreDocs[0].doc;
-        Fields fields = dr.termVectors().get(doc);
+        Fields fields = dr.getTermVectors(doc);
         EnumSet<Flag> flags = EnumSet.of(Flag.Positions, Flag.Offsets);
         outResponse.setFields(fields, null, flags, fields);
         outResponse.setExists(true);
@@ -167,7 +167,7 @@ public class TermVectorsUnitTests extends OpenSearchTestCase {
         TopDocs search = s.search(new TermQuery(new Term("id", "abc")), 1);
         ScoreDoc[] scoreDocs = search.scoreDocs;
         int doc = scoreDocs[0].doc;
-        Fields termVectors = dr.termVectors().get(doc);
+        Fields termVectors = dr.getTermVectors(doc);
         EnumSet<Flag> flags = EnumSet.of(Flag.Positions, Flag.Offsets);
         outResponse.setFields(termVectors, null, flags, termVectors);
         dr.close();
@@ -286,7 +286,7 @@ public class TermVectorsUnitTests extends OpenSearchTestCase {
             // write using older version which contains types
             ByteArrayOutputStream outBuffer = new ByteArrayOutputStream();
             OutputStreamStreamOutput out = new OutputStreamStreamOutput(outBuffer);
-            out.setVersion(LegacyESVersion.fromId(7000099));
+            out.setVersion(LegacyESVersion.V_7_2_0);
             request.writeTo(out);
 
             // First check the type on the stream was written as "_doc" by manually parsing the stream until the type
@@ -302,7 +302,7 @@ public class TermVectorsUnitTests extends OpenSearchTestCase {
             // now read the stream as normal to check it is parsed correct if received from an older node
             opensearchInBuffer = new ByteArrayInputStream(outBuffer.toByteArray());
             opensearchBuffer = new InputStreamStreamInput(opensearchInBuffer);
-            opensearchBuffer.setVersion(LegacyESVersion.fromId(7000099));
+            opensearchBuffer.setVersion(LegacyESVersion.V_7_2_0);
             TermVectorsRequest req2 = new TermVectorsRequest(opensearchBuffer);
 
             assertThat(request.offsets(), equalTo(req2.offsets()));

@@ -32,7 +32,6 @@
 
 package org.opensearch.search.aggregations.bucket.adjacency;
 
-import org.opensearch.Version;
 import org.opensearch.core.ParseField;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
@@ -72,10 +71,7 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
 
     private static final ParseField SEPARATOR_FIELD = new ParseField("separator");
     private static final ParseField FILTERS_FIELD = new ParseField("filters");
-    private static final ParseField SHOW_ONLY_INTERSECTING = new ParseField("show_only_intersecting");
-
     private List<KeyedFilter> filters;
-    private boolean showOnlyIntersecting = false;
     private String separator = DEFAULT_SEPARATOR;
 
     private static final ObjectParser<AdjacencyMatrixAggregationBuilder, String> PARSER = ObjectParser.fromBuilder(
@@ -85,10 +81,6 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
     static {
         PARSER.declareString(AdjacencyMatrixAggregationBuilder::separator, SEPARATOR_FIELD);
         PARSER.declareNamedObjects(AdjacencyMatrixAggregationBuilder::setFiltersAsList, KeyedFilter.PARSER, FILTERS_FIELD);
-        PARSER.declareBoolean(
-            AdjacencyMatrixAggregationBuilder::setShowOnlyIntersecting,
-            AdjacencyMatrixAggregationBuilder.SHOW_ONLY_INTERSECTING
-        );
     }
 
     public static AggregationBuilder parse(XContentParser parser, String name) throws IOException {
@@ -123,7 +115,6 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
         super(clone, factoriesBuilder, metadata);
         this.filters = new ArrayList<>(clone.filters);
         this.separator = clone.separator;
-        this.showOnlyIntersecting = clone.showOnlyIntersecting;
     }
 
     @Override
@@ -148,49 +139,12 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
     }
 
     /**
-     * @param name
-     *            the name of this aggregation
-     * @param filters
-     *            the filters and their key to use with this aggregation.
-     * @param showOnlyIntersecting
-     *            show only the buckets that intersection multiple documents
-     */
-    public AdjacencyMatrixAggregationBuilder(String name, Map<String, QueryBuilder> filters, boolean showOnlyIntersecting) {
-        this(name, DEFAULT_SEPARATOR, filters, showOnlyIntersecting);
-    }
-
-    /**
-     * @param name
-     *            the name of this aggregation
-     * @param separator
-     *            the string used to separate keys in intersections buckets e.g.
-     *            &amp; character for keyed filters A and B would return an
-     *            intersection bucket named A&amp;B
-     * @param filters
-     *            the filters and their key to use with this aggregation.
-     * @param showOnlyIntersecting
-     *            show only the buckets that intersection multiple documents
-     */
-    public AdjacencyMatrixAggregationBuilder(
-        String name,
-        String separator,
-        Map<String, QueryBuilder> filters,
-        boolean showOnlyIntersecting
-    ) {
-        this(name, separator, filters);
-        this.showOnlyIntersecting = showOnlyIntersecting;
-    }
-
-    /**
      * Read from a stream.
      */
     public AdjacencyMatrixAggregationBuilder(StreamInput in) throws IOException {
         super(in);
         int filtersSize = in.readVInt();
         separator = in.readString();
-        if (in.getVersion().onOrAfter(Version.V_2_19_0)) {
-            showOnlyIntersecting = in.readBoolean();
-        }
         filters = new ArrayList<>(filtersSize);
         for (int i = 0; i < filtersSize; i++) {
             filters.add(new KeyedFilter(in));
@@ -201,9 +155,6 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
     protected void doWriteTo(StreamOutput out) throws IOException {
         out.writeVInt(filters.size());
         out.writeString(separator);
-        if (out.getVersion().onOrAfter(Version.V_2_19_0)) {
-            out.writeBoolean(showOnlyIntersecting);
-        }
         for (KeyedFilter keyedFilter : filters) {
             keyedFilter.writeTo(out);
         }
@@ -231,11 +182,6 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
         // internally we want to have a fixed order of filters, regardless of
         // the order of the filters in the request
         Collections.sort(this.filters, Comparator.comparing(KeyedFilter::key));
-        return this;
-    }
-
-    public AdjacencyMatrixAggregationBuilder setShowOnlyIntersecting(boolean showOnlyIntersecting) {
-        this.showOnlyIntersecting = showOnlyIntersecting;
         return this;
     }
 
@@ -268,10 +214,6 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
         return result;
     }
 
-    public boolean isShowOnlyIntersecting() {
-        return showOnlyIntersecting;
-    }
-
     @Override
     protected AdjacencyMatrixAggregationBuilder doRewrite(QueryRewriteContext queryShardContext) throws IOException {
         boolean modified = false;
@@ -282,9 +224,7 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
             rewrittenFilters.add(new KeyedFilter(kf.key(), rewritten));
         }
         if (modified) {
-            return new AdjacencyMatrixAggregationBuilder(name).separator(separator)
-                .setFiltersAsList(rewrittenFilters)
-                .setShowOnlyIntersecting(showOnlyIntersecting);
+            return new AdjacencyMatrixAggregationBuilder(name).separator(separator).setFiltersAsList(rewrittenFilters);
         }
         return this;
     }
@@ -305,16 +245,7 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
                     + "] index level setting."
             );
         }
-        return new AdjacencyMatrixAggregatorFactory(
-            name,
-            filters,
-            showOnlyIntersecting,
-            separator,
-            queryShardContext,
-            parent,
-            subFactoriesBuilder,
-            metadata
-        );
+        return new AdjacencyMatrixAggregatorFactory(name, filters, separator, queryShardContext, parent, subFactoriesBuilder, metadata);
     }
 
     @Override
@@ -326,8 +257,7 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
     protected XContentBuilder internalXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
         builder.field(SEPARATOR_FIELD.getPreferredName(), separator);
-        builder.field(SHOW_ONLY_INTERSECTING.getPreferredName(), showOnlyIntersecting);
-        builder.startObject(FILTERS_FIELD.getPreferredName());
+        builder.startObject(AdjacencyMatrixAggregator.FILTERS_FIELD.getPreferredName());
         for (KeyedFilter keyedFilter : filters) {
             builder.field(keyedFilter.key(), keyedFilter.filter());
         }
@@ -338,7 +268,7 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), filters, showOnlyIntersecting, separator);
+        return Objects.hash(super.hashCode(), filters, separator);
     }
 
     @Override
@@ -347,9 +277,7 @@ public class AdjacencyMatrixAggregationBuilder extends AbstractAggregationBuilde
         if (obj == null || getClass() != obj.getClass()) return false;
         if (super.equals(obj) == false) return false;
         AdjacencyMatrixAggregationBuilder other = (AdjacencyMatrixAggregationBuilder) obj;
-        return Objects.equals(filters, other.filters)
-            && Objects.equals(separator, other.separator)
-            && Objects.equals(showOnlyIntersecting, other.showOnlyIntersecting);
+        return Objects.equals(filters, other.filters) && Objects.equals(separator, other.separator);
     }
 
     @Override

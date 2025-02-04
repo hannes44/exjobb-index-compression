@@ -33,12 +33,13 @@ package org.opensearch.cluster.metadata;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.ResourceAlreadyExistsException;
 import org.opensearch.action.admin.indices.create.CreateIndexClusterStateUpdateRequest;
 import org.opensearch.action.support.ActiveShardCount;
 import org.opensearch.action.support.ActiveShardsObserver;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.cluster.AckedClusterStateUpdateTask;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.ack.ClusterStateUpdateRequest;
@@ -157,6 +158,9 @@ public class MetadataCreateDataStreamService {
         ClusterState currentState,
         CreateDataStreamClusterStateUpdateRequest request
     ) throws Exception {
+        if (currentState.nodes().getMinNodeVersion().before(LegacyESVersion.V_7_9_0)) {
+            throw new IllegalStateException("data streams require minimum node version of " + LegacyESVersion.V_7_9_0);
+        }
 
         if (currentState.metadata().dataStreams().containsKey(request.name)) {
             throw new ResourceAlreadyExistsException("data_stream [" + request.name + "] already exists");

@@ -44,7 +44,6 @@ import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.semver.SemverRange;
 import org.opensearch.test.OpenSearchTestCase;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -56,7 +55,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 
 public class PluginInfoTests extends OpenSearchTestCase {
 
@@ -283,30 +281,6 @@ public class PluginInfoTests extends OpenSearchTestCase {
         assertThat(e.getMessage(), containsString("property [classname] is missing"));
     }
 
-    public void testExtendedPluginsSingleOptionalExtension() throws IOException {
-        Path pluginDir = createTempDir().resolve("fake-plugin");
-        PluginTestUtil.writePluginProperties(
-            pluginDir,
-            "description",
-            "fake desc",
-            "name",
-            "my_plugin",
-            "version",
-            "1.0",
-            "opensearch.version",
-            Version.CURRENT.toString(),
-            "java.version",
-            System.getProperty("java.specification.version"),
-            "classname",
-            "FakePlugin",
-            "extended.plugins",
-            "foo;optional=true"
-        );
-        PluginInfo info = PluginInfo.readFromProperties(pluginDir);
-        assertThat(info.getExtendedPlugins(), contains("foo"));
-        assertThat(info.isExtendedPluginOptional("foo"), is(true));
-    }
-
     public void testExtendedPluginsSingleExtension() throws Exception {
         Path pluginDir = createTempDir().resolve("fake-plugin");
         PluginTestUtil.writePluginProperties(
@@ -328,7 +302,6 @@ public class PluginInfoTests extends OpenSearchTestCase {
         );
         PluginInfo info = PluginInfo.readFromProperties(pluginDir);
         assertThat(info.getExtendedPlugins(), contains("foo"));
-        assertThat(info.isExtendedPluginOptional("foo"), is(false));
     }
 
     public void testExtendedPluginsMultipleExtensions() throws Exception {

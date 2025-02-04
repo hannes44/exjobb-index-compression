@@ -740,7 +740,7 @@ public class IndicesClusterStateService extends AbstractLifecycleComponent imple
                 shardStateAction.shardStarted(
                     shardRouting,
                     primaryTerm,
-                    "master "
+                    "cluster-manager "
                         + nodes.getClusterManagerNode()
                         + " marked shard as initializing, but shard state is ["
                         + state

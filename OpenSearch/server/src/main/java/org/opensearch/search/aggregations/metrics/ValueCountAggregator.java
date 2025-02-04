@@ -46,8 +46,6 @@ import org.opensearch.search.aggregations.Aggregator;
 import org.opensearch.search.aggregations.InternalAggregation;
 import org.opensearch.search.aggregations.LeafBucketCollector;
 import org.opensearch.search.aggregations.LeafBucketCollectorBase;
-import org.opensearch.search.aggregations.StarTreeBucketCollector;
-import org.opensearch.search.aggregations.StarTreePreComputeCollector;
 import org.opensearch.search.aggregations.support.ValuesSource;
 import org.opensearch.search.aggregations.support.ValuesSourceConfig;
 import org.opensearch.search.internal.SearchContext;
@@ -65,7 +63,7 @@ import static org.opensearch.index.compositeindex.datacube.startree.utils.StarTr
  *
  * @opensearch.internal
  */
-public class ValueCountAggregator extends NumericMetricsAggregator.SingleValue implements StarTreePreComputeCollector {
+public class ValueCountAggregator extends NumericMetricsAggregator.SingleValue {
 
     final ValuesSource valuesSource;
 
@@ -98,11 +96,6 @@ public class ValueCountAggregator extends NumericMetricsAggregator.SingleValue i
 
             CompositeIndexFieldInfo supportedStarTree = getSupportedStarTree(this.context);
             if (supportedStarTree != null) {
-                if (parent != null && subAggregators.length == 0) {
-                    // If this a child aggregator, then the parent will trigger star-tree pre-computation.
-                    // Returning NO_OP_COLLECTOR explicitly because the getLeafCollector() are invoked starting from innermost aggregators
-                    return LeafBucketCollector.NO_OP_COLLECTOR;
-                }
                 return getStarTreeCollector(ctx, sub, supportedStarTree);
             }
 
@@ -187,22 +180,4 @@ public class ValueCountAggregator extends NumericMetricsAggregator.SingleValue i
         Releasables.close(counts);
     }
 
-    /**
-     * The parent aggregator invokes this method to get a StarTreeBucketCollector,
-     * which exposes collectStarTreeEntry() to be evaluated on filtered star tree entries
-     */
-    public StarTreeBucketCollector getStarTreeBucketCollector(
-        LeafReaderContext ctx,
-        CompositeIndexFieldInfo starTree,
-        StarTreeBucketCollector parentCollector
-    ) throws IOException {
-        return StarTreeQueryHelper.getStarTreeBucketMetricCollector(
-            starTree,
-            MetricStat.VALUE_COUNT.getTypeName(),
-            (ValuesSource.Numeric) valuesSource,
-            parentCollector,
-            (bucket) -> counts = context.bigArrays().grow(counts, bucket + 1),
-            (bucket, metricValue) -> counts.increment(bucket, metricValue)
-        );
-    }
 }

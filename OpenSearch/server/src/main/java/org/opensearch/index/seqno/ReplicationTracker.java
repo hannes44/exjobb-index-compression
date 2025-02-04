@@ -231,7 +231,7 @@ public class ReplicationTracker extends AbstractIndexShardComponent implements L
 
     /**
      * Whether there should be a peer recovery retention lease (PRRL) for every tracked shard copy. Always true on indices created from
-     * {@code LegacyESVersion#V_7_4_0} onwards, because these versions create PRRLs properly. May be false on indices created in an
+     * {@link LegacyESVersion#V_7_4_0} onwards, because these versions create PRRLs properly. May be false on indices created in an
      * earlier version if we recently did a rolling upgrade and
      * {@link ReplicationTracker#createMissingPeerRecoveryRetentionLeases(ActionListener)} has not yet completed. Is only permitted
      * to change from false to true; can be removed once support for pre-PRRL indices is no longer needed.
@@ -633,7 +633,6 @@ public class ReplicationTracker extends AbstractIndexShardComponent implements L
          */
         final boolean renewalNeeded = StreamSupport.stream(routingTable.spliterator(), false)
             .filter(ShardRouting::assignedToNode)
-            .filter(r -> r.isSearchOnly() == false)
             .anyMatch(shardRouting -> {
                 final RetentionLease retentionLease = retentionLeases.get(getPeerRecoveryRetentionLeaseId(shardRouting));
                 if (retentionLease == null) {
@@ -684,16 +683,16 @@ public class ReplicationTracker extends AbstractIndexShardComponent implements L
     }
 
     /**
-    * The state of the lucene checkpoint
-    *
+     * The state of the lucene checkpoint
+     *
     * @opensearch.api
     */
     @PublicApi(since = "1.0.0")
     public static class CheckpointState implements Writeable {
 
         /**
-        * the last local checkpoint information that we have for this shard. All operations up to this point are properly fsynced to disk.
-        */
+         * the last local checkpoint information that we have for this shard. All operations up to this point are properly fsynced to disk.
+         */
         long localCheckpoint;
 
         /**
@@ -1072,8 +1071,10 @@ public class ReplicationTracker extends AbstractIndexShardComponent implements L
         this.pendingInSync = new HashSet<>();
         this.routingTable = null;
         this.replicationGroup = null;
-        this.hasAllPeerRecoveryRetentionLeases = indexSettings.isSoftDeleteEnabled()
-            && indexSettings.getIndexMetadata().getState() == IndexMetadata.State.OPEN;
+        this.hasAllPeerRecoveryRetentionLeases = indexSettings.getIndexVersionCreated().onOrAfter(LegacyESVersion.V_7_6_0)
+            || (indexSettings.isSoftDeleteEnabled()
+                && indexSettings.getIndexVersionCreated().onOrAfter(LegacyESVersion.V_7_4_0)
+                && indexSettings.getIndexMetadata().getState() == IndexMetadata.State.OPEN);
         this.fileBasedRecoveryThreshold = IndexSettings.FILE_BASED_RECOVERY_THRESHOLD_SETTING.get(indexSettings.getSettings());
         this.safeCommitInfoSupplier = safeCommitInfoSupplier;
         this.onReplicationGroupUpdated = onReplicationGroupUpdated;
@@ -1843,7 +1844,7 @@ public class ReplicationTracker extends AbstractIndexShardComponent implements L
         assert primaryMode == false;
         if (primaryContext.checkpoints.containsKey(shardAllocationId) == false) {
             // can happen if the old primary was on an old version
-            assert indexSettings.getIndexVersionCreated().before(LegacyESVersion.fromId(7000099));
+            assert indexSettings.getIndexVersionCreated().before(LegacyESVersion.V_7_3_0);
             throw new IllegalStateException("primary context [" + primaryContext + "] does not contain " + shardAllocationId);
         }
         final Runnable runAfter = getClusterManagerUpdateOperationFromCurrentState();

@@ -47,6 +47,10 @@ public class InternalTranslogManager implements TranslogManager, Closeable {
     private final Supplier<LocalCheckpointTracker> localCheckpointTrackerSupplier;
     private final Logger logger;
 
+    public AtomicBoolean getPendingTranslogRecovery() {
+        return pendingTranslogRecovery;
+    }
+
     public InternalTranslogManager(
         TranslogConfig translogConfig,
         LongSupplier primaryTermSupplier,
@@ -104,11 +108,6 @@ public class InternalTranslogManager implements TranslogManager, Closeable {
             }
             throw new TranslogException(shardId, "failed to roll translog", e);
         }
-    }
-
-    @Override
-    public Translog.Snapshot newChangesSnapshot(long fromSeqNo, long toSeqNo, boolean requiredFullRange) throws IOException {
-        return translog.newSnapshot(fromSeqNo, toSeqNo, requiredFullRange);
     }
 
     /**

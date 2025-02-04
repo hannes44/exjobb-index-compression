@@ -40,8 +40,8 @@ import org.apache.lucene.search.MultiCollector;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.TopDocsCollector;
-import org.apache.lucene.search.TopFieldCollectorManager;
-import org.apache.lucene.search.TopScoreDocCollectorManager;
+import org.apache.lucene.search.TopFieldCollector;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.search.TotalHitCountCollector;
 import org.apache.lucene.search.TotalHits;
 import org.apache.lucene.search.Weight;
@@ -413,7 +413,6 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
             try {
                 queryShardContext.setParentFilter(parentFilter);
                 queryShardContext.nestedScope().nextLevel(nestedObjectMapper);
-                queryShardContext.setInnerHitQuery(true);
                 try {
                     NestedInnerHitSubContext nestedInnerHits = new NestedInnerHitSubContext(
                         name,
@@ -428,7 +427,6 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
                 }
             } finally {
                 queryShardContext.setParentFilter(previousParentFilter);
-                queryShardContext.setInnerHitQuery(false);
             }
         }
     }
@@ -438,7 +436,7 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
      *
      * @opensearch.internal
      */
-    public static final class NestedInnerHitSubContext extends InnerHitsContext.InnerHitSubContext {
+    static final class NestedInnerHitSubContext extends InnerHitsContext.InnerHitSubContext {
 
         private final ObjectMapper parentObjectMapper;
         private final ObjectMapper childObjectMapper;
@@ -490,12 +488,12 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
                 TopDocsCollector<?> topDocsCollector;
                 MaxScoreCollector maxScoreCollector = null;
                 if (sort() != null) {
-                    topDocsCollector = new TopFieldCollectorManager(sort().sort, topN, null, Integer.MAX_VALUE, false).newCollector();
+                    topDocsCollector = TopFieldCollector.create(sort().sort, topN, Integer.MAX_VALUE);
                     if (trackScores()) {
                         maxScoreCollector = new MaxScoreCollector();
                     }
                 } else {
-                    topDocsCollector = new TopScoreDocCollectorManager(topN, null, Integer.MAX_VALUE, false).newCollector();
+                    topDocsCollector = TopScoreDocCollector.create(topN, Integer.MAX_VALUE);
                     maxScoreCollector = new MaxScoreCollector();
                 }
                 intersect(weight, innerHitQueryWeight, MultiCollector.wrap(topDocsCollector, maxScoreCollector), ctx);
@@ -506,10 +504,6 @@ public class NestedQueryBuilder extends AbstractQueryBuilder<NestedQueryBuilder>
                 }
                 return new TopDocsAndMaxScore(td, maxScore);
             }
-        }
-
-        public ObjectMapper getChildObjectMapper() {
-            return childObjectMapper;
         }
     }
 

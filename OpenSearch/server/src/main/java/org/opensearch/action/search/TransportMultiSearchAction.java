@@ -44,9 +44,6 @@ import org.opensearch.common.util.concurrent.AtomicArray;
 import org.opensearch.common.util.concurrent.OpenSearchExecutors;
 import org.opensearch.core.action.ActionListener;
 import org.opensearch.core.common.io.stream.Writeable;
-import org.opensearch.core.tasks.TaskCancelledException;
-import org.opensearch.core.tasks.TaskId;
-import org.opensearch.tasks.CancellableTask;
 import org.opensearch.tasks.Task;
 import org.opensearch.threadpool.ThreadPool;
 import org.opensearch.transport.TransportService;
@@ -196,19 +193,6 @@ public class TransportMultiSearchAction extends HandledTransportAction<MultiSear
                 if (responseCounter.decrementAndGet() == 0) {
                     assert requests.isEmpty();
                     finish();
-                } else if (isCancelled(request.request.getParentTask())) {
-                    // Drain the rest of the queue
-                    SearchRequestSlot request;
-                    while ((request = requests.poll()) != null) {
-                        responses.set(
-                            request.responseSlot,
-                            new MultiSearchResponse.Item(null, new TaskCancelledException("Parent task was cancelled"))
-                        );
-                        if (responseCounter.decrementAndGet() == 0) {
-                            assert requests.isEmpty();
-                            finish();
-                        }
-                    }
                 } else {
                     if (thread == Thread.currentThread()) {
                         // we are on the same thread, we need to fork to another thread to avoid recursive stack overflow on a single thread
@@ -234,14 +218,6 @@ public class TransportMultiSearchAction extends HandledTransportAction<MultiSear
                 return TimeUnit.NANOSECONDS.toMillis(relativeTimeProvider.getAsLong() - relativeStartTime);
             }
         });
-    }
-
-    private boolean isCancelled(TaskId taskId) {
-        if (taskId.isSet()) {
-            CancellableTask task = taskManager.getCancellableTask(taskId.getId());
-            return task != null && task.isCancelled();
-        }
-        return false;
     }
 
     /**

@@ -35,11 +35,11 @@ package org.opensearch.repositories.url;
 import org.opensearch.action.admin.cluster.snapshots.create.CreateSnapshotResponse;
 import org.opensearch.action.admin.cluster.snapshots.get.GetSnapshotsResponse;
 import org.opensearch.action.admin.cluster.snapshots.restore.RestoreSnapshotResponse;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.Client;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.core.common.unit.ByteSizeUnit;
-import org.opensearch.plugin.repository.url.URLRepositoryModulePlugin;
+import org.opensearch.plugin.repository.url.URLRepositoryPlugin;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.repositories.fs.FsRepository;
 import org.opensearch.snapshots.SnapshotState;
@@ -59,7 +59,7 @@ public class URLSnapshotRestoreIT extends OpenSearchIntegTestCase {
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Collections.singletonList(URLRepositoryModulePlugin.class);
+        return Collections.singletonList(URLRepositoryPlugin.class);
     }
 
     public void testUrlRepository() throws Exception {
@@ -80,7 +80,7 @@ public class URLSnapshotRestoreIT extends OpenSearchIntegTestCase {
             index("test-idx", "doc", Integer.toString(i), "foo", "bar" + i);
         }
         refresh();
-        assertThat(client.prepareSearch("test-idx").setSize(0).get().getHits().getTotalHits().value(), equalTo(100L));
+        assertThat(client.prepareSearch("test-idx").setSize(0).get().getHits().getTotalHits().value, equalTo(100L));
 
         logger.info("--> snapshot");
         CreateSnapshotResponse createSnapshotResponse = client.admin()
@@ -121,7 +121,7 @@ public class URLSnapshotRestoreIT extends OpenSearchIntegTestCase {
             .actionGet();
         assertThat(restoreSnapshotResponse.getRestoreInfo().totalShards(), greaterThan(0));
 
-        assertThat(client.prepareSearch("test-idx").setSize(0).get().getHits().getTotalHits().value(), equalTo(100L));
+        assertThat(client.prepareSearch("test-idx").setSize(0).get().getHits().getTotalHits().value, equalTo(100L));
 
         logger.info("--> list available shapshots");
         GetSnapshotsResponse getSnapshotsResponse = client.admin().cluster().prepareGetSnapshots("url-repo").get();

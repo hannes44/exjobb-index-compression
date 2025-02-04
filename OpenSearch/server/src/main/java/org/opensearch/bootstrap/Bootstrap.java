@@ -47,7 +47,6 @@ import org.opensearch.cli.Terminal;
 import org.opensearch.cli.UserException;
 import org.opensearch.common.PidFile;
 import org.opensearch.common.SuppressForbidden;
-import org.opensearch.common.bootstrap.JarHell;
 import org.opensearch.common.inject.CreationException;
 import org.opensearch.common.logging.LogConfigurator;
 import org.opensearch.common.logging.Loggers;
@@ -190,7 +189,7 @@ final class Bootstrap {
         }
 
         initializeNatives(
-            environment.tmpDir(),
+            environment.tmpFile(),
             BootstrapSettings.MEMORY_LOCK_SETTING.get(settings),
             BootstrapSettings.SYSTEM_CALL_FILTER_SETTING.get(settings),
             BootstrapSettings.CTRLHANDLER_SETTING.get(settings)
@@ -255,7 +254,7 @@ final class Bootstrap {
     static SecureSettings loadSecureSettings(Environment initialEnv) throws BootstrapException {
         final KeyStoreWrapper keystore;
         try {
-            keystore = KeyStoreWrapper.load(initialEnv.configDir());
+            keystore = KeyStoreWrapper.load(initialEnv.configFile());
         } catch (IOException e) {
             throw new BootstrapException(e);
         }
@@ -274,11 +273,11 @@ final class Bootstrap {
         try {
             if (keystore == null) {
                 final KeyStoreWrapper keyStoreWrapper = KeyStoreWrapper.create();
-                keyStoreWrapper.save(initialEnv.configDir(), new char[0]);
+                keyStoreWrapper.save(initialEnv.configFile(), new char[0]);
                 return keyStoreWrapper;
             } else {
                 keystore.decrypt(password.getChars());
-                KeyStoreWrapper.upgrade(keystore, initialEnv.configDir(), password.getChars());
+                KeyStoreWrapper.upgrade(keystore, initialEnv.configFile(), password.getChars());
             }
         } catch (Exception e) {
             throw new BootstrapException(e);
@@ -367,7 +366,7 @@ final class Bootstrap {
         INSTANCE = new Bootstrap();
 
         final SecureSettings keystore = loadSecureSettings(initialEnv);
-        final Environment environment = createEnvironment(pidFile, keystore, initialEnv.settings(), initialEnv.configDir());
+        final Environment environment = createEnvironment(pidFile, keystore, initialEnv.settings(), initialEnv.configFile());
 
         LogConfigurator.setNodeName(Node.NODE_NAME_SETTING.get(environment.settings()));
         try {
