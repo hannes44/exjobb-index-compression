@@ -70,6 +70,14 @@ apply from: 'gradle/run.gradle'
 apply from: 'gradle/missing-javadoc.gradle'
 apply from: 'gradle/code-coverage.gradle'
 
+// Adding local repository for all projects since most of them need to use the local lucene repository
+allprojects {
+    repositories {
+        mavenLocal()
+    }
+}
+
+
 // Disable unconditional publishing of build scans
 develocity {
   buildScan {

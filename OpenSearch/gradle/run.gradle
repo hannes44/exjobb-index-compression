@@ -43,11 +43,6 @@ testClusters {
   }
 }
 
-allprojects {
-    repositories {
-        mavenLocal()
-    }
-}
 
 tasks.register("run", RunTask) {
   useCluster testClusters.runTask;
