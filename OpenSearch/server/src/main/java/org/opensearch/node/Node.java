@@ -45,7 +45,6 @@ import org.opensearch.action.ActionModule;
 import org.opensearch.action.ActionModule.DynamicActionRegistry;
 import org.opensearch.action.ActionType;
 import org.opensearch.action.admin.cluster.snapshots.status.TransportNodesSnapshotsStatus;
-import org.opensearch.action.admin.indices.view.ViewService;
 import org.opensearch.action.search.SearchExecutionStatsCollector;
 import org.opensearch.action.search.SearchPhaseController;
 import org.opensearch.action.search.SearchRequestOperationsCompositeListenerFactory;
@@ -157,7 +156,6 @@ import org.opensearch.index.engine.EngineFactory;
 import org.opensearch.index.recovery.RemoteStoreRestoreService;
 import org.opensearch.index.remote.RemoteIndexPathUploader;
 import org.opensearch.index.remote.RemoteStoreStatsTrackerFactory;
-import org.opensearch.index.store.IndexStoreListener;
 import org.opensearch.index.store.RemoteSegmentStoreDirectoryFactory;
 import org.opensearch.index.store.remote.filecache.FileCache;
 import org.opensearch.index.store.remote.filecache.FileCacheCleaner;
@@ -286,7 +284,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -488,8 +486,8 @@ public class Node implements Closeable {
                 Constants.OS_ARCH,
                 Constants.JVM_VENDOR,
                 Constants.JVM_NAME,
-                System.getProperty("java.version"),
-                Runtime.version().toString()
+                Constants.JAVA_VERSION,
+                Constants.JVM_VERSION
             );
             if (jvmInfo.getBundledJdk()) {
                 logger.info("JVM home [{}], using bundled JDK/JRE [{}]", System.getProperty("java.home"), jvmInfo.getUsingBundledJdk());
@@ -511,18 +509,18 @@ public class Node implements Closeable {
             if (logger.isDebugEnabled()) {
                 logger.debug(
                     "using config [{}], data [{}], logs [{}], plugins [{}]",
-                    initialEnvironment.configDir(),
+                    initialEnvironment.configFile(),
                     Arrays.toString(initialEnvironment.dataFiles()),
-                    initialEnvironment.logsDir(),
-                    initialEnvironment.pluginsDir()
+                    initialEnvironment.logsFile(),
+                    initialEnvironment.pluginsFile()
                 );
             }
 
             this.pluginsService = new PluginsService(
                 tmpSettings,
-                initialEnvironment.configDir(),
-                initialEnvironment.modulesDir(),
-                initialEnvironment.pluginsDir(),
+                initialEnvironment.configFile(),
+                initialEnvironment.modulesFile(),
+                initialEnvironment.pluginsFile(),
                 classpathPlugins
             );
 
@@ -547,29 +545,12 @@ public class Node implements Closeable {
              * Create the environment based on the finalized view of the settings. This is to ensure that components get the same setting
              * values, no matter they ask for them from.
              */
-            this.environment = new Environment(settings, initialEnvironment.configDir(), Node.NODE_LOCAL_STORAGE_SETTING.get(settings));
+            this.environment = new Environment(settings, initialEnvironment.configFile(), Node.NODE_LOCAL_STORAGE_SETTING.get(settings));
             Environment.assertEquivalent(initialEnvironment, this.environment);
-            Stream<IndexStoreListener> indexStoreListenerStream = pluginsService.filterPlugins(IndexStorePlugin.class)
-                .stream()
-                .map(IndexStorePlugin::getIndexStoreListener)
-                .filter(Optional::isPresent)
-                .map(Optional::get);
-            // FileCache is only initialized on search nodes, so we only create FileCacheCleaner on search nodes as well
             if (DiscoveryNode.isSearchNode(settings) == false) {
-                nodeEnvironment = new NodeEnvironment(
-                    settings,
-                    environment,
-                    new IndexStoreListener.CompositeIndexStoreListener(indexStoreListenerStream.collect(Collectors.toList()))
-                );
+                nodeEnvironment = new NodeEnvironment(tmpSettings, environment);
             } else {
-                nodeEnvironment = new NodeEnvironment(
-                    settings,
-                    environment,
-                    new IndexStoreListener.CompositeIndexStoreListener(
-                        Stream.concat(indexStoreListenerStream, Stream.of(new FileCacheCleaner(this::fileCache)))
-                            .collect(Collectors.toList())
-                    )
-                );
+                nodeEnvironment = new NodeEnvironment(settings, environment, new FileCacheCleaner(this::fileCache));
             }
             logger.info(
                 "node name [{}], node ID [{}], cluster name [{}], roles {}",
@@ -998,8 +979,6 @@ public class Node implements Closeable {
                 metadataCreateIndexService
             );
 
-            final ViewService viewService = new ViewService(clusterService, client, null);
-
             Collection<Object> pluginComponents = pluginsService.filterPlugins(Plugin.class)
                 .stream()
                 .flatMap(
@@ -1165,7 +1144,6 @@ public class Node implements Closeable {
                 transportInterceptors,
                 secureSettingsFactories
             );
-
             Collection<UnaryOperator<Map<String, IndexTemplateMetadata>>> indexTemplateMetadataUpgraders = pluginsService.filterPlugins(
                 Plugin.class
             ).stream().map(Plugin::getIndexTemplateMetadataUpgrader).collect(Collectors.toList());
@@ -1216,9 +1194,6 @@ public class Node implements Closeable {
                 SearchExecutionStatsCollector.makeWrapper(responseCollectorService)
             );
             final HttpServerTransport httpServerTransport = newHttpTransport(networkModule);
-
-            pluginComponents.addAll(newAuxTransports(networkModule));
-
             final IndexingPressureService indexingPressureService = new IndexingPressureService(settings, clusterService);
             // Going forward, IndexingPressureService will have required constructs for exposing listeners/interfaces for plugin
             // development. Then we can deprecate Getter and Setter for IndexingPressureService in ClusterService (#478).
@@ -1320,7 +1295,7 @@ public class Node implements Closeable {
                 clusterService.getClusterSettings(),
                 pluginsService.filterPlugins(DiscoveryPlugin.class),
                 clusterModule.getAllocationService(),
-                environment.configDir(),
+                environment.configFile(),
                 gatewayMetaState,
                 rerouteService,
                 fsHealthService,
@@ -1460,7 +1435,6 @@ public class Node implements Closeable {
                 b.bind(MetadataCreateIndexService.class).toInstance(metadataCreateIndexService);
                 b.bind(AwarenessReplicaBalance.class).toInstance(awarenessReplicaBalance);
                 b.bind(MetadataCreateDataStreamService.class).toInstance(metadataCreateDataStreamService);
-                b.bind(ViewService.class).toInstance(viewService);
                 b.bind(SearchService.class).toInstance(searchService);
                 b.bind(SearchTransportService.class).toInstance(searchTransportService);
                 b.bind(SearchPhaseController.class)
@@ -1525,7 +1499,6 @@ public class Node implements Closeable {
                 b.bind(SegmentReplicationStatsTracker.class).toInstance(segmentReplicationStatsTracker);
                 b.bind(SearchRequestOperationsCompositeListenerFactory.class).toInstance(searchRequestOperationsCompositeListenerFactory);
                 b.bind(SegmentReplicator.class).toInstance(segmentReplicator);
-
                 taskManagerClientOptional.ifPresent(value -> b.bind(TaskManagerClient.class).toInstance(value));
             });
             injector = modules.createInjector();
@@ -1982,8 +1955,8 @@ public class Node implements Closeable {
 
     /** Writes a file to the logs dir containing the ports for the given transport type */
     private void writePortsFile(String type, BoundTransportAddress boundAddress) {
-        Path tmpPortsFile = environment.logsDir().resolve(type + ".ports.tmp");
-        try (BufferedWriter writer = Files.newBufferedWriter(tmpPortsFile, StandardCharsets.UTF_8)) {
+        Path tmpPortsFile = environment.logsFile().resolve(type + ".ports.tmp");
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpPortsFile, Charset.forName("UTF-8"))) {
             for (TransportAddress address : boundAddress.boundAddresses()) {
                 InetAddress inetAddress = InetAddress.getByName(address.getAddress());
                 writer.write(NetworkAddress.format(new InetSocketAddress(inetAddress, address.getPort())) + "\n");
@@ -1991,7 +1964,7 @@ public class Node implements Closeable {
         } catch (IOException e) {
             throw new RuntimeException("Failed to write ports file", e);
         }
-        Path portsFile = environment.logsDir().resolve(type + ".ports");
+        Path portsFile = environment.logsFile().resolve(type + ".ports");
         try {
             Files.move(tmpPortsFile, portsFile, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
@@ -2114,10 +2087,6 @@ public class Node implements Closeable {
     /** Constructs a {@link org.opensearch.http.HttpServerTransport} which may be mocked for tests. */
     protected HttpServerTransport newHttpTransport(NetworkModule networkModule) {
         return networkModule.getHttpServerTransportSupplier().get();
-    }
-
-    protected List<NetworkPlugin.AuxTransport> newAuxTransports(NetworkModule networkModule) {
-        return networkModule.getAuxServerTransportList();
     }
 
     private static class LocalNodeFactory implements Function<BoundTransportAddress, DiscoveryNode> {

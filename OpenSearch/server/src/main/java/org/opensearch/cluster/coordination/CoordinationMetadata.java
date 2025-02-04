@@ -35,15 +35,14 @@ import org.opensearch.cluster.node.DiscoveryNode;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.util.set.Sets;
 import org.opensearch.core.ParseField;
-import org.opensearch.core.common.io.stream.BufferedChecksumStreamOutput;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
-import org.opensearch.core.common.io.stream.VerifiableWriteable;
 import org.opensearch.core.common.io.stream.Writeable;
 import org.opensearch.core.xcontent.ConstructingObjectParser;
 import org.opensearch.core.xcontent.ToXContentFragment;
 import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.index.translog.BufferedChecksumStreamOutput;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,7 +60,7 @@ import java.util.stream.Collectors;
  * @opensearch.api
  */
 @PublicApi(since = "1.0.0")
-public class CoordinationMetadata implements VerifiableWriteable, ToXContentFragment {
+public class CoordinationMetadata implements Writeable, ToXContentFragment {
 
     public static final CoordinationMetadata EMPTY_METADATA = builder().build();
 
@@ -151,7 +150,6 @@ public class CoordinationMetadata implements VerifiableWriteable, ToXContentFrag
         out.writeCollection(votingConfigExclusions);
     }
 
-    @Override
     public void writeVerifiableTo(BufferedChecksumStreamOutput out) throws IOException {
         writeTo(out);
     }
@@ -383,6 +381,13 @@ public class CoordinationMetadata implements VerifiableWriteable, ToXContentFrag
     public static class VotingConfiguration implements Writeable, ToXContentFragment {
 
         public static final VotingConfiguration EMPTY_CONFIG = new VotingConfiguration(Collections.emptySet());
+        /**
+         * @deprecated As of 2.0, because supporting inclusive language, replaced by {@link #MUST_JOIN_ELECTED_CLUSTER_MANAGER}
+         */
+        @Deprecated
+        public static final VotingConfiguration MUST_JOIN_ELECTED_MASTER = new VotingConfiguration(
+            Collections.singleton("_must_join_elected_master_")
+        );
         public static final VotingConfiguration MUST_JOIN_ELECTED_CLUSTER_MANAGER = new VotingConfiguration(
             Collections.singleton("_must_join_elected_cluster_manager_")
         );

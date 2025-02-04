@@ -809,7 +809,6 @@ public class TransportSearchActionTests extends OpenSearchTestCase {
                     remoteIndicesByCluster,
                     remoteClusterService,
                     threadPool,
-                    null,
                     new LatchedActionListener<>(ActionListener.wrap(response::set, e -> fail("no failures expected")), latch)
                 );
                 awaitLatch(latch, 5, TimeUnit.SECONDS);
@@ -836,7 +835,6 @@ public class TransportSearchActionTests extends OpenSearchTestCase {
                     remoteIndicesByCluster,
                     remoteClusterService,
                     threadPool,
-                    null,
                     new LatchedActionListener<>(ActionListener.wrap(r -> fail("no response expected"), failure::set), latch)
                 );
                 awaitLatch(latch, 5, TimeUnit.SECONDS);
@@ -882,7 +880,6 @@ public class TransportSearchActionTests extends OpenSearchTestCase {
                     remoteIndicesByCluster,
                     remoteClusterService,
                     threadPool,
-                    null,
                     new LatchedActionListener<>(ActionListener.wrap(r -> fail("no response expected"), failure::set), latch)
                 );
                 awaitLatch(latch, 5, TimeUnit.SECONDS);
@@ -910,7 +907,6 @@ public class TransportSearchActionTests extends OpenSearchTestCase {
                     remoteIndicesByCluster,
                     remoteClusterService,
                     threadPool,
-                    null,
                     new LatchedActionListener<>(ActionListener.wrap(response::set, e -> fail("no failures expected")), latch)
                 );
                 awaitLatch(latch, 5, TimeUnit.SECONDS);
@@ -953,7 +949,6 @@ public class TransportSearchActionTests extends OpenSearchTestCase {
                     remoteIndicesByCluster,
                     remoteClusterService,
                     threadPool,
-                    null,
                     new LatchedActionListener<>(ActionListener.wrap(response::set, e -> fail("no failures expected")), latch)
                 );
                 awaitLatch(latch, 5, TimeUnit.SECONDS);

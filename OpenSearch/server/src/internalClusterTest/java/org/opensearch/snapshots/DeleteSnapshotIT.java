@@ -9,7 +9,7 @@
 package org.opensearch.snapshots;
 
 import org.opensearch.action.admin.cluster.snapshots.create.CreateSnapshotResponse;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.Client;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.common.UUIDs;
@@ -45,37 +45,6 @@ public class DeleteSnapshotIT extends AbstractSnapshotIntegTestCase {
 
     private static final String REMOTE_REPO_NAME = "remote-store-repo-name";
 
-    public void testStaleIndexDeletion() throws Exception {
-        String indexName1 = ".testindex1";
-        String repoName = "test-restore-snapshot-repo";
-        String snapshotName1 = "test-restore-snapshot1";
-        Path absolutePath = randomRepoPath().toAbsolutePath();
-        logger.info("Path [{}]", absolutePath);
-
-        Client client = client();
-        // Write a document
-        String docId = Integer.toString(randomInt());
-        index(indexName1, "_doc", docId, "value", "expected");
-        createRepository(repoName, "fs", absolutePath);
-
-        logger.info("--> snapshot");
-        CreateSnapshotResponse createSnapshotResponse = client.admin()
-            .cluster()
-            .prepareCreateSnapshot(repoName, snapshotName1)
-            .setWaitForCompletion(true)
-            .setIndices(indexName1)
-            .get();
-        assertTrue(createSnapshotResponse.getSnapshotInfo().successfulShards() > 0);
-        assertEquals(createSnapshotResponse.getSnapshotInfo().totalShards(), createSnapshotResponse.getSnapshotInfo().successfulShards());
-        assertEquals(SnapshotState.SUCCESS, createSnapshotResponse.getSnapshotInfo().state());
-
-        assertAcked(startDeleteSnapshot(repoName, snapshotName1).get());
-        assertBusy(() -> assertEquals(0, RemoteStoreBaseIntegTestCase.getFileCount(absolutePath.resolve(BlobStoreRepository.INDICES_DIR))));
-        assertBusy(() -> assertEquals(0, RemoteStoreBaseIntegTestCase.getFileCount(absolutePath.resolve(SnapshotShardPaths.DIR))));
-        // At the end there are 2 files that exists - index-N and index.latest
-        assertBusy(() -> assertEquals(2, RemoteStoreBaseIntegTestCase.getFileCount(absolutePath)));
-    }
-
     public void testDeleteSnapshot() throws Exception {
         disableRepoConsistencyCheck("Remote store repository is being used in the test");
         final Path remoteStoreRepoPath = randomRepoPath();
@@ -103,6 +72,7 @@ public class DeleteSnapshotIT extends AbstractSnapshotIntegTestCase {
         assert (getRepositoryData(snapshotRepoName).getSnapshotIds().size() == 0);
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/opensearch-project/OpenSearch/issues/9115")
     public void testDeleteShallowCopySnapshot() throws Exception {
         disableRepoConsistencyCheck("Remote store repository is being used in the test");
         final Path remoteStoreRepoPath = randomRepoPath();
@@ -372,7 +342,7 @@ public class DeleteSnapshotIT extends AbstractSnapshotIntegTestCase {
         }
         assert (lockFiles.length == 2) : "lock files are " + Arrays.toString(lockFiles);
 
-        // delete remote store index
+        // delete the giremote store index
         assertAcked(client().admin().indices().prepareDelete(remoteStoreEnabledIndexName));
 
         logger.info("--> delete snapshot 1");

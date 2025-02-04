@@ -42,7 +42,7 @@ import org.opensearch.transport.TransportRequestOptions;
 /**
  * A generic action. Should strive to make it a singleton.
  *
- * @opensearch.api
+ * @opensearch.internal
  */
 @PublicApi(since = "1.0.0")
 public class ActionType<Response extends ActionResponse> {

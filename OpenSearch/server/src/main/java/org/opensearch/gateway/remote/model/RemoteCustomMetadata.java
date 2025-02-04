@@ -8,7 +8,6 @@
 
 package org.opensearch.gateway.remote.model;
 
-import org.opensearch.Version;
 import org.opensearch.cluster.metadata.Metadata.Custom;
 import org.opensearch.common.io.Streams;
 import org.opensearch.common.remote.AbstractClusterMetadataWriteableBlobEntity;
@@ -68,17 +67,16 @@ public class RemoteCustomMetadata extends AbstractClusterMetadataWriteableBlobEn
         final String customType,
         final String clusterUUID,
         final Compressor compressor,
-        final NamedWriteableRegistry namedWriteableRegistry,
-        final Version version
+        final NamedWriteableRegistry namedWriteableRegistry
     ) {
         super(clusterUUID, compressor, null);
         this.blobName = blobName;
         this.customType = customType;
         this.namedWriteableRegistry = namedWriteableRegistry;
-        this.customBlobStoreFormat = new ChecksumWritableBlobStoreFormat<>("custom", is -> {
-            is.setVersion(version);
-            return readFrom(is, namedWriteableRegistry, customType);
-        });
+        this.customBlobStoreFormat = new ChecksumWritableBlobStoreFormat<>(
+            "custom",
+            is -> readFrom(is, namedWriteableRegistry, customType)
+        );
     }
 
     @Override

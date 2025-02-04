@@ -22,7 +22,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
 import org.opensearch.common.Numbers;
@@ -107,7 +106,7 @@ public abstract class SortedUnsignedLongDocValuesRangeQuery extends Query {
             }
 
             @Override
-            public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+            public Scorer scorer(LeafReaderContext context) throws IOException {
                 SortedNumericDocValues values = getValues(context.reader(), field);
                 if (values == null) {
                     return null;
@@ -149,8 +148,7 @@ public abstract class SortedUnsignedLongDocValuesRangeQuery extends Query {
                         }
                     };
                 }
-                final Scorer scorer = new ConstantScoreScorer(score(), scoreMode, iterator);
-                return new DefaultScorerSupplier(scorer);
+                return new ConstantScoreScorer(this, score(), scoreMode, iterator);
             }
         };
     }

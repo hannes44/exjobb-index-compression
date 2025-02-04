@@ -38,7 +38,6 @@ import org.opensearch.core.xcontent.NamedXContentRegistry;
 import org.opensearch.http.HttpChannel;
 import org.opensearch.http.HttpHandlingSettings;
 import org.opensearch.http.HttpServerTransport;
-import org.opensearch.http.netty4.Netty4HttpChannel;
 import org.opensearch.http.netty4.Netty4HttpServerTransport;
 import org.opensearch.plugins.SecureHttpTransportSettingsProvider;
 import org.opensearch.plugins.TransportExceptionHandler;
@@ -56,19 +55,16 @@ import java.util.stream.Collectors;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.DecoderException;
-import io.netty.handler.ssl.ApplicationProtocolNames;
-import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.handler.ssl.SslHandler;
 
 /**
  * @see <a href="https://github.com/opensearch-project/security/blob/d526c9f6c2a438c14db8b413148204510b9fe2e2/src/main/java/org/opensearch/security/ssl/http/netty/SecuritySSLNettyHttpServerTransport.java">SecuritySSLNettyHttpServerTransport</a>
  */
 public class SecureNetty4HttpServerTransport extends Netty4HttpServerTransport {
-    public static final String REQUEST_HEADER_VERIFIER = SecureHttpTransportSettingsProvider.REQUEST_HEADER_VERIFIER;
-    public static final String REQUEST_DECOMPRESSOR = SecureHttpTransportSettingsProvider.REQUEST_DECOMPRESSOR;
+    public static final String REQUEST_HEADER_VERIFIER = "HeaderVerifier";
+    public static final String REQUEST_DECOMPRESSOR = "RequestDecompressor";
 
     private static final Logger logger = LogManager.getLogger(SecureNetty4HttpServerTransport.class);
     private final SecureHttpTransportSettingsProvider secureHttpTransportSettingsProvider;
@@ -159,40 +155,6 @@ public class SecureNetty4HttpServerTransport extends Netty4HttpServerTransport {
     }
 
     protected class SslHttpChannelHandler extends Netty4HttpServerTransport.HttpChannelHandler {
-        /**
-         * Application negotiation handler to select either HTTP 1.1 or HTTP 2 protocol, based
-         * on client/server ALPN negotiations.
-         */
-        private class Http2OrHttpHandler extends ApplicationProtocolNegotiationHandler {
-            protected Http2OrHttpHandler() {
-                super(ApplicationProtocolNames.HTTP_1_1);
-            }
-
-            @Override
-            protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
-                if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
-                    configureDefaultHttp2Pipeline(ctx.pipeline());
-                } else if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-                    configureDefaultHttpPipeline(ctx.pipeline());
-                } else {
-                    throw new IllegalStateException("Unknown application protocol: " + protocol);
-                }
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                super.exceptionCaught(ctx, cause);
-                Netty4HttpChannel channel = ctx.channel().attr(HTTP_CHANNEL_KEY).get();
-                if (channel != null) {
-                    if (cause instanceof Error) {
-                        onException(channel, new Exception(cause));
-                    } else {
-                        onException(channel, (Exception) cause);
-                    }
-                }
-            }
-        }
-
         protected SslHttpChannelHandler(final Netty4HttpServerTransport transport, final HttpHandlingSettings handlingSettings) {
             super(transport, handlingSettings);
         }
@@ -208,11 +170,6 @@ public class SecureNetty4HttpServerTransport extends Netty4HttpServerTransport {
 
             final SslHandler sslHandler = new SslHandler(sslEngine);
             ch.pipeline().addFirst("ssl_http", sslHandler);
-        }
-
-        @Override
-        protected void configurePipeline(Channel ch) {
-            ch.pipeline().addLast(new Http2OrHttpHandler());
         }
     }
 

@@ -116,7 +116,7 @@ public class RemoteRoutingTableBlobStoreTests extends OpenSearchTestCase {
         );
         BlobPath blobPath = remoteIndexRoutingTableStore.getBlobPathForUpload(remoteObjectForUpload);
         BlobPath expectedPath = HASHED_PREFIX.path(
-            RemoteStorePathStrategy.PathInput.builder()
+            RemoteStorePathStrategy.BasePathInput.builder()
                 .basePath(
                     new BlobPath().add("base-path")
                         .add(RemoteClusterStateUtils.encodeString("test-cluster"))

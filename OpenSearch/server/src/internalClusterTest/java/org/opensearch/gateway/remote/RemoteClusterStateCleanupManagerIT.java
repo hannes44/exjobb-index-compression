@@ -290,7 +290,10 @@ public class RemoteClusterStateCleanupManagerIT extends RemoteStoreBaseIntegTest
 
     private BlobPath getIndexRoutingPath(BlobPath baseMetadataPath, String indexUUID) {
         return pathType.path(
-            RemoteStorePathStrategy.PathInput.builder().basePath(baseMetadataPath.add(INDEX_ROUTING_TABLE)).indexUUID(indexUUID).build(),
+            RemoteStorePathStrategy.BasePathInput.builder()
+                .basePath(baseMetadataPath.add(INDEX_ROUTING_TABLE))
+                .indexUUID(indexUUID)
+                .build(),
             RemoteStoreEnums.PathHashAlgorithm.FNV_1A_BASE64
         );
     }

@@ -46,7 +46,7 @@ preProcessFixture {
   }
   doLast {
     file("${testFixturesDir}/shared").mkdirs()
-    copy {
+    project.copy {
       from jar
       from configurations.runtimeClasspath
       into "${testFixturesDir}/shared"

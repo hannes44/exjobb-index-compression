@@ -226,7 +226,7 @@ public class CardinalityAggregator extends NumericMetricsAggregator.SingleValue 
                 return false;
             }
             Bits liveDocs = ctx.reader().getLiveDocs();
-            scorer.score(pruningCollector, liveDocs, 0, DocIdSetIterator.NO_MORE_DOCS);
+            scorer.score(pruningCollector, liveDocs);
             pruningCollector.postCollect();
             Releasables.close(pruningCollector);
         } catch (Exception e) {
@@ -354,7 +354,7 @@ public class CardinalityAggregator extends NumericMetricsAggregator.SingleValue 
 
             this.queue = new DisiPriorityQueue(postingMap.size());
             for (Scorer scorer : postingMap.values()) {
-                queue.add(new DisiWrapper(scorer, false));
+                queue.add(new DisiWrapper(scorer));
             }
 
             competitiveIterator = new DisjunctionDISI(queue);
@@ -554,9 +554,7 @@ public class CardinalityAggregator extends NumericMetricsAggregator.SingleValue 
                 visitedOrds.set(bucketOrd, bits);
             }
             if (values.advanceExact(doc)) {
-                int count = values.docValueCount();
-                long ord;
-                while ((count-- > 0) && (ord = values.nextOrd()) != SortedSetDocValues.NO_MORE_DOCS) {
+                for (long ord = values.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = values.nextOrd()) {
                     bits.set((int) ord);
                 }
             }

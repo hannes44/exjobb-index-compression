@@ -42,6 +42,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.tests.analysis.MockTokenizer;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.common.io.Streams;
@@ -56,8 +57,6 @@ import org.opensearch.index.analysis.CharFilterFactory;
 import org.opensearch.index.analysis.CustomAnalyzer;
 import org.opensearch.index.analysis.IndexAnalyzers;
 import org.opensearch.index.analysis.MyFilterTokenFilterFactory;
-import org.opensearch.index.analysis.NameOrDefinition;
-import org.opensearch.index.analysis.NamedAnalyzer;
 import org.opensearch.index.analysis.PreConfiguredCharFilter;
 import org.opensearch.index.analysis.PreConfiguredTokenFilter;
 import org.opensearch.index.analysis.PreConfiguredTokenizer;
@@ -82,7 +81,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -215,6 +213,34 @@ public class AnalysisModuleTests extends OpenSearchTestCase {
                     equalTo("analyzer name must not start with '_'. got \"_invalidName\"")
                 )
             );
+        }
+    }
+
+    public void testStandardFilterBWC() throws IOException {
+        // standard tokenfilter should have been removed entirely in the 7x line. However, a
+        // cacheing bug meant that it was still possible to create indexes using a standard
+        // filter until 7.6
+        {
+            Version version = VersionUtils.randomVersionBetween(random(), LegacyESVersion.V_7_6_0, Version.CURRENT);
+            final Settings settings = Settings.builder()
+                .put("index.analysis.analyzer.my_standard.tokenizer", "standard")
+                .put("index.analysis.analyzer.my_standard.filter", "standard")
+                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
+                .put(IndexMetadata.SETTING_VERSION_CREATED, version)
+                .build();
+            IllegalArgumentException exc = expectThrows(IllegalArgumentException.class, () -> getIndexAnalyzers(settings));
+            assertThat(exc.getMessage(), equalTo("The [standard] token filter has been removed."));
+        }
+        {
+            Version version = VersionUtils.randomVersionBetween(random(), LegacyESVersion.V_7_0_0, LegacyESVersion.V_7_5_2);
+            final Settings settings = Settings.builder()
+                .put("index.analysis.analyzer.my_standard.tokenizer", "standard")
+                .put("index.analysis.analyzer.my_standard.filter", "standard")
+                .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
+                .put(IndexMetadata.SETTING_VERSION_CREATED, version)
+                .build();
+            getIndexAnalyzers(settings);
+            assertWarnings("The [standard] token filter is deprecated and will be removed in a future version.");
         }
     }
 
@@ -450,7 +476,7 @@ public class AnalysisModuleTests extends OpenSearchTestCase {
         InputStream aff = getClass().getResourceAsStream("/indices/analyze/conf_dir/hunspell/en_US/en_US.aff");
         InputStream dic = getClass().getResourceAsStream("/indices/analyze/conf_dir/hunspell/en_US/en_US.dic");
         Dictionary dictionary;
-        try (Directory tmp = new NIOFSDirectory(environment.tmpDir())) {
+        try (Directory tmp = new NIOFSDirectory(environment.tmpFile())) {
             dictionary = new Dictionary(tmp, "hunspell", aff, dic);
         }
         AnalysisModule module = new AnalysisModule(environment, singletonList(new AnalysisPlugin() {
@@ -524,54 +550,4 @@ public class AnalysisModuleTests extends OpenSearchTestCase {
         }
     }
 
-    /**
-     * Tests registration and functionality of token filters that require access to the AnalysisModule.
-     * This test verifies the token filter registration using the extended getTokenFilters(AnalysisModule) method
-     */
-    public void testTokenFilterRegistrationWithModuleReference() throws IOException {
-        class TestPlugin implements AnalysisPlugin {
-            @Override
-            public Map<String, AnalysisProvider<TokenFilterFactory>> getTokenFilters(AnalysisModule module) {
-                return Map.of(
-                    "test_filter",
-                    (indexSettings, env, name, settings) -> AppendTokenFilter.factoryForSuffix("_" + module.hashCode())
-                );
-            }
-        }
-        Settings settings = Settings.builder()
-            .put(Environment.PATH_HOME_SETTING.getKey(), createTempDir().toString())
-            .put(IndexMetadata.SETTING_VERSION_CREATED, Version.CURRENT)
-            .put("index.analysis.analyzer.my_analyzer.tokenizer", "standard")
-            .put("index.analysis.analyzer.my_analyzer.filter", "test_filter")
-            .build();
-        Environment environment = TestEnvironment.newEnvironment(settings);
-        AnalysisModule module = new AnalysisModule(environment, singletonList(new TestPlugin()));
-        AnalysisRegistry registry = module.getAnalysisRegistry();
-        IndexSettings indexSettings = IndexSettingsModule.newIndexSettings("test", Settings.builder().put(settings).build());
-        Map<String, TokenFilterFactory> tokenFilterFactories = registry.buildTokenFilterFactories(indexSettings);
-        assertTrue("Token filter 'test_filter' should be registered", tokenFilterFactories.containsKey("test_filter"));
-        IndexAnalyzers analyzers = registry.build(indexSettings);
-        String testText = "test";
-        TokenStream tokenStream = analyzers.get("my_analyzer").tokenStream("", testText);
-        CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-        tokenStream.reset();
-        assertTrue("Should have found a token", tokenStream.incrementToken());
-        assertEquals("Token should have expected suffix", "test_" + module.hashCode(), charTermAttribute.toString());
-        assertFalse("Should not have additional tokens", tokenStream.incrementToken());
-        tokenStream.close();
-        NamedAnalyzer customAnalyzer = registry.buildCustomAnalyzer(
-            indexSettings,
-            false,
-            new NameOrDefinition("standard"),
-            Collections.emptyList(),
-            Collections.singletonList(new NameOrDefinition("test_filter"))
-        );
-        tokenStream = customAnalyzer.tokenStream("", testText);
-        charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-        tokenStream.reset();
-        assertTrue("Custom analyzer should produce a token", tokenStream.incrementToken());
-        assertEquals("Custom analyzer token should have expected suffix", "test_" + module.hashCode(), charTermAttribute.toString());
-        assertFalse("Custom analyzer should not produce additional tokens", tokenStream.incrementToken());
-        tokenStream.close();
-    }
 }

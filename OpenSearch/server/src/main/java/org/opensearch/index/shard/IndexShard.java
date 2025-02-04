@@ -57,6 +57,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.ThreadInterruptedException;
 import org.opensearch.ExceptionsHelper;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchException;
 import org.opensearch.action.ActionRunnable;
 import org.opensearch.action.admin.indices.flush.FlushRequest;
@@ -126,6 +127,7 @@ import org.opensearch.index.engine.EngineConfig;
 import org.opensearch.index.engine.EngineConfigFactory;
 import org.opensearch.index.engine.EngineException;
 import org.opensearch.index.engine.EngineFactory;
+import org.opensearch.index.engine.InternalEngine;
 import org.opensearch.index.engine.NRTReplicationEngine;
 import org.opensearch.index.engine.ReadOnlyEngine;
 import org.opensearch.index.engine.RefreshFailedEngineException;
@@ -176,7 +178,6 @@ import org.opensearch.index.translog.RemoteTranslogStats;
 import org.opensearch.index.translog.Translog;
 import org.opensearch.index.translog.TranslogConfig;
 import org.opensearch.index.translog.TranslogFactory;
-import org.opensearch.index.translog.TranslogRecoveryRunner;
 import org.opensearch.index.translog.TranslogStats;
 import org.opensearch.index.warmer.ShardIndexWarmerService;
 import org.opensearch.index.warmer.WarmerStats;
@@ -345,6 +346,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     private final AtomicReference<Translog.Location> pendingRefreshLocation = new AtomicReference<>();
     private final RefreshPendingLocationListener refreshPendingLocationListener;
     private volatile boolean useRetentionLeasesInPeerRecovery;
+
     private final Store remoteStore;
     private final BiFunction<IndexSettings, ShardRouting, TranslogFactory> translogFactorySupplier;
     private final boolean isTimeSeriesIndex;
@@ -797,17 +799,20 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                              * the reverted operations on this shard by replaying the translog to avoid losing acknowledged writes.
                              */
                             final Engine engine = getEngine();
-                            engine.translogManager()
-                                .restoreLocalHistoryFromTranslog(
-                                    engine.getProcessedLocalCheckpoint(),
-                                    (snapshot) -> runTranslogRecovery(engine, snapshot, Engine.Operation.Origin.LOCAL_RESET, () -> {})
-                                );
+                            engine.restoreLocalHistoryFromTranslog(
+                                (resettingEngine, snapshot) -> runTranslogRecovery(
+                                    resettingEngine,
+                                    snapshot,
+                                    Engine.Operation.Origin.LOCAL_RESET,
+                                    () -> {}
+                                )
+                            );
                             /* Rolling the translog generation is not strictly needed here (as we will never have collisions between
                              * sequence numbers in a translog generation in a new primary as it takes the last known sequence number
                              * as a starting point), but it simplifies reasoning about the relationship between primary terms and
                              * translog generations.
                              */
-                            engine.translogManager().rollTranslogGeneration();
+                            engine.rollTranslogGeneration();
                             engine.fillSeqNoGaps(newPrimaryTerm);
                             replicationTracker.updateLocalCheckpoint(currentRouting.allocationId().getId(), getLocalCheckpoint());
                             primaryReplicaSyncer.accept(this, new ActionListener<ResyncTask>() {
@@ -932,7 +937,9 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 }
 
                 // Ensure all in-flight remote store translog upload drains, before we perform the performSegRep.
-                releasablesOnHandoffFailures.add(getEngine().translogManager().drainSync());
+                if (getEngine() instanceof InternalEngine) {
+                    releasablesOnHandoffFailures.add(((InternalEngine) getEngine()).translogManager().drainSync());
+                }
 
                 // no shard operation permits are being held here, move state from started to relocated
                 assert indexShardOperationPermits.getActiveOperationsCount() == OPERATIONS_BLOCKED
@@ -1514,7 +1521,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     public TranslogStats translogStats() {
-        TranslogStats translogStats = getEngine().translogManager().getTranslogStats();
+        TranslogStats translogStats = getEngine().getTranslogStats();
         // Populate remote_store stats only if the index is remote store backed
         if (indexSettings.isAssignedOnRemoteNode()) {
             translogStats.addRemoteTranslogStats(
@@ -1560,7 +1567,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         }
         verifyNotClosed();
         final Engine engine = getEngine();
-        engine.translogManager().trimUnreferencedTranslogFiles();
+        engine.trimUnreferencedTranslogFiles();
     }
 
     /**
@@ -1568,7 +1575,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
      */
     public void rollTranslogGeneration() throws IOException {
         final Engine engine = getEngine();
-        engine.translogManager().rollTranslogGeneration();
+        engine.rollTranslogGeneration();
     }
 
     public void forceMerge(ForceMergeRequest forceMerge) throws IOException {
@@ -1622,22 +1629,6 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             }
         }
         return luceneVersion == null ? indexSettings.getIndexVersionCreated().luceneVersion : luceneVersion;
-    }
-
-    /**
-     * Fetches the last remote uploaded segment metadata file
-     * @return {@link RemoteSegmentMetadata}
-     * @throws IOException
-     */
-    public RemoteSegmentMetadata fetchLastRemoteUploadedSegmentMetadata() throws IOException {
-        if (!indexSettings.isAssignedOnRemoteNode()) {
-            throw new IllegalStateException("Index is not assigned on Remote Node");
-        }
-        RemoteSegmentMetadata lastUploadedMetadata = getRemoteDirectory().readLatestMetadataFile();
-        if (lastUploadedMetadata == null) {
-            throw new FileNotFoundException("No metadata file found in remote store");
-        }
-        return lastUploadedMetadata;
     }
 
     /**
@@ -2076,9 +2067,11 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                     // Also closing refreshListeners to prevent us from accumulating any more listeners
                     IOUtils.close(engine, globalCheckpointListeners, refreshListeners, pendingReplicationActions);
 
-                    if (deleted && engine != null && isPrimaryMode()) {
+                    if (deleted && engine != null && isPrimaryMode() && isRemoteTranslogEnabled()) {
                         // Translog Clean up
-                        engine.translogManager().onDelete();
+                        if (engine instanceof InternalEngine) {
+                            ((InternalEngine) engine).translogManager().onDelete();
+                        }
                     }
 
                     indexShardOperationPermits.close();
@@ -2269,10 +2262,10 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 return safeCommit.get().localCheckpoint + 1;
             }
             try {
-                final TranslogRecoveryRunner translogRecoveryRunner = (snapshot) -> {
+                final Engine.TranslogRecoveryRunner translogRecoveryRunner = (engine, snapshot) -> {
                     recoveryState.getTranslog().totalLocal(snapshot.totalOperations());
                     final int recoveredOps = runTranslogRecovery(
-                        getEngine(),
+                        engine,
                         snapshot,
                         Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY,
                         recoveryState.getTranslog()::incrementRecoveredOperations
@@ -2281,8 +2274,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                     return recoveredOps;
                 };
                 innerOpenEngineAndTranslog(() -> globalCheckpoint);
-                getEngine().translogManager()
-                    .recoverFromTranslog(translogRecoveryRunner, getEngine().getProcessedLocalCheckpoint(), globalCheckpoint);
+                getEngine().recoverFromTranslog(translogRecoveryRunner, globalCheckpoint);
                 logger.trace("shard locally recovered up to {}", getEngine().getSeqNoStats(globalCheckpoint));
             } finally {
                 synchronized (engineMutex) {
@@ -2359,7 +2351,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     public void trimOperationOfPreviousPrimaryTerms(long aboveSeqNo) {
-        getEngine().translogManager().trimOperationsFromTranslog(getOperationPrimaryTerm(), aboveSeqNo);
+        getEngine().trimOperationsFromTranslog(getOperationPrimaryTerm(), aboveSeqNo);
     }
 
     /**
@@ -2504,11 +2496,11 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         maybeCheckIndex();
         recoveryState.setStage(RecoveryState.Stage.TRANSLOG);
         final RecoveryState.Translog translogRecoveryStats = recoveryState.getTranslog();
-        final TranslogRecoveryRunner translogRecoveryRunner = (snapshot) -> {
+        final Engine.TranslogRecoveryRunner translogRecoveryRunner = (engine, snapshot) -> {
             translogRecoveryStats.totalOperations(snapshot.totalOperations());
             translogRecoveryStats.totalOperationsOnStart(snapshot.totalOperations());
             return runTranslogRecovery(
-                getEngine(),
+                engine,
                 snapshot,
                 Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY,
                 translogRecoveryStats::incrementRecoveredOperations
@@ -2530,8 +2522,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             translogConfig.setDownloadRemoteTranslogOnInit(true);
         }
 
-        getEngine().translogManager()
-            .recoverFromTranslog(translogRecoveryRunner, getEngine().getProcessedLocalCheckpoint(), Long.MAX_VALUE);
+        getEngine().recoverFromTranslog(translogRecoveryRunner, Long.MAX_VALUE);
     }
 
     /**
@@ -2540,25 +2531,23 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
      */
     public void openEngineAndSkipTranslogRecovery() throws IOException {
         assert routingEntry().recoverySource().getType() == RecoverySource.Type.PEER : "not a peer recovery [" + routingEntry() + "]";
-        openEngineAndSkipTranslogRecovery(true);
+        recoveryState.validateCurrentStage(RecoveryState.Stage.TRANSLOG);
+        loadGlobalCheckpointToReplicationTracker();
+        innerOpenEngineAndTranslog(replicationTracker);
+        getEngine().skipTranslogRecovery();
     }
 
     public void openEngineAndSkipTranslogRecoveryFromSnapshot() throws IOException {
-        assert routingEntry().isSearchOnly() || routingEntry().recoverySource().getType() == RecoverySource.Type.SNAPSHOT
-            : "not a snapshot recovery [" + routingEntry() + "]";
+        assert routingEntry().recoverySource().getType() == RecoverySource.Type.SNAPSHOT : "not a snapshot recovery ["
+            + routingEntry()
+            + "]";
         recoveryState.validateCurrentStage(RecoveryState.Stage.INDEX);
         maybeCheckIndex();
         recoveryState.setStage(RecoveryState.Stage.TRANSLOG);
-        openEngineAndSkipTranslogRecovery(routingEntry().isSearchOnly());
-    }
-
-    void openEngineAndSkipTranslogRecovery(boolean syncFromRemote) throws IOException {
         recoveryState.validateCurrentStage(RecoveryState.Stage.TRANSLOG);
         loadGlobalCheckpointToReplicationTracker();
-        innerOpenEngineAndTranslog(replicationTracker, syncFromRemote);
-        assert routingEntry().isSearchOnly() == false || translogStats().estimatedNumberOfOperations() == 0
-            : "Translog is expected to be empty but holds " + translogStats().estimatedNumberOfOperations() + "Operations.";
-        getEngine().translogManager().skipTranslogRecovery();
+        innerOpenEngineAndTranslog(replicationTracker, false);
+        getEngine().skipTranslogRecovery();
     }
 
     private void innerOpenEngineAndTranslog(LongSupplier globalCheckpointSupplier) throws IOException {
@@ -2670,7 +2659,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
 
     private void onNewEngine(Engine newEngine) {
         assert Thread.holdsLock(engineMutex);
-        refreshListeners.setCurrentRefreshLocationSupplier(newEngine.translogManager()::getTranslogLastWriteLocation);
+        refreshListeners.setCurrentRefreshLocationSupplier(newEngine::getTranslogLastWriteLocation);
     }
 
     /**
@@ -2907,8 +2896,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     public void recoverFromStore(ActionListener<Boolean> listener) {
         // we are the first primary, recover from the gateway
         // if its post api allocation, the index should exists
-        assert shardRouting.primary() || shardRouting.isSearchOnly()
-            : "recover from store only makes sense if the shard is a primary shard or an untracked search only replica";
+        assert shardRouting.primary() : "recover from store only makes sense if the shard is a primary shard";
         assert shardRouting.initializing() : "can only start recovery on initializing shard";
         StoreRecovery storeRecovery = new StoreRecovery(shardId, logger);
         storeRecovery.recoverFromStore(this, listener);
@@ -2995,7 +2983,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         final Engine engine = getEngineOrNull();
         if (engine != null) {
             try {
-                return engine.translogManager().shouldRollTranslogGeneration();
+                return engine.shouldRollTranslogGeneration();
             } catch (final AlreadyClosedException e) {
                 // we are already closed, no need to flush or roll
             }
@@ -3048,7 +3036,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     /**
      * Creates a new history snapshot for reading operations since
      * the provided starting seqno (inclusive) and ending seqno (inclusive)
-     * The returned snapshot can be retrieved from either Lucene index or translog files.
+     * The returned snapshot is retrieved from a Lucene index.
      */
     public Translog.Snapshot getHistoryOperations(String reason, long startingSeqNo, long endSeqNo, boolean accurateCount)
         throws IOException {
@@ -3056,14 +3044,17 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     /**
-     * Creates a new history snapshot from the translog instead of the lucene index. Required for cross cluster replication.
-     * Use the recommended {@link #getHistoryOperations(String, long, long, boolean)} method for other cases.
-     * This method should only be invoked if Segment Replication or Remote Store is not enabled.
+     * Creates a new history snapshot from the translog file instead of the lucene index
+     *
+     * @deprecated reading history operations from the translog file is deprecated and will be removed in the next release
+     *
+     * Use {@link IndexShard#getHistoryOperations(String, long, long, boolean)} instead
      */
-    public Translog.Snapshot getHistoryOperationsFromTranslog(long startingSeqNo, long endSeqNo) throws IOException {
+    @Deprecated
+    public Translog.Snapshot getHistoryOperationsFromTranslogFile(String reason, long startingSeqNo, long endSeqNo) throws IOException {
         assert indexSettings.isSegRepEnabledOrRemoteNode() == false
             : "unsupported operation for segment replication enabled indices or remote store backed indices";
-        return getEngine().translogManager().newChangesSnapshot(startingSeqNo, endSeqNo, true);
+        return getEngine().newChangesSnapshotFromTranslogFile(reason, startingSeqNo, endSeqNo, true);
     }
 
     /**
@@ -3466,11 +3457,16 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     /**
-     * Fetch the latest checkpoint that has been processed but not necessarily persisted.
+     * Fetch the latest checkpoint that has been processed but not necessarily persisted. This should be used only when Segment Replication is enabled.
      * Also see {@link #getLocalCheckpoint()}.
      */
     public long getProcessedLocalCheckpoint() {
-        return getEngine().getProcessedLocalCheckpoint();
+        // Returns checkpoint only if the current engine is an instance of NRTReplicationEngine or InternalEngine
+        return getReplicationEngine().map(NRTReplicationEngine::getProcessedLocalCheckpoint).orElseGet(() -> {
+            final Engine engine = getEngine();
+            assert engine instanceof InternalEngine;
+            return ((InternalEngine) engine).getProcessedLocalCheckpoint();
+        });
     }
 
     /**
@@ -3632,7 +3628,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             // This helps to get a consistent state in remote store where both remote segment store and remote
             // translog contains data.
             try {
-                getEngine().translogManager().syncTranslog();
+                getEngine().syncTranslog();
             } catch (IOException e) {
                 logger.error("Failed to sync translog to remote from new primary", e);
             }
@@ -3912,7 +3908,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     ) {
         assert assertPrimaryMode();
         // only needed for BWC reasons involving rolling upgrades from versions that do not support PRRLs:
-        assert indexSettings.isSoftDeleteEnabled() == false;
+        assert indexSettings.getIndexVersionCreated().before(LegacyESVersion.V_7_4_0) || indexSettings.isSoftDeleteEnabled() == false;
         return replicationTracker.addPeerRecoveryRetentionLease(nodeId, globalCheckpoint, listener);
     }
 
@@ -4423,7 +4419,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                         if (currentGlobalCheckpoint < maxSeqNo && indexSettings.isSegRepEnabledOrRemoteNode() == false) {
                             resetEngineToGlobalCheckpoint();
                         } else {
-                            getEngine().translogManager().rollTranslogGeneration();
+                            getEngine().rollTranslogGeneration();
                         }
                     }, allowCombineOperationWithPrimaryTermUpdate ? operationListener : null);
 
@@ -4480,7 +4476,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         ThreadContext threadContext = threadPool.getThreadContext();
         CheckedConsumer<List<Tuple<Translog.Location, Consumer<Exception>>>, IOException> writeConsumer = candidates -> {
             try {
-                engineSupplier.get().translogManager().ensureTranslogSynced(candidates.stream().map(Tuple::v1));
+                engineSupplier.get().ensureTranslogSynced(candidates.stream().map(Tuple::v1));
             } catch (AlreadyClosedException ex) {
                 // that's fine since we already synced everything on engine close - this also is conform with the methods
                 // documentation
@@ -4489,6 +4485,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 throw ex;
             }
         };
+
         if (bufferAsyncIoProcessor) {
             return new BufferedAsyncIOProcessor<>(logger, 102400, threadContext, threadPool, bufferIntervalSupplier) {
                 @Override
@@ -4502,7 +4499,6 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 }
             };
         }
-
         return new AsyncIOProcessor<>(logger, 1024, threadContext) {
             @Override
             protected void write(List<Tuple<Translog.Location, Consumer<Exception>>> candidates) throws IOException {
@@ -4527,14 +4523,14 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
 
     public void sync() throws IOException {
         verifyNotClosed();
-        getEngine().translogManager().syncTranslog();
+        getEngine().syncTranslog();
     }
 
     /**
      * Checks if the underlying storage sync is required.
      */
     public boolean isSyncNeeded() {
-        return getEngine().translogManager().isTranslogSyncNeeded();
+        return getEngine().isTranslogSyncNeeded();
     }
 
     /**
@@ -4734,7 +4730,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     private void setRefreshPending(Engine engine) {
-        final Translog.Location lastWriteLocation = engine.translogManager().getTranslogLastWriteLocation();
+        final Translog.Location lastWriteLocation = engine.getTranslogLastWriteLocation();
         pendingRefreshLocation.updateAndGet(curr -> {
             if (curr == null || curr.compareTo(lastWriteLocation) <= 0) {
                 return lastWriteLocation;
@@ -4750,7 +4746,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         @Override
         public void beforeRefresh() {
             try {
-                lastWriteLocation = getEngine().translogManager().getTranslogLastWriteLocation();
+                lastWriteLocation = getEngine().getTranslogLastWriteLocation();
             } catch (AlreadyClosedException exc) {
                 // shard is closed - no location is fine
                 lastWriteLocation = null;
@@ -4992,8 +4988,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             newEngineReference.set(engineFactory.newReadWriteEngine(newEngineConfig(replicationTracker)));
             onNewEngine(newEngineReference.get());
         }
-        final TranslogRecoveryRunner translogRunner = (snapshot) -> runTranslogRecovery(
-            newEngineReference.get(),
+        final Engine.TranslogRecoveryRunner translogRunner = (engine, snapshot) -> runTranslogRecovery(
+            engine,
             snapshot,
             Engine.Operation.Origin.LOCAL_RESET,
             () -> {
@@ -5008,9 +5004,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         long recoverUpto = this.isRemoteTranslogEnabled() || indexSettings().isSegRepEnabledOrRemoteNode()
             ? Long.MAX_VALUE
             : globalCheckpoint;
-        newEngineReference.get()
-            .translogManager()
-            .recoverFromTranslog(translogRunner, newEngineReference.get().getProcessedLocalCheckpoint(), recoverUpto);
+        newEngineReference.get().recoverFromTranslog(translogRunner, recoverUpto);
         newEngineReference.get().refresh("reset_engine");
         synchronized (engineMutex) {
             verifyNotClosed();
@@ -5166,6 +5160,15 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             store.decRef();
             remoteStore.decRef();
         }
+    }
+
+    public void syncSegmentsFromGivenRemoteSegmentStore(
+        boolean overrideLocal,
+        RemoteSegmentStoreDirectory sourceRemoteDirectory,
+        long primaryTerm,
+        long commitGeneration
+    ) throws IOException {
+        // Keeping this method to avoid breaking change detection
     }
 
     /**

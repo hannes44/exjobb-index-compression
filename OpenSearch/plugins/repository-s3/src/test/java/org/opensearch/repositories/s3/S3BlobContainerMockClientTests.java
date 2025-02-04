@@ -639,7 +639,7 @@ public class S3BlobContainerMockClientTests extends OpenSearchTestCase implement
 
         GenericStatsMetricPublisher genericStatsMetricPublisher = new GenericStatsMetricPublisher(10000L, 10, 10000L, 10);
         SizeBasedBlockingQ sizeBasedBlockingQ = new SizeBasedBlockingQ(
-            capacity,
+            new ByteSizeValue(1, ByteSizeUnit.MB),
             transferQueueConsumerService,
             10,
             genericStatsMetricPublisher,

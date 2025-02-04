@@ -35,6 +35,7 @@ package org.opensearch.index.mapper;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.cluster.metadata.MappingMetadata;
@@ -150,7 +151,7 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         "index.mapping.depth.limit",
         20L,
         1,
-        Long.MAX_VALUE,
+        Integer.MAX_VALUE,
         limit -> {
             // Make sure XContent constraints are not exceeded (otherwise content processing will fail)
             if (limit > XContentContraints.DEFAULT_MAX_DEPTH) {
@@ -171,9 +172,9 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
     );
     public static final Setting<Long> INDEX_MAPPING_FIELD_NAME_LENGTH_LIMIT_SETTING = Setting.longSetting(
         "index.mapping.field_name_length.limit",
-        50000,
+        Integer.MAX_VALUE,
         1L,
-        Long.MAX_VALUE,
+        Integer.MAX_VALUE,
         limit -> {
             // Make sure XContent constraints are not exceeded (otherwise content processing will fail)
             if (limit > XContentContraints.DEFAULT_MAX_NAME_LEN) {
@@ -228,7 +229,6 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
 
     private volatile Set<CompositeMappedFieldType> compositeMappedFieldTypes;
     private volatile Set<String> fieldsPartOfCompositeMappings;
-    private volatile Set<String> nestedFieldsPartOfCompositeMappings;
 
     public MapperService(
         IndexSettings indexSettings,
@@ -241,7 +241,6 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         ScriptService scriptService
     ) {
         super(indexSettings);
-
         this.indexVersionCreated = indexSettings.getIndexVersionCreated();
         this.indexAnalyzers = indexAnalyzers;
         this.documentParser = new DocumentMapperParser(
@@ -265,13 +264,9 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         this.mapperRegistry = mapperRegistry;
         this.idFieldDataEnabled = idFieldDataEnabled;
 
-        if (INDEX_MAPPER_DYNAMIC_SETTING.exists(indexSettings.getSettings())) {
-            deprecationLogger.deprecate(
-                index().getName() + INDEX_MAPPER_DYNAMIC_SETTING.getKey(),
-                "Index [{}] has setting [{}] that is not supported in OpenSearch, its value will be ignored.",
-                index().getName(),
-                INDEX_MAPPER_DYNAMIC_SETTING.getKey()
-            );
+        if (INDEX_MAPPER_DYNAMIC_SETTING.exists(indexSettings.getSettings())
+            && indexSettings.getIndexVersionCreated().onOrAfter(LegacyESVersion.V_7_0_0)) {
+            throw new IllegalArgumentException("Setting " + INDEX_MAPPER_DYNAMIC_SETTING.getKey() + " was removed after version 6.0.0");
         }
     }
 
@@ -555,29 +550,10 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
 
     private void buildCompositeFieldLookup() {
         Set<String> fieldsPartOfCompositeMappings = new HashSet<>();
-        Set<String> nestedFieldsPartOfCompositeMappings = new HashSet<>();
-
         for (CompositeMappedFieldType fieldType : compositeMappedFieldTypes) {
             fieldsPartOfCompositeMappings.addAll(fieldType.fields());
-
-            for (String field : fieldType.fields()) {
-                String[] parts = field.split("\\.");
-                if (parts.length > 1) {
-                    StringBuilder path = new StringBuilder();
-                    for (int i = 0; i < parts.length; i++) {
-                        if (i == 0) {
-                            path.append(parts[i]);
-                        } else {
-                            path.append(".").append(parts[i]);
-                        }
-                        nestedFieldsPartOfCompositeMappings.add(path.toString());
-                    }
-                }
-            }
         }
-
         this.fieldsPartOfCompositeMappings = fieldsPartOfCompositeMappings;
-        this.nestedFieldsPartOfCompositeMappings = nestedFieldsPartOfCompositeMappings;
     }
 
     private boolean assertSerialization(DocumentMapper mapper) {
@@ -710,11 +686,6 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
         return fieldsPartOfCompositeMappings.contains(field);
     }
 
-    public boolean isCompositeIndexFieldNestedField(String field) {
-        return nestedFieldsPartOfCompositeMappings.contains(field);
-
-    }
-
     public ObjectMapper getObjectMapper(String name) {
         return this.mapper == null ? null : this.mapper.objectMappers().get(name);
     }
@@ -776,14 +747,14 @@ public class MapperService extends AbstractIndexComponent implements Closeable {
      * this method considers all mapper plugins
      */
     public boolean isMetadataField(String field) {
-        return mapperRegistry.isMetadataField(field);
+        return mapperRegistry.isMetadataField(indexVersionCreated, field);
     }
 
     /**
      * Returns a set containing the registered metadata fields
      */
     public Set<String> getMetadataFields() {
-        return Collections.unmodifiableSet(mapperRegistry.getMetadataMapperParsers().keySet());
+        return Collections.unmodifiableSet(mapperRegistry.getMetadataMapperParsers(indexVersionCreated).keySet());
     }
 
     /**

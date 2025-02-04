@@ -703,7 +703,7 @@ final class BootstrapChecks {
         }
 
         String javaVersion() {
-            return Runtime.version().toString();
+            return Constants.JAVA_VERSION;
         }
 
     }

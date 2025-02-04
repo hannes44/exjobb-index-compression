@@ -110,7 +110,7 @@ public class PercolatorQuerySearchIT extends ParameterizedStaticSettingsOpenSear
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(PercolatorModulePlugin.class, GeoModulePlugin.class);
+        return Arrays.asList(PercolatorPlugin.class, GeoModulePlugin.class);
     }
 
     public void testPercolatorQuery() throws Exception {
@@ -1332,7 +1332,7 @@ public class PercolatorQuerySearchIT extends ParameterizedStaticSettingsOpenSear
                 )
             )
             .get();
-        assertEquals(1, response.getHits().getTotalHits().value());
+        assertEquals(1, response.getHits().getTotalHits().value);
 
         response = client().prepareSearch("test")
             .setQuery(
@@ -1344,7 +1344,7 @@ public class PercolatorQuerySearchIT extends ParameterizedStaticSettingsOpenSear
             )
             .addSort("_doc", SortOrder.ASC)
             .get();
-        assertEquals(1, response.getHits().getTotalHits().value());
+        assertEquals(1, response.getHits().getTotalHits().value);
 
         response = client().prepareSearch("test")
             .setQuery(
@@ -1357,7 +1357,7 @@ public class PercolatorQuerySearchIT extends ParameterizedStaticSettingsOpenSear
                 )
             )
             .get();
-        assertEquals(1, response.getHits().getTotalHits().value());
+        assertEquals(1, response.getHits().getTotalHits().value);
 
     }
 }

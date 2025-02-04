@@ -34,11 +34,8 @@ package org.opensearch.bootstrap;
 
 import org.opensearch.cli.Command;
 import org.opensearch.common.SuppressForbidden;
-import org.opensearch.common.bootstrap.JarHell;
 import org.opensearch.common.io.PathUtils;
-import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
-import org.opensearch.common.transport.PortsRange;
 import org.opensearch.env.Environment;
 import org.opensearch.http.HttpTransportSettings;
 import org.opensearch.plugins.PluginInfo;
@@ -74,9 +71,6 @@ import java.util.regex.Pattern;
 
 import static org.opensearch.bootstrap.FilePermissionUtils.addDirectoryPath;
 import static org.opensearch.bootstrap.FilePermissionUtils.addSingleFilePath;
-import static org.opensearch.plugins.NetworkPlugin.AuxTransport.AUX_PORT_DEFAULTS;
-import static org.opensearch.plugins.NetworkPlugin.AuxTransport.AUX_TRANSPORT_PORT;
-import static org.opensearch.plugins.NetworkPlugin.AuxTransport.AUX_TRANSPORT_TYPES_SETTING;
 
 /**
  * Initializes SecurityManager with necessary permissions.
@@ -191,11 +185,11 @@ final class Security {
      * we look for matching plugins and set URLs to fit
      */
     @SuppressForbidden(reason = "proper use of URL")
-    static Map<String, Policy> getPluginPermissions(Environment environment) throws IOException {
+    static Map<String, Policy> getPluginPermissions(Environment environment) throws IOException, NoSuchAlgorithmException {
         Map<String, Policy> map = new HashMap<>();
         // collect up set of plugins and modules by listing directories.
-        Set<Path> pluginsAndModules = new LinkedHashSet<>(PluginsService.findPluginDirs(environment.pluginsDir()));
-        pluginsAndModules.addAll(PluginsService.findPluginDirs(environment.modulesDir()));
+        Set<Path> pluginsAndModules = new LinkedHashSet<>(PluginsService.findPluginDirs(environment.pluginsFile()));
+        pluginsAndModules.addAll(PluginsService.findPluginDirs(environment.modulesFile()));
 
         // now process each one
         for (Path plugin : pluginsAndModules) {
@@ -356,19 +350,19 @@ final class Security {
      */
     static void addFilePermissions(Permissions policy, Environment environment) throws IOException {
         // read-only dirs
-        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.binDir(), "read,readlink", false);
-        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.libDir(), "read,readlink", false);
-        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.modulesDir(), "read,readlink", false);
-        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.pluginsDir(), "read,readlink", false);
-        addDirectoryPath(policy, "path.conf'", environment.configDir(), "read,readlink", false);
+        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.binFile(), "read,readlink", false);
+        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.libFile(), "read,readlink", false);
+        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.modulesFile(), "read,readlink", false);
+        addDirectoryPath(policy, Environment.PATH_HOME_SETTING.getKey(), environment.pluginsFile(), "read,readlink", false);
+        addDirectoryPath(policy, "path.conf'", environment.configFile(), "read,readlink", false);
         // read-write dirs
-        addDirectoryPath(policy, "java.io.tmpdir", environment.tmpDir(), "read,readlink,write,delete", false);
-        addDirectoryPath(policy, Environment.PATH_LOGS_SETTING.getKey(), environment.logsDir(), "read,readlink,write,delete", false);
-        if (environment.sharedDataDir() != null) {
+        addDirectoryPath(policy, "java.io.tmpdir", environment.tmpFile(), "read,readlink,write,delete", false);
+        addDirectoryPath(policy, Environment.PATH_LOGS_SETTING.getKey(), environment.logsFile(), "read,readlink,write,delete", false);
+        if (environment.sharedDataFile() != null) {
             addDirectoryPath(
                 policy,
                 Environment.PATH_SHARED_DATA_SETTING.getKey(),
-                environment.sharedDataDir(),
+                environment.sharedDataFile(),
                 "read,readlink,write,delete",
                 false
             );
@@ -408,7 +402,6 @@ final class Security {
     private static void addBindPermissions(Permissions policy, Settings settings) {
         addSocketPermissionForHttp(policy, settings);
         addSocketPermissionForTransportProfiles(policy, settings);
-        addSocketPermissionForAux(policy, settings);
     }
 
     /**
@@ -421,29 +414,6 @@ final class Security {
         // http is simple
         final String httpRange = HttpTransportSettings.SETTING_HTTP_PORT.get(settings).getPortRangeString();
         addSocketPermissionForPortRange(policy, httpRange);
-    }
-
-    /**
-     * Add dynamic {@link SocketPermission} based on AffixSetting AUX_TRANSPORT_PORT.
-     * If an auxiliary transport type is enabled but has no corresponding port range setting fall back to AUX_PORT_DEFAULTS.
-     *
-     * @param policy the {@link Permissions} instance to apply the dynamic {@link SocketPermission}s to.
-     * @param settings the {@link Settings} instance to read the gRPC settings from
-     */
-    private static void addSocketPermissionForAux(final Permissions policy, final Settings settings) {
-        Set<PortsRange> portsRanges = new HashSet<>();
-        for (String auxType : AUX_TRANSPORT_TYPES_SETTING.get(settings)) {
-            Setting<PortsRange> auxTypePortSettings = AUX_TRANSPORT_PORT.getConcreteSettingForNamespace(auxType);
-            if (auxTypePortSettings.exists(settings)) {
-                portsRanges.add(auxTypePortSettings.get(settings));
-            } else {
-                portsRanges.add(new PortsRange(AUX_PORT_DEFAULTS));
-            }
-        }
-
-        for (PortsRange portRange : portsRanges) {
-            addSocketPermissionForPortRange(policy, portRange.getPortRangeString());
-        }
     }
 
     /**

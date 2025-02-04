@@ -33,11 +33,10 @@ package org.opensearch.index.engine;
 
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.ByteVectorValues;
-import org.apache.lucene.index.DocValuesSkipIndexType;
-import org.apache.lucene.index.DocValuesSkipper;
 import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
+import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.FloatVectorValues;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.LeafMetaData;
@@ -83,7 +82,6 @@ public final class TranslogLeafReader extends LeafReader {
         false,
         IndexOptions.NONE,
         DocValuesType.NONE,
-        DocValuesSkipIndexType.NONE,
         -1,
         Collections.emptyMap(),
         0,
@@ -103,7 +101,6 @@ public final class TranslogLeafReader extends LeafReader {
         false,
         IndexOptions.NONE,
         DocValuesType.NONE,
-        DocValuesSkipIndexType.NONE,
         -1,
         Collections.emptyMap(),
         0,
@@ -123,7 +120,6 @@ public final class TranslogLeafReader extends LeafReader {
         false,
         IndexOptions.NONE,
         DocValuesType.NONE,
-        DocValuesSkipIndexType.NONE,
         -1,
         Collections.emptyMap(),
         0,
@@ -207,6 +203,11 @@ public final class TranslogLeafReader extends LeafReader {
     }
 
     @Override
+    public Fields getTermVectors(int docID) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public TermVectors termVectors() throws IOException {
         throw new UnsupportedOperationException();
     }
@@ -219,6 +220,11 @@ public final class TranslogLeafReader extends LeafReader {
     @Override
     public int maxDoc() {
         return 1;
+    }
+
+    @Override
+    public void document(int docID, StoredFieldVisitor visitor) throws IOException {
+        storedFields().document(docID, visitor);
     }
 
     @Override
@@ -274,11 +280,6 @@ public final class TranslogLeafReader extends LeafReader {
 
     @Override
     public void searchNearestVectors(String field, float[] target, KnnCollector k, Bits acceptDocs) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public DocValuesSkipper getDocValuesSkipper(String field) throws IOException {
         throw new UnsupportedOperationException();
     }
 }

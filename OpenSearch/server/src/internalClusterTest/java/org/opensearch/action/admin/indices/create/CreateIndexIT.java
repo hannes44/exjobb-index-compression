@@ -39,7 +39,7 @@ import org.opensearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.support.ActiveShardCount;
 import org.opensearch.action.support.IndicesOptions;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.applicationtemplates.ClusterStateSystemTemplateLoader;
 import org.opensearch.cluster.applicationtemplates.SystemTemplate;
@@ -51,7 +51,6 @@ import org.opensearch.cluster.metadata.MappingMetadata;
 import org.opensearch.cluster.metadata.Metadata;
 import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.settings.Settings;
-import org.opensearch.common.settings.SettingsException;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.core.action.ActionListener;
@@ -94,7 +93,7 @@ public class CreateIndexIT extends OpenSearchIntegTestCase {
         try {
             prepareCreate("test").setSettings(Settings.builder().put(IndexMetadata.SETTING_CREATION_DATE, 4L)).get();
             fail();
-        } catch (SettingsException ex) {
+        } catch (IllegalArgumentException ex) {
             assertEquals(
                 "unknown setting [index.creation_date] please check that any required plugins are installed, or check the "
                     + "breaking changes documentation for removed settings",
@@ -215,7 +214,7 @@ public class CreateIndexIT extends OpenSearchIntegTestCase {
         try {
             prepareCreate("test").setSettings(Settings.builder().put("index.unknown.value", "this must fail").build()).get();
             fail("should have thrown an exception about the shard count");
-        } catch (SettingsException e) {
+        } catch (IllegalArgumentException e) {
             assertEquals(
                 "unknown setting [index.unknown.value] please check that any required plugins are installed, or check the"
                     + " breaking changes documentation for removed settings",
@@ -317,8 +316,8 @@ public class CreateIndexIT extends OpenSearchIntegTestCase {
             .setQuery(new RangeQueryBuilder("index_version").from(indexVersion.get(), true))
             .get();
         SearchResponse all = client().prepareSearch("test").setIndicesOptions(IndicesOptions.lenientExpandOpen()).get();
-        assertEquals(expected + " vs. " + all, expected.getHits().getTotalHits().value(), all.getHits().getTotalHits().value());
-        logger.info("total: {}", expected.getHits().getTotalHits().value());
+        assertEquals(expected + " vs. " + all, expected.getHits().getTotalHits().value, all.getHits().getTotalHits().value);
+        logger.info("total: {}", expected.getHits().getTotalHits().value);
     }
 
     public void testRestartIndexCreationAfterFullClusterRestart() throws Exception {

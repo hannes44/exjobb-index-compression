@@ -335,9 +335,6 @@ public class NestedQueryBuilderTests extends AbstractQueryTestCase<NestedQueryBu
             if (context.getParentFilter() == null) {
                 throw new Exception("Expect parent filter to be non-null");
             }
-            if (context.isInnerHitQuery() == false) {
-                throw new Exception("Expect it to be inner hit query");
-            }
             return invoke.callRealMethod();
         });
         NestedQueryBuilder query = new NestedQueryBuilder("nested1", innerQueryBuilder, ScoreMode.None);
@@ -348,7 +345,6 @@ public class NestedQueryBuilderTests extends AbstractQueryTestCase<NestedQueryBu
         assertThat(innerHitBuilders.size(), Matchers.equalTo(1));
         assertTrue(innerHitBuilders.containsKey(leafInnerHits.getName()));
         assertNull(queryShardContext.getParentFilter());
-        assertFalse(queryShardContext.isInnerHitQuery());
         innerHitBuilders.get(leafInnerHits.getName()).build(searchContext, innerHitsContext);
         assertNull(queryShardContext.getParentFilter());
         verify(innerQueryBuilder).toQuery(queryShardContext);
@@ -490,10 +486,10 @@ public class NestedQueryBuilderTests extends AbstractQueryTestCase<NestedQueryBu
             OpenSearchToParentBlockJoinQuery blockJoinQuery = (OpenSearchToParentBlockJoinQuery) queryBuilder.toQuery(context);
             Optional<BooleanClause> childLeg = ((BooleanQuery) blockJoinQuery.getChildQuery()).clauses()
                 .stream()
-                .filter(c -> c.occur() == BooleanClause.Occur.MUST)
+                .filter(c -> c.getOccur() == BooleanClause.Occur.MUST)
                 .findFirst();
             assertTrue(childLeg.isPresent());
-            assertEquals(new MatchAllDocsQuery(), childLeg.get().query());
+            assertEquals(new MatchAllDocsQuery(), childLeg.get().getQuery());
         };
         check.accept(createShardContext());
         doWithDepth(randomIntBetween(1, 20), check);
@@ -504,7 +500,7 @@ public class NestedQueryBuilderTests extends AbstractQueryTestCase<NestedQueryBu
     }
 
     public void testNestedDepthDefault() throws Exception {
-        assertEquals(20, createShardContext().getIndexSettings().getMaxNestedQueryDepth());
+        assertEquals(Integer.MAX_VALUE, createShardContext().getIndexSettings().getMaxNestedQueryDepth());
     }
 
     private void checkOnceNested(QueryShardContext ctx) throws Exception {
@@ -528,7 +524,7 @@ public class NestedQueryBuilderTests extends AbstractQueryTestCase<NestedQueryBu
             assertEquals(
                 "Can parse joins one by one without breaching depth limit",
                 2,
-                bool.clauses().stream().filter(c -> c.query() instanceof OpenSearchToParentBlockJoinQuery).count()
+                bool.clauses().stream().filter(c -> c.getQuery() instanceof OpenSearchToParentBlockJoinQuery).count()
             );
         }
     }

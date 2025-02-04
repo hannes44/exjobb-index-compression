@@ -40,7 +40,6 @@ import org.opensearch.common.settings.Settings;
 import org.opensearch.env.Environment;
 import org.opensearch.index.IndexSettings;
 import org.opensearch.index.analysis.AnalysisMode;
-import org.opensearch.index.analysis.AnalysisRegistry;
 import org.opensearch.index.analysis.CharFilterFactory;
 import org.opensearch.index.analysis.TokenFilterFactory;
 import org.opensearch.index.analysis.TokenizerFactory;
@@ -50,14 +49,8 @@ import java.util.function.Function;
 
 public class SynonymGraphTokenFilterFactory extends SynonymTokenFilterFactory {
 
-    SynonymGraphTokenFilterFactory(
-        IndexSettings indexSettings,
-        Environment env,
-        String name,
-        Settings settings,
-        AnalysisRegistry analysisRegistry
-    ) {
-        super(indexSettings, env, name, settings, analysisRegistry);
+    SynonymGraphTokenFilterFactory(IndexSettings indexSettings, Environment env, String name, Settings settings) {
+        super(indexSettings, env, name, settings);
     }
 
     @Override

@@ -427,12 +427,19 @@ public enum FieldData {
      */
     public static SortedBinaryDocValues toString(final SortedSetDocValues values) {
         return new SortedBinaryDocValues() {
+            private int count = 0;
+
             @Override
             public boolean advanceExact(int doc) throws IOException {
                 if (values.advanceExact(doc) == false) {
                     return false;
                 }
-
+                for (int i = 0;; ++i) {
+                    if (values.nextOrd() == SortedSetDocValues.NO_MORE_ORDS) {
+                        count = i;
+                        break;
+                    }
+                }
                 // reset the iterator on the current doc
                 boolean advanced = values.advanceExact(doc);
                 assert advanced;
@@ -441,7 +448,7 @@ public enum FieldData {
 
             @Override
             public int docValueCount() {
-                return values.docValueCount();
+                return count;
             }
 
             @Override

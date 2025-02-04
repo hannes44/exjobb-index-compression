@@ -410,7 +410,7 @@ public class NodeIndicesStats implements Writeable, ToXContentFragment {
      *
      * @opensearch.internal
      */
-    @PublicApi(since = "3.0.0")
+    @PublicApi(since = "2.17.0")
     public enum StatsLevel {
         INDICES("indices"),
         SHARDS("shards"),

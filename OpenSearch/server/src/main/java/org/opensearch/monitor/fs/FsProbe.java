@@ -174,7 +174,7 @@ public class FsProbe {
                 }
             }
 
-            return new FsInfo.IoStats(devicesStats.toArray(new FsInfo.DeviceStats[0]));
+            return new FsInfo.IoStats(devicesStats.toArray(new FsInfo.DeviceStats[devicesStats.size()]));
         } catch (Exception e) {
             // do not fail Elasticsearch if something unexpected
             // happens here

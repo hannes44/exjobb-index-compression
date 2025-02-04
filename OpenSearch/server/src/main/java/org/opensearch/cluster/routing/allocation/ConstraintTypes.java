@@ -86,14 +86,4 @@ public class ConstraintTypes {
             return primaryShardCount >= allowedPrimaryShardCount;
         };
     }
-
-    public static long predicateKeyToWeightMap(String key, long primaryConstraintWeight) {
-        switch (key) {
-            case CLUSTER_PRIMARY_SHARD_BALANCE_CONSTRAINT_ID:
-            case CLUSTER_PRIMARY_SHARD_REBALANCE_CONSTRAINT_ID:
-                return primaryConstraintWeight;
-            default:
-                return CONSTRAINT_WEIGHT;
-        }
-    }
 }

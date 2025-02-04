@@ -47,7 +47,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.ArrayUtil;
-import org.apache.lucene.util.IOSupplier;
 import org.apache.lucene.util.InPlaceMergeSorter;
 
 import java.io.IOException;
@@ -209,12 +208,7 @@ public abstract class BlendedTermQuery extends Query {
         int df = termContext.docFreq();
         long ttf = sumTTF;
         for (int i = 0; i < len; i++) {
-            final IOSupplier<TermState> termStateSupplier = termContext.get(leaves.get(i));
-            if (termStateSupplier == null) {
-                continue;
-            }
-
-            final TermState termState = termStateSupplier.get();
+            TermState termState = termContext.get(leaves.get(i));
             if (termState == null) {
                 continue;
             }
@@ -238,16 +232,10 @@ public abstract class BlendedTermQuery extends Query {
         }
         TermStates newCtx = new TermStates(readerContext);
         for (int i = 0; i < len; ++i) {
-            final IOSupplier<TermState> termStateSupplier = ctx.get(leaves.get(i));
-            if (termStateSupplier == null) {
-                continue;
-            }
-
-            final TermState termState = termStateSupplier.get();
+            TermState termState = ctx.get(leaves.get(i));
             if (termState == null) {
                 continue;
             }
-
             newCtx.register(termState, i, newDocFreq, newTTF);
             newDocFreq = 0;
             newTTF = 0;
@@ -397,7 +385,7 @@ public abstract class BlendedTermQuery extends Query {
                 if (low.clauses().isEmpty()) {
                     BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
                     for (BooleanClause booleanClause : high) {
-                        queryBuilder.add(booleanClause.query(), Occur.MUST);
+                        queryBuilder.add(booleanClause.getQuery(), Occur.MUST);
                     }
                     return queryBuilder.build();
                 } else if (high.clauses().isEmpty()) {

@@ -32,13 +32,14 @@
 
 package org.opensearch.cluster.node;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.common.io.stream.BytesStreamOutput;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
-import org.opensearch.core.common.io.stream.BufferedChecksumStreamOutput;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.transport.TransportAddress;
+import org.opensearch.index.translog.BufferedChecksumStreamOutput;
 import org.opensearch.node.remotestore.RemoteStoreNodeAttribute;
 import org.opensearch.test.NodeRoles;
 import org.opensearch.test.OpenSearchTestCase;
@@ -99,7 +100,7 @@ public class DiscoveryNodeTests extends OpenSearchTestCase {
             roles,
             Version.CURRENT
         );
-        assertFalse(node.toString().contains(RemoteStoreNodeAttribute.REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.get(0)));
+        assertFalse(node.toString().contains(RemoteStoreNodeAttribute.REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX));
     }
 
     public void testDiscoveryNodeIsCreatedWithHostFromInetAddress() throws Exception {
@@ -212,11 +213,11 @@ public class DiscoveryNodeTests extends OpenSearchTestCase {
 
         {
             BytesStreamOutput streamOutput = new BytesStreamOutput();
-            streamOutput.setVersion(Version.V_2_0_0);
+            streamOutput.setVersion(LegacyESVersion.V_7_9_0);
             node.writeTo(streamOutput);
 
             StreamInput in = StreamInput.wrap(streamOutput.bytes().toBytesRef().bytes);
-            in.setVersion(Version.V_2_0_0);
+            in.setVersion(LegacyESVersion.V_7_9_0);
             DiscoveryNode serialized = new DiscoveryNode(in);
             assertThat(serialized.getRoles().stream().map(DiscoveryNodeRole::roleName).collect(Collectors.joining()), equalTo("data"));
         }

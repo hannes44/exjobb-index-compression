@@ -60,7 +60,7 @@ import org.opensearch.index.query.QueryShardException;
 import org.opensearch.index.query.TermQueryBuilder;
 import org.opensearch.index.query.WrapperQueryBuilder;
 import org.opensearch.index.similarity.SimilarityService;
-import org.opensearch.join.ParentJoinModulePlugin;
+import org.opensearch.join.ParentJoinPlugin;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.search.sort.FieldSortBuilder;
 import org.opensearch.search.sort.SortOrder;
@@ -96,7 +96,7 @@ public class HasChildQueryBuilderTests extends AbstractQueryTestCase<HasChildQue
 
     @Override
     protected Collection<Class<? extends Plugin>> getPlugins() {
-        return Arrays.asList(ParentJoinModulePlugin.class, TestGeoShapeFieldMapperPlugin.class);
+        return Arrays.asList(ParentJoinPlugin.class, TestGeoShapeFieldMapperPlugin.class);
     }
 
     @Override
@@ -300,15 +300,15 @@ public class HasChildQueryBuilderTests extends AbstractQueryTestCase<HasChildQue
         BooleanQuery booleanQuery = (BooleanQuery) lateParsingQuery.getInnerQuery();
         assertThat(booleanQuery.clauses().size(), equalTo(2));
         // check the inner ids query, we have to call rewrite to get to check the type it's executed against
-        assertThat(booleanQuery.clauses().get(0).occur(), equalTo(BooleanClause.Occur.MUST));
-        assertThat(booleanQuery.clauses().get(0).query(), instanceOf(TermInSetQuery.class));
-        TermInSetQuery termsQuery = (TermInSetQuery) booleanQuery.clauses().get(0).query();
+        assertThat(booleanQuery.clauses().get(0).getOccur(), equalTo(BooleanClause.Occur.MUST));
+        assertThat(booleanQuery.clauses().get(0).getQuery(), instanceOf(TermInSetQuery.class));
+        TermInSetQuery termsQuery = (TermInSetQuery) booleanQuery.clauses().get(0).getQuery();
         // The query is of type MultiTermQueryConstantScoreBlendedWrapper and is sealed inside Apache Lucene,
         // no access to inner queries without using the reflection, falling back to stringified query comparison
         assertThat(termsQuery.toString(), equalTo("_id:([ff 69 64])"));
         // check the type filter
-        assertThat(booleanQuery.clauses().get(1).occur(), equalTo(BooleanClause.Occur.FILTER));
-        assertEquals(new TermQuery(new Term("join_field", type)), booleanQuery.clauses().get(1).query());
+        assertThat(booleanQuery.clauses().get(1).getOccur(), equalTo(BooleanClause.Occur.FILTER));
+        assertEquals(new TermQuery(new Term("join_field", type)), booleanQuery.clauses().get(1).getQuery());
     }
 
     @Override

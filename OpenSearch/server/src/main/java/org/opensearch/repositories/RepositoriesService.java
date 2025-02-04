@@ -80,7 +80,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -691,6 +690,14 @@ public class RepositoriesService extends AbstractLifecycleComponent implements C
     public static void validateRepositoryMetadataSettings(
         ClusterService clusterService,
         final String repositoryName,
+        final Settings repositoryMetadataSettings
+    ) {
+        validateRepositoryMetadataSettings(clusterService, repositoryName, repositoryMetadataSettings, null, null, null);
+    }
+
+    public static void validateRepositoryMetadataSettings(
+        ClusterService clusterService,
+        final String repositoryName,
         final Settings repositoryMetadataSettings,
         Map<String, Repository> repositories,
         Settings settings,
@@ -710,6 +717,12 @@ public class RepositoriesService extends AbstractLifecycleComponent implements C
             );
         }
         if (SHALLOW_SNAPSHOT_V2.get(repositoryMetadataSettings)) {
+            if (repositories == null || repositoriesService == null || settings == null) {
+                throw new RepositoryException(
+                    repositoryName,
+                    "setting " + SHALLOW_SNAPSHOT_V2.getKey() + " cannot be enabled if required params are not provided"
+                );
+            }
             if (minVersionInCluster.onOrAfter(Version.V_2_17_0) == false) {
                 throw new RepositoryException(
                     repositoryName,
@@ -904,12 +917,6 @@ public class RepositoriesService extends AbstractLifecycleComponent implements C
                 Repository repository = repositories.get(currentRepositoryMetadata.name());
                 Settings newRepositoryMetadataSettings = newRepositoryMetadata.settings();
                 Settings currentRepositoryMetadataSettings = currentRepositoryMetadata.settings();
-
-                assert Objects.nonNull(repository) : String.format(
-                    Locale.ROOT,
-                    "repository [%s] not present in RepositoryService",
-                    currentRepositoryMetadata.name()
-                );
 
                 List<String> restrictedSettings = repository.getRestrictedSystemRepositorySettings()
                     .stream()

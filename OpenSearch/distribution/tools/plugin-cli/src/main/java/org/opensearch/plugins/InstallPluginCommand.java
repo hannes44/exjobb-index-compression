@@ -52,12 +52,12 @@ import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentVerifierBuilderProvider;
 import org.opensearch.Build;
 import org.opensearch.Version;
+import org.opensearch.bootstrap.JarHell;
 import org.opensearch.cli.EnvironmentAwareCommand;
 import org.opensearch.cli.ExitCodes;
 import org.opensearch.cli.Terminal;
 import org.opensearch.cli.UserException;
 import org.opensearch.common.SuppressForbidden;
-import org.opensearch.common.bootstrap.JarHell;
 import org.opensearch.common.collect.Tuple;
 import org.opensearch.common.hash.MessageDigests;
 import org.opensearch.common.util.io.IOUtils;
@@ -136,6 +136,8 @@ import static org.opensearch.cli.Terminal.Verbosity.VERBOSE;
  * already exist, they will be skipped.
  */
 class InstallPluginCommand extends EnvironmentAwareCommand {
+
+    private static final String PROPERTY_STAGING_ID = "opensearch.plugins.staging";
 
     // exit codes for install
     /** A plugin with the same name is already installed. */
@@ -268,8 +270,8 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
                 final List<Path> deleteOnFailure = new ArrayList<>();
                 deleteOnFailures.put(pluginId, deleteOnFailure);
 
-                final Path pluginZip = download(terminal, pluginId, env.tmpDir(), isBatch);
-                final Path extractedZip = unzip(pluginZip, env.pluginsDir());
+                final Path pluginZip = download(terminal, pluginId, env.tmpFile(), isBatch);
+                final Path extractedZip = unzip(pluginZip, env.pluginsFile());
                 deleteOnFailure.add(extractedZip);
                 final PluginInfo pluginInfo = installPlugin(terminal, isBatch, extractedZip, env, deleteOnFailure);
                 terminal.println("-> Installed " + pluginInfo.getName() + " with folder name " + pluginInfo.getTargetFolderName());
@@ -305,7 +307,14 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
     private Path download(Terminal terminal, String pluginId, Path tmpDir, boolean isBatch) throws Exception {
 
         if (OFFICIAL_PLUGINS.contains(pluginId)) {
-            final String url = getOpenSearchUrl(terminal, Version.CURRENT, isSnapshot(), pluginId, Platforms.PLATFORM_NAME);
+            final String url = getOpenSearchUrl(
+                terminal,
+                getStagingHash(),
+                Version.CURRENT,
+                isSnapshot(),
+                pluginId,
+                Platforms.PLATFORM_NAME
+            );
             terminal.println("-> Downloading " + pluginId + " from opensearch");
             return downloadAndValidate(terminal, url, tmpDir, true, isBatch);
         }
@@ -332,6 +341,11 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
         return downloadZip(terminal, pluginId, tmpDir, isBatch);
     }
 
+    // pkg private so tests can override
+    String getStagingHash() {
+        return System.getProperty(PROPERTY_STAGING_ID);
+    }
+
     boolean isSnapshot() {
         return Build.CURRENT.isSnapshot();
     }
@@ -339,18 +353,26 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
     /** Returns the url for an official opensearch plugin. */
     private String getOpenSearchUrl(
         final Terminal terminal,
+        final String stagingHash,
         final Version version,
         final boolean isSnapshot,
         final String pluginId,
         final String platform
     ) throws IOException, UserException {
         final String baseUrl;
-        if (isSnapshot == true) {
+        if (isSnapshot && stagingHash == null) {
+            throw new UserException(
+                ExitCodes.CONFIG,
+                "attempted to install release build of official plugin on snapshot build of OpenSearch"
+            );
+        }
+        if (stagingHash != null) {
             baseUrl = String.format(
                 Locale.ROOT,
-                "https://artifacts.opensearch.org/snapshots/plugins/%s/%s",
+                "https://artifacts.opensearch.org/snapshots/plugins/%s/%s-%s",
                 pluginId,
-                Build.CURRENT.getQualifiedVersion()
+                version,
+                stagingHash
             );
         } else {
             baseUrl = String.format(
@@ -797,14 +819,14 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
         PluginsService.verifyCompatibility(info);
 
         // checking for existing version of the plugin
-        verifyPluginName(env.pluginsDir(), info.getName());
+        verifyPluginName(env.pluginsFile(), info.getName());
 
-        PluginsService.checkForFailedPluginRemovals(env.pluginsDir());
+        PluginsService.checkForFailedPluginRemovals(env.pluginsFile());
 
         terminal.println(VERBOSE, info.toString());
 
         // check for jar hell before any copying
-        jarHellCheck(info, pluginRoot, env.pluginsDir(), env.modulesDir());
+        jarHellCheck(info, pluginRoot, env.pluginsFile(), env.modulesFile());
 
         return info;
     }
@@ -854,21 +876,21 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
         Path policy = tmpRoot.resolve(PluginInfo.OPENSEARCH_PLUGIN_POLICY);
         final Set<String> permissions;
         if (Files.exists(policy)) {
-            permissions = PluginSecurity.parsePermissions(policy, env.tmpDir());
+            permissions = PluginSecurity.parsePermissions(policy, env.tmpFile());
         } else {
             permissions = Collections.emptySet();
         }
         PluginSecurity.confirmPolicyExceptions(terminal, permissions, isBatch);
 
         String targetFolderName = info.getTargetFolderName();
-        final Path destination = env.pluginsDir().resolve(targetFolderName);
+        final Path destination = env.pluginsFile().resolve(targetFolderName);
         deleteOnFailure.add(destination);
 
         installPluginSupportFiles(
             info,
             tmpRoot,
-            env.binDir().resolve(targetFolderName),
-            env.configDir().resolve(targetFolderName),
+            env.binFile().resolve(targetFolderName),
+            env.configFile().resolve(targetFolderName),
             deleteOnFailure
         );
         movePlugin(tmpRoot, destination);
@@ -1005,7 +1027,7 @@ class InstallPluginCommand extends EnvironmentAwareCommand {
 
     @Override
     public void close() throws IOException {
-        IOUtils.rm(pathsToDeleteOnShutdown.toArray(new Path[0]));
+        IOUtils.rm(pathsToDeleteOnShutdown.toArray(new Path[pathsToDeleteOnShutdown.size()]));
     }
 
 }

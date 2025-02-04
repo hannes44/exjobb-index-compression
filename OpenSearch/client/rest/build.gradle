@@ -44,13 +44,12 @@ base {
 }
 
 dependencies {
-  api "org.apache.httpcomponents.client5:httpclient5:${versions.httpclient5}"
-  api "org.apache.httpcomponents.core5:httpcore5:${versions.httpcore5}"
-  api "org.apache.httpcomponents.core5:httpcore5-h2:${versions.httpcore5}"
-  api "org.apache.httpcomponents.core5:httpcore5-reactive:${versions.httpcore5}"
+  api "org.apache.httpcomponents:httpclient:${versions.httpclient}"
+  api "org.apache.httpcomponents:httpcore:${versions.httpcore}"
+  api "org.apache.httpcomponents:httpasyncclient:${versions.httpasyncclient}"
+  api "org.apache.httpcomponents:httpcore-nio:${versions.httpcore}"
   api "commons-codec:commons-codec:${versions.commonscodec}"
   api "commons-logging:commons-logging:${versions.commonslogging}"
-  api "org.slf4j:slf4j-api:${versions.slf4j}"
 
   // reactor
   api "io.projectreactor:reactor-core:${versions.reactor}"
@@ -67,7 +66,6 @@ dependencies {
   testImplementation "org.apache.logging.log4j:log4j-api:${versions.log4j}"
   testImplementation "org.apache.logging.log4j:log4j-core:${versions.log4j}"
   testImplementation "org.apache.logging.log4j:log4j-jul:${versions.log4j}"
-  testImplementation "org.apache.logging.log4j:log4j-slf4j-impl:${versions.log4j}"
 }
 
 tasks.withType(CheckForbiddenApis).configureEach {
@@ -100,10 +98,8 @@ testingConventions {
 
 thirdPartyAudit {
   ignoreMissingClasses(
-      'org.conscrypt.Conscrypt',
-      'org.slf4j.impl.StaticLoggerBinder',
-      'org.slf4j.impl.StaticMDCBinder',
-      'org.slf4j.impl.StaticMarkerBinder',
+      'org.slf4j.Logger',
+      'org.slf4j.LoggerFactory',
       //commons-logging optional dependencies
       'org.apache.avalon.framework.logger.Logger',
       'org.apache.log.Hierarchy',

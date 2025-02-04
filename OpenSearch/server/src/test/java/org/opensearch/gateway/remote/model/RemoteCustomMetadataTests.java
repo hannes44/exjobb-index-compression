@@ -106,8 +106,7 @@ public class RemoteCustomMetadataTests extends OpenSearchTestCase {
             "test-custom",
             clusterUUID,
             compressor,
-            namedWriteableRegistry,
-            Version.CURRENT
+            namedWriteableRegistry
         );
         assertThat(remoteObjectForDownload.clusterUUID(), is(clusterUUID));
     }
@@ -129,8 +128,7 @@ public class RemoteCustomMetadataTests extends OpenSearchTestCase {
             "test-custom",
             clusterUUID,
             compressor,
-            namedWriteableRegistry,
-            Version.CURRENT
+            namedWriteableRegistry
         );
         assertThat(remoteObjectForDownload.getFullBlobName(), is(TEST_BLOB_NAME));
     }
@@ -152,8 +150,7 @@ public class RemoteCustomMetadataTests extends OpenSearchTestCase {
             "test-custom",
             clusterUUID,
             compressor,
-            namedWriteableRegistry,
-            Version.CURRENT
+            namedWriteableRegistry
         );
         assertThat(remoteObjectForDownload.getBlobFileName(), is(TEST_BLOB_FILE_NAME));
     }
@@ -165,8 +162,7 @@ public class RemoteCustomMetadataTests extends OpenSearchTestCase {
             "test-custom",
             clusterUUID,
             compressor,
-            namedWriteableRegistry,
-            Version.CURRENT
+            namedWriteableRegistry
         );
         assertThat(remoteObjectForDownload.getBlobPathTokens(), is(new String[] { "user", "local", "opensearch", "customMetadata" }));
     }

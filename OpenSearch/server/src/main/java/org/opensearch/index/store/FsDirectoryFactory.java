@@ -45,6 +45,7 @@ import org.apache.lucene.store.NativeFSLockFactory;
 import org.apache.lucene.store.SimpleFSLockFactory;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Setting.Property;
+import org.opensearch.common.settings.Settings;
 import org.opensearch.common.util.io.IOUtils;
 import org.opensearch.index.IndexModule;
 import org.opensearch.index.IndexSettings;
@@ -56,7 +57,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Factory for a filesystem directory
@@ -98,15 +100,29 @@ public class FsDirectoryFactory implements IndexStorePlugin.DirectoryFactory {
             case HYBRIDFS:
                 // Use Lucene defaults
                 final FSDirectory primaryDirectory = FSDirectory.open(location, lockFactory);
-                final Set<String> nioExtensions = new HashSet<>(indexSettings.getValue(IndexModule.INDEX_STORE_HYBRID_NIO_EXTENSIONS));
+                final Set<String> nioExtensions;
+                final Set<String> mmapExtensions = Set.copyOf(indexSettings.getValue(IndexModule.INDEX_STORE_HYBRID_MMAP_EXTENSIONS));
+                if (mmapExtensions.equals(
+                    new HashSet(IndexModule.INDEX_STORE_HYBRID_MMAP_EXTENSIONS.getDefault(Settings.EMPTY))
+                ) == false) {
+                    // If the mmap extension setting was defined, then compute nio extensions by subtracting out the
+                    // mmap extensions from the set of all extensions.
+                    nioExtensions = Stream.concat(
+                        IndexModule.INDEX_STORE_HYBRID_NIO_EXTENSIONS.getDefault(Settings.EMPTY).stream(),
+                        IndexModule.INDEX_STORE_HYBRID_MMAP_EXTENSIONS.getDefault(Settings.EMPTY).stream()
+                    ).filter(e -> mmapExtensions.contains(e) == false).collect(Collectors.toUnmodifiableSet());
+                } else {
+                    // Otherwise, get the list of nio extensions from the nio setting
+                    nioExtensions = Set.copyOf(indexSettings.getValue(IndexModule.INDEX_STORE_HYBRID_NIO_EXTENSIONS));
+                }
                 if (primaryDirectory instanceof MMapDirectory) {
                     MMapDirectory mMapDirectory = (MMapDirectory) primaryDirectory;
-                    return new HybridDirectory(lockFactory, setPreload(mMapDirectory, preLoadExtensions), nioExtensions);
+                    return new HybridDirectory(lockFactory, setPreload(mMapDirectory, lockFactory, preLoadExtensions), nioExtensions);
                 } else {
                     return primaryDirectory;
                 }
             case MMAPFS:
-                return setPreload(new MMapDirectory(location, lockFactory), preLoadExtensions);
+                return setPreload(new MMapDirectory(location, lockFactory), lockFactory, preLoadExtensions);
             // simplefs was removed in Lucene 9; support for enum is maintained for bwc
             case SIMPLEFS:
             case NIOFS:
@@ -116,9 +132,15 @@ public class FsDirectoryFactory implements IndexStorePlugin.DirectoryFactory {
         }
     }
 
-    public static MMapDirectory setPreload(MMapDirectory mMapDirectory, Set<String> preLoadExtensions) throws IOException {
+    public static MMapDirectory setPreload(MMapDirectory mMapDirectory, LockFactory lockFactory, Set<String> preLoadExtensions)
+        throws IOException {
+        assert mMapDirectory.getPreload() == false;
         if (preLoadExtensions.isEmpty() == false) {
-            mMapDirectory.setPreload(createPreloadPredicate(preLoadExtensions));
+            if (preLoadExtensions.contains("*")) {
+                mMapDirectory.setPreload(true);
+            } else {
+                return new PreLoadMMapDirectory(mMapDirectory, lockFactory, preLoadExtensions);
+            }
         }
         return mMapDirectory;
     }
@@ -129,20 +151,6 @@ public class FsDirectoryFactory implements IndexStorePlugin.DirectoryFactory {
     public static boolean isHybridFs(Directory directory) {
         Directory unwrap = FilterDirectory.unwrap(directory);
         return unwrap instanceof HybridDirectory;
-    }
-
-    static BiPredicate<String, IOContext> createPreloadPredicate(Set<String> preLoadExtensions) {
-        if (preLoadExtensions.contains("*")) {
-            return MMapDirectory.ALL_FILES;
-        } else {
-            return (s, f) -> {
-                int dotIndex = s.lastIndexOf('.');
-                if (dotIndex > 0) {
-                    return preLoadExtensions.contains(s.substring(dotIndex + 1));
-                }
-                return false;
-            };
-        }
     }
 
     /**
@@ -184,6 +192,57 @@ public class FsDirectoryFactory implements IndexStorePlugin.DirectoryFactory {
         @Override
         public void close() throws IOException {
             IOUtils.close(super::close, delegate);
+        }
+
+        MMapDirectory getDelegate() {
+            return delegate;
+        }
+    }
+
+    /**
+     * Pre loaded mmap directory
+     *
+     * @opensearch.internal
+     */
+    // TODO it would be nice to share code between PreLoadMMapDirectory and HybridDirectory but due to the nesting aspect of
+    // directories here makes it tricky. It would be nice to allow MMAPDirectory to pre-load on a per IndexInput basis.
+    static final class PreLoadMMapDirectory extends MMapDirectory {
+        private final MMapDirectory delegate;
+        private final Set<String> preloadExtensions;
+
+        PreLoadMMapDirectory(MMapDirectory delegate, LockFactory lockFactory, Set<String> preload) throws IOException {
+            super(delegate.getDirectory(), lockFactory);
+            super.setPreload(false);
+            this.delegate = delegate;
+            this.delegate.setPreload(true);
+            this.preloadExtensions = preload;
+            assert getPreload() == false;
+        }
+
+        @Override
+        public void setPreload(boolean preload) {
+            throw new IllegalArgumentException("can't set preload on a preload-wrapper");
+        }
+
+        @Override
+        public IndexInput openInput(String name, IOContext context) throws IOException {
+            if (useDelegate(name)) {
+                // we need to do these checks on the outer directory since the inner doesn't know about pending deletes
+                ensureOpen();
+                ensureCanRead(name);
+                return delegate.openInput(name, context);
+            }
+            return super.openInput(name, context);
+        }
+
+        @Override
+        public synchronized void close() throws IOException {
+            IOUtils.close(super::close, delegate);
+        }
+
+        boolean useDelegate(String name) {
+            final String extension = FileSwitchDirectory.getExtension(name);
+            return preloadExtensions.contains(extension);
         }
 
         MMapDirectory getDelegate() {

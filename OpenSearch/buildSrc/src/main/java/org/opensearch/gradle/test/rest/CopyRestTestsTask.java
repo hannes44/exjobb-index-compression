@@ -71,20 +71,16 @@ import java.util.stream.Collectors;
  */
 public class CopyRestTestsTask extends DefaultTask {
     private static final String REST_TEST_PREFIX = "rest-api-spec/test";
-    final ListProperty<String> includeCore;
+    final ListProperty<String> includeCore = getProject().getObjects().listProperty(String.class);
 
     String sourceSetName;
     Configuration coreConfig;
     Configuration additionalConfig;
-    private final Project project;
 
     private final PatternFilterable corePatternSet;
 
-    @Inject
-    public CopyRestTestsTask(Project project) {
-        this.project = project;
-        this.corePatternSet = getPatternSetFactory().create();
-        this.includeCore = project.getObjects().listProperty(String.class);
+    public CopyRestTestsTask() {
+        corePatternSet = getPatternSetFactory().create();
     }
 
     @Inject
@@ -127,8 +123,8 @@ public class CopyRestTestsTask extends DefaultTask {
             }
         }
         ConfigurableFileCollection fileCollection = additionalConfig == null
-            ? project.files(coreFileTree)
-            : project.files(coreFileTree, additionalConfig.getAsFileTree());
+            ? getProject().files(coreFileTree)
+            : getProject().files(coreFileTree, additionalConfig.getAsFileTree());
 
         // copy tests only if explicitly requested
         return includeCore.get().isEmpty() == false || additionalConfig != null ? fileCollection.getAsFileTree() : null;
@@ -182,6 +178,7 @@ public class CopyRestTestsTask extends DefaultTask {
     }
 
     private Optional<SourceSet> getSourceSet() {
+        Project project = getProject();
         return project.getExtensions().findByType(JavaPluginExtension.class) == null
             ? Optional.empty()
             : Optional.ofNullable(GradleUtils.getJavaSourceSets(project).findByName(getSourceSetName()));

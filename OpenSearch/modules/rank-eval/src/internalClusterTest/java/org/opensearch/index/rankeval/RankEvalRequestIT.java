@@ -81,7 +81,7 @@ public class RankEvalRequestIT extends ParameterizedStaticSettingsOpenSearchInte
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(RankEvalModulePlugin.class);
+        return Arrays.asList(RankEvalPlugin.class);
     }
 
     @Before

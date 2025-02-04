@@ -34,7 +34,6 @@ package org.opensearch.search.suggest.completion;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BulkScorer;
 import org.apache.lucene.search.CollectionTerminatedException;
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.Weight;
@@ -113,7 +112,7 @@ public class CompletionSuggester extends Suggester<CompletionSuggestionContext> 
                 LeafCollector leafCollector = null;
                 try {
                     leafCollector = collector.getLeafCollector(context);
-                    scorer.score(leafCollector, context.reader().getLiveDocs(), 0, DocIdSetIterator.NO_MORE_DOCS);
+                    scorer.score(leafCollector, context.reader().getLiveDocs());
                 } catch (CollectionTerminatedException e) {
                     // collection was terminated prematurely
                     // continue with the following leaf

@@ -59,7 +59,6 @@ import org.opensearch.test.junit.annotations.TestLogging;
 import org.opensearch.test.rest.FakeRestRequest;
 import org.opensearch.threadpool.TestThreadPool;
 import org.opensearch.threadpool.ThreadPool;
-import org.opensearch.transport.Transport;
 import org.junit.After;
 import org.junit.Before;
 
@@ -71,6 +70,8 @@ import java.util.List;
 
 import static java.net.InetAddress.getByName;
 import static java.util.Arrays.asList;
+import static org.opensearch.http.AbstractHttpServerTransport.resolvePublishPort;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
 public class AbstractHttpServerTransportTests extends OpenSearchTestCase {
@@ -100,40 +101,47 @@ public class AbstractHttpServerTransportTests extends OpenSearchTestCase {
         int boundPort = randomIntBetween(9000, 9100);
         int otherBoundPort = randomIntBetween(9200, 9300);
 
-        int publishPort = Transport.resolveTransportPublishPort(9080, randomAddresses(), getByName("127.0.0.2"));
+        int publishPort = resolvePublishPort(
+            Settings.builder().put(HttpTransportSettings.SETTING_HTTP_PUBLISH_PORT.getKey(), 9080).build(),
+            randomAddresses(),
+            getByName("127.0.0.2")
+        );
         assertThat("Publish port should be explicitly set to 9080", publishPort, equalTo(9080));
 
-        publishPort = Transport.resolveTransportPublishPort(
-            -1,
+        publishPort = resolvePublishPort(
+            Settings.EMPTY,
             asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
             getByName("127.0.0.1")
         );
         assertThat("Publish port should be derived from matched address", publishPort, equalTo(boundPort));
 
-        publishPort = Transport.resolveTransportPublishPort(
-            -1,
+        publishPort = resolvePublishPort(
+            Settings.EMPTY,
             asList(address("127.0.0.1", boundPort), address("127.0.0.2", boundPort)),
             getByName("127.0.0.3")
         );
         assertThat("Publish port should be derived from unique port of bound addresses", publishPort, equalTo(boundPort));
 
-        publishPort = Transport.resolveTransportPublishPort(
-            -1,
-            asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
-            getByName("127.0.0.3")
+        final BindHttpException e = expectThrows(
+            BindHttpException.class,
+            () -> resolvePublishPort(
+                Settings.EMPTY,
+                asList(address("127.0.0.1", boundPort), address("127.0.0.2", otherBoundPort)),
+                getByName("127.0.0.3")
+            )
         );
-        assertThat(publishPort, equalTo(-1));
+        assertThat(e.getMessage(), containsString("Failed to auto-resolve http publish port"));
 
-        publishPort = Transport.resolveTransportPublishPort(
-            -1,
+        publishPort = resolvePublishPort(
+            Settings.EMPTY,
             asList(address("0.0.0.0", boundPort), address("127.0.0.2", otherBoundPort)),
             getByName("127.0.0.1")
         );
         assertThat("Publish port should be derived from matching wildcard address", publishPort, equalTo(boundPort));
 
         if (NetworkUtils.SUPPORTS_V6) {
-            publishPort = Transport.resolveTransportPublishPort(
-                -1,
+            publishPort = resolvePublishPort(
+                Settings.EMPTY,
                 asList(address("0.0.0.0", boundPort), address("127.0.0.2", otherBoundPort)),
                 getByName("::1")
             );
@@ -285,8 +293,6 @@ public class AbstractHttpServerTransportTests extends OpenSearchTestCase {
                             + opaqueId
                             + "\\]\\["
                             + (badRequest ? "BAD_REQUEST" : "OK")
-                            + "\\]\\["
-                            + (badRequest ? "400" : "200")
                             + "\\]\\[null\\]\\[0\\] sent response to \\[.*"
                     )
                 );

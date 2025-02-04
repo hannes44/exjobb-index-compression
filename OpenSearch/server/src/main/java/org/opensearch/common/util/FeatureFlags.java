@@ -62,12 +62,12 @@ public class FeatureFlags {
      */
     public static final String PLUGGABLE_CACHE = "opensearch.experimental.feature.pluggable.caching.enabled";
 
+    public static final String READER_WRITER_SPLIT_EXPERIMENTAL = "opensearch.experimental.feature.read.write.split.enabled";
+
     /**
      * Gates the functionality of background task execution.
      */
     public static final String BACKGROUND_TASK_EXECUTION_EXPERIMENTAL = "opensearch.experimental.feature.task.background.enabled";
-
-    public static final String READER_WRITER_SPLIT_EXPERIMENTAL = "opensearch.experimental.feature.read.write.split.enabled";
 
     public static final Setting<Boolean> REMOTE_STORE_MIGRATION_EXPERIMENTAL_SETTING = Setting.boolSetting(
         REMOTE_STORE_MIGRATION_EXPERIMENTAL,
@@ -96,13 +96,6 @@ public class FeatureFlags {
     );
 
     /**
-     * Gates the functionality of star tree index, which improves the performance of search
-     * aggregations.
-     */
-    public static final String STAR_TREE_INDEX = "opensearch.experimental.feature.composite_index.star_tree.enabled";
-    public static final Setting<Boolean> STAR_TREE_INDEX_SETTING = Setting.boolSetting(STAR_TREE_INDEX, false, Property.NodeScope);
-
-    /**
      * Gates the functionality of application based configuration templates.
      */
     public static final String APPLICATION_BASED_CONFIGURATION_TEMPLATES = "opensearch.experimental.feature.application_templates.enabled";
@@ -111,6 +104,13 @@ public class FeatureFlags {
         false,
         Property.NodeScope
     );
+
+    /**
+     * Gates the functionality of star tree index, which improves the performance of search
+     * aggregations.
+     */
+    public static final String STAR_TREE_INDEX = "opensearch.experimental.feature.composite_index.star_tree.enabled";
+    public static final Setting<Boolean> STAR_TREE_INDEX_SETTING = Setting.boolSetting(STAR_TREE_INDEX, false, Property.NodeScope);
 
     /**
      * Gates the functionality of ApproximatePointRangeQuery where we approximate query results.
@@ -135,8 +135,8 @@ public class FeatureFlags {
         DATETIME_FORMATTER_CACHING_SETTING,
         TIERED_REMOTE_INDEX_SETTING,
         PLUGGABLE_CACHE_SETTING,
-        STAR_TREE_INDEX_SETTING,
         APPLICATION_BASED_CONFIGURATION_TEMPLATES_SETTING,
+        STAR_TREE_INDEX_SETTING,
         READER_WRITER_SPLIT_EXPERIMENTAL_SETTING,
         TERM_VERSION_PRECOMMIT_ENABLE_SETTING
     );

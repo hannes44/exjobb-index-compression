@@ -759,7 +759,7 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         final RemoteClusterStateService remoteClusterStateService = Mockito.mock(RemoteClusterStateService.class);
         final ClusterMetadataManifest manifest = ClusterMetadataManifest.builder().clusterTerm(1L).stateVersion(5L).build();
         final String previousClusterUUID = "prev-cluster-uuid";
-        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any()))
+        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any(), eq(MANIFEST_CURRENT_CODEC_VERSION)))
             .thenReturn(new RemoteClusterStateManifestInfo(manifest, "path/to/manifest"));
 
         Mockito.when(remoteClusterStateService.writeIncrementalMetadata(Mockito.any(), Mockito.any(), Mockito.any()))
@@ -777,7 +777,7 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         );
 
         remotePersistedState.setLastAcceptedState(clusterState);
-        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterState, previousClusterUUID);
+        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterState, previousClusterUUID, MANIFEST_CURRENT_CODEC_VERSION);
 
         assertThat(remotePersistedState.getLastAcceptedState(), equalTo(clusterState));
         assertThat(remotePersistedState.getCurrentTerm(), equalTo(clusterTerm));
@@ -789,7 +789,8 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         );
 
         remotePersistedState.setLastAcceptedState(secondClusterState);
-        Mockito.verify(remoteClusterStateService, times(1)).writeFullMetadata(secondClusterState, previousClusterUUID);
+        Mockito.verify(remoteClusterStateService, times(1))
+            .writeFullMetadata(secondClusterState, previousClusterUUID, MANIFEST_CURRENT_CODEC_VERSION);
 
         assertThat(remotePersistedState.getLastAcceptedState(), equalTo(secondClusterState));
         assertThat(remotePersistedState.getCurrentTerm(), equalTo(clusterTerm));
@@ -819,9 +820,9 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
             .clusterTerm(1L)
             .stateVersion(5L)
             .codecVersion(CODEC_V1)
-            .opensearchVersion(Version.V_2_15_0)
+            .opensearchVersion(Version.CURRENT)
             .build();
-        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any()))
+        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any(), eq(CODEC_V1)))
             .thenReturn(new RemoteClusterStateManifestInfo(manifest, "path/to/manifest2"));
 
         CoordinationState.PersistedState remotePersistedState = new RemotePersistedState(remoteClusterStateService, previousClusterUUID);
@@ -832,7 +833,7 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         );
         remotePersistedState.setLastAcceptedState(clusterState1);
 
-        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterState1, previousClusterUUID);
+        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterState1, previousClusterUUID, CODEC_V1);
 
         ClusterState clusterState2 = createClusterState(
             randomNonNegativeLong(),
@@ -845,10 +846,10 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
             .codecVersion(MANIFEST_CURRENT_CODEC_VERSION)
             .opensearchVersion(Version.CURRENT)
             .build();
-        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any()))
+        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any(), eq(MANIFEST_CURRENT_CODEC_VERSION)))
             .thenReturn(new RemoteClusterStateManifestInfo(manifest2, "path/to/manifest"));
         remotePersistedState.setLastAcceptedState(clusterState2);
-        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterState2, previousClusterUUID);
+        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterState2, previousClusterUUID, MANIFEST_CURRENT_CODEC_VERSION);
 
         ClusterState clusterState3 = createClusterState(
             randomNonNegativeLong(),
@@ -888,7 +889,8 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
 
         remotePersistedState.setLastAcceptedState(clusterState);
         remotePersistedState.setLastAcceptedManifest(manifest);
-        Mockito.verify(remoteClusterStateService, never()).writeFullMetadata(clusterState, previousClusterUUID);
+        Mockito.verify(remoteClusterStateService, never())
+            .writeFullMetadata(clusterState, previousClusterUUID, MANIFEST_CURRENT_CODEC_VERSION);
 
         assertEquals(clusterState, remotePersistedState.getLastAcceptedState());
         assertEquals(clusterTerm, remotePersistedState.getCurrentTerm());
@@ -904,7 +906,8 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         );
 
         remotePersistedState.setLastAcceptedState(secondClusterState);
-        Mockito.verify(remoteClusterStateService, never()).writeFullMetadata(secondClusterState, previousClusterUUID);
+        Mockito.verify(remoteClusterStateService, never())
+            .writeFullMetadata(secondClusterState, previousClusterUUID, MANIFEST_CURRENT_CODEC_VERSION);
 
         assertEquals(secondClusterState, remotePersistedState.getLastAcceptedState());
         assertEquals(clusterTerm, remotePersistedState.getCurrentTerm());
@@ -937,7 +940,7 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
             .build();
         Mockito.when(remoteClusterStateService.getLatestClusterMetadataManifest(Mockito.any(), Mockito.any()))
             .thenReturn(Optional.of(manifest));
-        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any()))
+        Mockito.when(remoteClusterStateService.writeFullMetadata(Mockito.any(), Mockito.any(), eq(MANIFEST_CURRENT_CODEC_VERSION)))
             .thenReturn(new RemoteClusterStateManifestInfo(manifest, "path/to/manifest"));
 
         Mockito.when(remoteClusterStateService.writeIncrementalMetadata(Mockito.any(), Mockito.any(), Mockito.any()))
@@ -963,14 +966,17 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         remotePersistedState.setLastAcceptedState(clusterState);
         ArgumentCaptor<String> previousClusterUUIDCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<ClusterState> clusterStateCaptor = ArgumentCaptor.forClass(ClusterState.class);
-        Mockito.verify(remoteClusterStateService).writeFullMetadata(clusterStateCaptor.capture(), previousClusterUUIDCaptor.capture());
+        Mockito.verify(remoteClusterStateService)
+            .writeFullMetadata(clusterStateCaptor.capture(), previousClusterUUIDCaptor.capture(), eq(MANIFEST_CURRENT_CODEC_VERSION));
         assertEquals(previousClusterUUID, previousClusterUUIDCaptor.getValue());
     }
 
     public void testRemotePersistedStateExceptionOnFullStateUpload() throws IOException {
         final RemoteClusterStateService remoteClusterStateService = Mockito.mock(RemoteClusterStateService.class);
         final String previousClusterUUID = "prev-cluster-uuid";
-        Mockito.doThrow(IOException.class).when(remoteClusterStateService).writeFullMetadata(Mockito.any(), Mockito.any());
+        Mockito.doThrow(IOException.class)
+            .when(remoteClusterStateService)
+            .writeFullMetadata(Mockito.any(), Mockito.any(), eq(MANIFEST_CURRENT_CODEC_VERSION));
 
         CoordinationState.PersistedState remotePersistedState = new RemotePersistedState(remoteClusterStateService, previousClusterUUID);
 
@@ -988,7 +994,9 @@ public class GatewayMetaStatePersistedStateTests extends OpenSearchTestCase {
         RemoteUploadStats remoteStateStats = new RemoteUploadStats();
         final RemoteClusterStateService remoteClusterStateService = Mockito.mock(RemoteClusterStateService.class);
         final String previousClusterUUID = "prev-cluster-uuid";
-        Mockito.doThrow(IOException.class).when(remoteClusterStateService).writeFullMetadata(Mockito.any(), Mockito.any());
+        Mockito.doThrow(IOException.class)
+            .when(remoteClusterStateService)
+            .writeFullMetadata(Mockito.any(), Mockito.any(), eq(MANIFEST_CURRENT_CODEC_VERSION));
         when(remoteClusterStateService.getUploadStats()).thenReturn(remoteStateStats);
         doAnswer((i) -> {
             remoteStateStats.stateFailed();

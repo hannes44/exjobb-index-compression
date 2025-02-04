@@ -121,7 +121,7 @@ public class PublishPlugin implements Plugin<Project> {
                         Node dependencyNode = dependenciesNode.appendNode("dependency");
                         dependencyNode.appendNode("groupId", dependency.getGroup());
                         ProjectDependency projectDependency = (ProjectDependency) dependency;
-                        String artifactId = getArchivesBaseName(project.project(projectDependency.getPath()));
+                        String artifactId = getArchivesBaseName(projectDependency.getDependencyProject());
                         dependencyNode.appendNode("artifactId", artifactId);
                         dependencyNode.appendNode("version", dependency.getVersion());
                         dependencyNode.appendNode("scope", "compile");

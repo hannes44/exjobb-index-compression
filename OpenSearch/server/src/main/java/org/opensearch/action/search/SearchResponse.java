@@ -33,6 +33,7 @@
 package org.opensearch.action.search;
 
 import org.apache.lucene.search.TotalHits;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.common.Nullable;
 import org.opensearch.common.annotation.PublicApi;
@@ -59,7 +60,6 @@ import org.opensearch.search.SearchHits;
 import org.opensearch.search.aggregations.Aggregations;
 import org.opensearch.search.aggregations.InternalAggregations;
 import org.opensearch.search.internal.InternalSearchResponse;
-import org.opensearch.search.pipeline.ProcessorExecutionDetail;
 import org.opensearch.search.profile.ProfileShardResult;
 import org.opensearch.search.profile.SearchProfileShardResults;
 import org.opensearch.search.suggest.Suggest;
@@ -74,7 +74,6 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static org.opensearch.action.search.SearchResponseSections.EXT_FIELD;
-import static org.opensearch.action.search.SearchResponseSections.PROCESSOR_RESULT_FIELD;
 import static org.opensearch.core.xcontent.XContentParserUtils.ensureExpectedToken;
 
 /**
@@ -91,6 +90,7 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
     private static final ParseField TIMED_OUT = new ParseField("timed_out");
     private static final ParseField TERMINATED_EARLY = new ParseField("terminated_early");
     private static final ParseField NUM_REDUCE_PHASES = new ParseField("num_reduce_phases");
+    private static final ParseField EXT = new ParseField("ext");
 
     private final SearchResponseSections internalResponse;
     private final String scrollId;
@@ -102,6 +102,8 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
     private final Clusters clusters;
     private final long tookInMillis;
     private final PhaseTook phaseTook;
+
+    private List<SearchExtBuilder> searchExtBuilders = new ArrayList<>();
 
     public SearchResponse(StreamInput in) throws IOException {
         super(in);
@@ -126,7 +128,11 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
             phaseTook = null;
         }
         skippedShards = in.readVInt();
-        pointInTimeId = in.readOptionalString();
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_10_0)) {
+            pointInTimeId = in.readOptionalString();
+        } else {
+            pointInTimeId = null;
+        }
     }
 
     public SearchResponse(
@@ -396,7 +402,6 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
         List<ShardSearchFailure> failures = new ArrayList<>();
         Clusters clusters = Clusters.EMPTY;
         List<SearchExtBuilder> extBuilders = new ArrayList<>();
-        List<ProcessorExecutionDetail> processorResult = new ArrayList<>();
         for (Token token = parser.nextToken(); token != Token.END_OBJECT; token = parser.nextToken()) {
             if (token == Token.FIELD_NAME) {
                 currentFieldName = parser.currentName();
@@ -520,11 +525,6 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
                             extBuilders.add(searchExtBuilder);
                         }
                     }
-                } else if (PROCESSOR_RESULT_FIELD.match(currentFieldName, parser.getDeprecationHandler())) {
-                    while ((token = parser.nextToken()) != Token.END_ARRAY) {
-                        ProcessorExecutionDetail detail = ProcessorExecutionDetail.fromXContent(parser);
-                        processorResult.add(detail);
-                    }
                 } else {
                     parser.skipChildren();
                 }
@@ -538,8 +538,7 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
             terminatedEarly,
             profile,
             numReducePhases,
-            extBuilders,
-            processorResult
+            extBuilders
         );
         return new SearchResponse(
             searchResponseSections,
@@ -572,12 +571,18 @@ public class SearchResponse extends ActionResponse implements StatusToXContentOb
             out.writeOptionalWriteable(phaseTook);
         }
         out.writeVInt(skippedShards);
-        out.writeOptionalString(pointInTimeId);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_10_0)) {
+            out.writeOptionalString(pointInTimeId);
+        }
     }
 
     @Override
     public String toString() {
         return Strings.toString(MediaTypeRegistry.JSON, this);
+    }
+
+    public void addSearchExtBuilder(SearchExtBuilder searchExtBuilder) {
+        this.searchExtBuilders.add(searchExtBuilder);
     }
 
     /**

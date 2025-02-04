@@ -14,7 +14,7 @@ import org.opensearch.cluster.routing.allocation.allocator.ShardsBalancer;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import static org.opensearch.cluster.routing.allocation.ConstraintTypes.predicateKeyToWeightMap;
+import static org.opensearch.cluster.routing.allocation.ConstraintTypes.CONSTRAINT_WEIGHT;
 
 /**
  * Defines a constraint useful to de-prioritize certain nodes as target of unassigned shards used in {@link AllocationConstraints} or
@@ -44,13 +44,11 @@ public class Constraint implements Predicate<Constraint.ConstraintParams> {
         private ShardsBalancer balancer;
         private BalancedShardsAllocator.ModelNode node;
         private String index;
-        private long PrimaryConstraintThreshold;
 
-        ConstraintParams(ShardsBalancer balancer, BalancedShardsAllocator.ModelNode node, String index, long primaryConstraintThreshold) {
+        ConstraintParams(ShardsBalancer balancer, BalancedShardsAllocator.ModelNode node, String index) {
             this.balancer = balancer;
             this.node = node;
             this.index = index;
-            this.PrimaryConstraintThreshold = primaryConstraintThreshold;
         }
 
         public ShardsBalancer getBalancer() {
@@ -77,12 +75,9 @@ public class Constraint implements Predicate<Constraint.ConstraintParams> {
          */
         public long weight(Map<String, Constraint> constraints) {
             long totalConstraintWeight = 0;
-            for (Map.Entry<String, Constraint> entry : constraints.entrySet()) {
-                String key = entry.getKey();
-                Constraint constraint = entry.getValue();
+            for (Constraint constraint : constraints.values()) {
                 if (constraint.test(this)) {
-                    double weight = predicateKeyToWeightMap(key, PrimaryConstraintThreshold);
-                    totalConstraintWeight += weight;
+                    totalConstraintWeight += CONSTRAINT_WEIGHT;
                 }
             }
             return totalConstraintWeight;

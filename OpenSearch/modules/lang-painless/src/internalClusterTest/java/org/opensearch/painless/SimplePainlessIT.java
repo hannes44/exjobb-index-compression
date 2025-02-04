@@ -61,7 +61,7 @@ public class SimplePainlessIT extends ParameterizedStaticSettingsOpenSearchInteg
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return List.of(PainlessModulePlugin.class);
+        return List.of(PainlessPlugin.class);
     }
 
     @Override
@@ -196,7 +196,7 @@ public class SimplePainlessIT extends ParameterizedStaticSettingsOpenSearchInteg
         );
         SearchResponse response = client().search(searchRequest).actionGet();
         assertSearchResponse(response);
-        assertEquals(2, Objects.requireNonNull(response.getHits().getTotalHits()).value());
+        assertEquals(2, Objects.requireNonNull(response.getHits().getTotalHits()).value);
     }
 
     public void testSimpleDerivedFieldsAgg() {

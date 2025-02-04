@@ -38,6 +38,7 @@ import org.opensearch.client.OriginSettingClient;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.collect.MapBuilder;
 import org.opensearch.common.collect.Tuple;
+import org.opensearch.common.logging.DeprecationLogger;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Setting.Property;
 import org.opensearch.common.settings.Settings;
@@ -104,6 +105,7 @@ import static org.opensearch.http.HttpTransportSettings.SETTING_HTTP_MAX_WARNING
  */
 @PublicApi(since = "1.0.0")
 public final class ThreadContext implements Writeable {
+    private static final DeprecationLogger deprecationLogger = DeprecationLogger.getLogger(ThreadContext.class);
 
     public static final String PREFIX = "request.headers";
     public static final Setting<Settings> DEFAULT_HEADERS_SETTING = Setting.groupSetting(PREFIX + ".", Property.NodeScope);
@@ -221,11 +223,17 @@ public final class ThreadContext implements Writeable {
      *
      * permission org.opensearch.secure_sm.ThreadContextPermission "stashWithOrigin";
      */
-    @SuppressWarnings("removal")
     public StoredContext stashWithOrigin(String origin) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            sm.checkPermission(STASH_WITH_ORIGIN_THREAD_CONTEXT_PERMISSION);
+            try {
+                sm.checkPermission(STASH_WITH_ORIGIN_THREAD_CONTEXT_PERMISSION);
+            } catch (SecurityException ex) {
+                deprecationLogger.deprecate(
+                    "stashWithOrigin",
+                    "Default access to stashWithOrigin will be removed in a future release. Permission to use stashWithOrigin must be explicitly granted."
+                );
+            }
         }
         final ThreadContext.StoredContext storedContext = stashContext();
         putTransient(ACTION_ORIGIN_TRANSIENT_NAME, origin);
@@ -244,11 +252,17 @@ public final class ThreadContext implements Writeable {
      *
      * permission org.opensearch.secure_sm.ThreadContextPermission "stashAndMergeHeaders";
      */
-    @SuppressWarnings("removal")
     public StoredContext stashAndMergeHeaders(Map<String, String> headers) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            sm.checkPermission(STASH_AND_MERGE_THREAD_CONTEXT_PERMISSION);
+            try {
+                sm.checkPermission(STASH_AND_MERGE_THREAD_CONTEXT_PERMISSION);
+            } catch (SecurityException ex) {
+                deprecationLogger.deprecate(
+                    "stashAndMergeHeaders",
+                    "Default access to stashAndMergeHeaders will be removed in a future release. Permission to use stashAndMergeHeaders must be explicitly granted."
+                );
+            }
         }
         final ThreadContextStruct context = threadLocal.get();
         Map<String, String> newHeader = new HashMap<>(headers);
@@ -550,15 +564,6 @@ public final class ThreadContext implements Writeable {
     }
 
     /**
-     * Remove the {@code value} for the specified {@code key}.
-     *
-     * @param key         the header name
-     */
-    public void removeResponseHeader(final String key) {
-        threadLocal.get().responseHeaders.remove(key);
-    }
-
-    /**
      * Saves the current thread context and wraps command in a Runnable that restores that context before running command. If
      * <code>command</code> has already been passed through this method then it is returned unaltered rather than wrapped twice.
      */
@@ -603,11 +608,17 @@ public final class ThreadContext implements Writeable {
      *
      * permission org.opensearch.secure_sm.ThreadContextPermission "markAsSystemContext";
      */
-    @SuppressWarnings("removal")
     public void markAsSystemContext() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            sm.checkPermission(ACCESS_SYSTEM_THREAD_CONTEXT_PERMISSION);
+            try {
+                sm.checkPermission(ACCESS_SYSTEM_THREAD_CONTEXT_PERMISSION);
+            } catch (SecurityException ex) {
+                deprecationLogger.deprecate(
+                    "markAsSystemContext",
+                    "Default access to markAsSystemContext will be removed in a future release. Permission to use markAsSystemContext must be explicitly granted."
+                );
+            }
         }
         threadLocal.set(threadLocal.get().setSystemContext(propagators));
     }

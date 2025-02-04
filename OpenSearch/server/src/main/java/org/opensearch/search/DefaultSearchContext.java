@@ -268,8 +268,8 @@ final class DefaultSearchContext extends SearchContext {
 
         this.maxAggRewriteFilters = evaluateFilterRewriteSetting();
         this.cardinalityAggregationPruningThreshold = evaluateCardinalityAggregationPruningThreshold();
-        this.concurrentSearchDeciderFactories = concurrentSearchDeciderFactories;
         this.keywordIndexOrDocValuesEnabled = evaluateKeywordIndexOrDocValuesEnabled();
+        this.concurrentSearchDeciderFactories = concurrentSearchDeciderFactories;
     }
 
     @Override
@@ -1090,6 +1090,14 @@ final class DefaultSearchContext extends SearchContext {
     }
 
     @Override
+    public boolean shouldUseTimeSeriesDescSortOptimization() {
+        return indexShard.isTimeSeriesDescSortOptimizationEnabled()
+            && sort != null
+            && sort.isSortOnTimeSeriesField()
+            && sort.sort.getSort()[0].getReverse() == false;
+    }
+
+    @Override
     public int getTargetMaxSliceCount() {
         if (shouldUseConcurrentSearch() == false) {
             throw new IllegalStateException("Target slice count should not be used when concurrent search is disabled");
@@ -1102,14 +1110,6 @@ final class DefaultSearchContext extends SearchContext {
                 clusterService.getClusterSettings().get(SearchService.CONCURRENT_SEGMENT_SEARCH_TARGET_MAX_SLICE_COUNT_SETTING)
             );
 
-    }
-
-    @Override
-    public boolean shouldUseTimeSeriesDescSortOptimization() {
-        return indexShard.isTimeSeriesDescSortOptimizationEnabled()
-            && sort != null
-            && sort.isSortOnTimeSeriesField()
-            && sort.sort.getSort()[0].getReverse() == false;
     }
 
     @Override

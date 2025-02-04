@@ -144,11 +144,7 @@ class Pipeline {
         ActionListener<SearchRequest> currentListener = finalListener;
         for (int i = searchRequestProcessors.size() - 1; i >= 0; i--) {
             final ActionListener<SearchRequest> nextListener = currentListener;
-            // Conditionally wrap the current processor with a TrackingSearchRequestProcessorWrapper
-            // if verbosePipeline mode is enabled. This allows detailed execution tracking for debugging purposes.
-            final SearchRequestProcessor processor = request.source().verbosePipeline()
-                ? new TrackingSearchRequestProcessorWrapper(searchRequestProcessors.get(i))
-                : searchRequestProcessors.get(i);
+            SearchRequestProcessor processor = searchRequestProcessors.get(i);
             currentListener = ActionListener.wrap(r -> {
                 long start = relativeTimeSupplier.getAsLong();
                 beforeRequestProcessor(processor);
@@ -160,9 +156,7 @@ class Pipeline {
                     long took = TimeUnit.NANOSECONDS.toMillis(relativeTimeSupplier.getAsLong() - start);
                     afterRequestProcessor(processor, took);
                     onRequestProcessorFailed(processor);
-                    // When verbosePipeline is enabled, all processor failures are ignored to ensure the execution chain continues without
-                    // interruption.TrackingSearchResponseProcessorWrapper will log all errors in detail for debugging purposes
-                    if (processor.isIgnoreFailure() || r.source().verbosePipeline()) {
+                    if (processor.isIgnoreFailure()) {
                         logger.warn(
                             "The exception from request processor ["
                                 + processor.getType()
@@ -207,6 +201,7 @@ class Pipeline {
         PipelineProcessingContext requestContext
     ) {
         if (searchResponseProcessors.isEmpty()) {
+            // No response transformation necessary
             return responseListener;
         }
 
@@ -227,9 +222,8 @@ class Pipeline {
 
         for (int i = searchResponseProcessors.size() - 1; i >= 0; i--) {
             final ActionListener<SearchResponse> currentFinalListener = responseListener;
-            final SearchResponseProcessor processor = request.source().verbosePipeline()
-                ? new TrackingSearchResponseProcessorWrapper(searchResponseProcessors.get(i))
-                : searchResponseProcessors.get(i);
+            final SearchResponseProcessor processor = searchResponseProcessors.get(i);
+
             responseListener = ActionListener.wrap(r -> {
                 beforeResponseProcessor(processor);
                 final long start = relativeTimeSupplier.getAsLong();
@@ -241,9 +235,7 @@ class Pipeline {
                     onResponseProcessorFailed(processor);
                     long took = TimeUnit.NANOSECONDS.toMillis(relativeTimeSupplier.getAsLong() - start);
                     afterResponseProcessor(processor, took);
-                    // When verbosePipeline is enabled, all processor failures are ignored to ensure the execution chain continues without
-                    // interruption.TrackingSearchResponseProcessorWrapper will log all errors in detail for debugging purposes
-                    if (processor.isIgnoreFailure() || request.source().verbosePipeline()) {
+                    if (processor.isIgnoreFailure()) {
                         logger.warn(
                             "The exception from response processor ["
                                 + processor.getType()

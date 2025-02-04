@@ -72,6 +72,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.tests.analysis.MockAnalyzer;
 import org.apache.lucene.tests.index.RandomIndexWriter;
 import org.apache.lucene.tests.store.MockDirectoryWrapper;
@@ -101,13 +102,61 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.Matchers.equalTo;
 
 public class LuceneTests extends OpenSearchTestCase {
     private static final NamedWriteableRegistry EMPTY_REGISTRY = new NamedWriteableRegistry(Collections.emptyList());
 
-    public static final String OLDER_VERSION_INDEX_ZIP_RELATIVE_PATH = "/indices/bwc/os-1.3.0/testIndex-os-1.3.0.zip";
+    public void testWaitForIndex() throws Exception {
+        final MockDirectoryWrapper dir = newMockDirectory();
+
+        final AtomicBoolean succeeded = new AtomicBoolean(false);
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        // Create a shadow Engine, which will freak out because there is no
+        // index yet
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    latch.await();
+                    if (Lucene.waitForIndex(dir, 5000)) {
+                        succeeded.set(true);
+                    } else {
+                        fail("index should have eventually existed!");
+                    }
+                } catch (InterruptedException e) {
+                    // ignore interruptions
+                } catch (Exception e) {
+                    fail("should have been able to create the engine! " + e.getMessage());
+                }
+            }
+        });
+        t.start();
+
+        // count down latch
+        // now shadow engine should try to be created
+        latch.countDown();
+
+        IndexWriterConfig iwc = newIndexWriterConfig();
+        iwc.setIndexDeletionPolicy(NoDeletionPolicy.INSTANCE);
+        iwc.setMergePolicy(NoMergePolicy.INSTANCE);
+        iwc.setMaxBufferedDocs(2);
+        IndexWriter writer = new IndexWriter(dir, iwc);
+        Document doc = new Document();
+        doc.add(new TextField("id", "1", random().nextBoolean() ? Field.Store.YES : Field.Store.NO));
+        writer.addDocument(doc);
+        writer.commit();
+
+        t.join();
+
+        writer.close();
+        dir.close();
+        assertTrue("index should have eventually existed", succeeded.get());
+    }
 
     public void testCleanIndex() throws IOException {
         MockDirectoryWrapper dir = newMockDirectory();
@@ -205,10 +254,10 @@ public class LuceneTests extends OpenSearchTestCase {
         assertEquals(3, open.maxDoc());
 
         IndexSearcher s = new IndexSearcher(open);
-        assertEquals(s.search(new TermQuery(new Term("id", "1")), 1).totalHits.value(), 1);
-        assertEquals(s.search(new TermQuery(new Term("id", "2")), 1).totalHits.value(), 1);
-        assertEquals(s.search(new TermQuery(new Term("id", "3")), 1).totalHits.value(), 1);
-        assertEquals(s.search(new TermQuery(new Term("id", "4")), 1).totalHits.value(), 0);
+        assertEquals(s.search(new TermQuery(new Term("id", "1")), 1).totalHits.value, 1);
+        assertEquals(s.search(new TermQuery(new Term("id", "2")), 1).totalHits.value, 1);
+        assertEquals(s.search(new TermQuery(new Term("id", "3")), 1).totalHits.value, 1);
+        assertEquals(s.search(new TermQuery(new Term("id", "4")), 1).totalHits.value, 0);
 
         for (String file : dir.listAll()) {
             assertFalse("unexpected file: " + file, file.equals("segments_3") || file.startsWith("_2"));
@@ -331,12 +380,13 @@ public class LuceneTests extends OpenSearchTestCase {
 
     /**
      * Tests whether old segments are readable and queryable based on the data documented
-     * in the README <a href="file:../../../../../resources/indices/bwc/os-1.3.0/README.md">here</a>.
+     * in the README <a href="file:../../../../../resources/indices/bwc/es-6.3.0/README.md">here</a>.
      */
     public void testReadSegmentInfosExtendedCompatibility() throws IOException {
-        final Version minVersion = LegacyESVersion.V_7_2_0;
+        final String pathToTestIndex = "/indices/bwc/es-6.3.0/testIndex-es-6.3.0.zip";
+        final Version minVersion = LegacyESVersion.fromId(6000099);
         Path tmp = createTempDir();
-        TestUtil.unzip(getClass().getResourceAsStream(OLDER_VERSION_INDEX_ZIP_RELATIVE_PATH), tmp);
+        TestUtil.unzip(getClass().getResourceAsStream(pathToTestIndex), tmp);
         try (MockDirectoryWrapper dir = newMockFSDirectory(tmp)) {
             // The standard API will throw an exception
             expectThrows(IndexFormatTooOldException.class, () -> Lucene.readSegmentInfos(dir));
@@ -467,6 +517,11 @@ public class LuceneTests extends OpenSearchTestCase {
                 }
 
                 @Override
+                public Scorer scorer(LeafReaderContext context) throws IOException {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
                 public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
                     return new ScorerSupplier() {
 
@@ -519,6 +574,18 @@ public class LuceneTests extends OpenSearchTestCase {
                 }
             }
         }
+    }
+
+    /**
+     * Test that the "unmap hack" is detected as supported by lucene.
+     * This works around the following bug: https://bugs.openjdk.java.net/browse/JDK-4724038
+     * <p>
+     * While not guaranteed, current status is "Critical Internal API": http://openjdk.java.net/jeps/260
+     * Additionally this checks we did not screw up the security logic around the hack.
+     */
+    public void testMMapHackSupported() throws Exception {
+        // add assume's here if needed for certain platforms, but we should know if it does not work.
+        assertTrue("MMapDirectory does not support unmapping: " + MMapDirectory.UNMAP_NOT_SUPPORTED_REASON, MMapDirectory.UNMAP_SUPPORTED);
     }
 
     public void testWrapAllDocsLive() throws Exception {

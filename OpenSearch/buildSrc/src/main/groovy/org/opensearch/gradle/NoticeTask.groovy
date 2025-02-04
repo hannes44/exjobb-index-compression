@@ -30,7 +30,6 @@
 package org.opensearch.gradle
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.SourceDirectorySet
@@ -39,8 +38,6 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-
-import javax.inject.Inject
 
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermissions
@@ -61,12 +58,8 @@ class NoticeTask extends DefaultTask {
     /** Directories to include notices from */
     private List<File> licensesDirs = new ArrayList<>()
 
-    private final Project project
-
-    @Inject
-    NoticeTask(Project project) {
-        this.project = project
-        this.description = 'Create a notice file from dependencies'
+    NoticeTask() {
+        description = 'Create a notice file from dependencies'
         // Default licenses directory is ${projectDir}/licenses (if it exists)
         File licensesDir = new File(project.projectDir, 'licenses')
         if (licensesDir.exists()) {
@@ -168,12 +161,11 @@ class NoticeTask extends DefaultTask {
     @Optional
     FileCollection getNoticeFiles() {
         FileTree tree
-        def p = project
         licensesDirs.each { dir ->
             if (tree == null) {
-                tree = p.fileTree(dir)
+                tree = project.fileTree(dir)
             } else {
-                tree += p.fileTree(dir)
+                tree += project.fileTree(dir)
             }
         }
 

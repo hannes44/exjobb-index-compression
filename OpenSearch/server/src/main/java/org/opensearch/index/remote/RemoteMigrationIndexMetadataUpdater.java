@@ -18,7 +18,6 @@ import org.opensearch.cluster.routing.ShardRoutingState;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.index.remote.RemoteStoreEnums.PathType;
 import org.opensearch.indices.replication.common.ReplicationType;
-import org.opensearch.node.remotestore.RemoteStoreNodeAttribute;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,8 @@ import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_TRANS
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REPLICATION_TYPE;
 import static org.opensearch.index.remote.RemoteStoreUtils.determineRemoteStoreCustomMetadataDuringMigration;
 import static org.opensearch.index.remote.RemoteStoreUtils.getRemoteStoreRepoName;
+import static org.opensearch.node.remotestore.RemoteStoreNodeAttribute.REMOTE_STORE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEY;
+import static org.opensearch.node.remotestore.RemoteStoreNodeAttribute.REMOTE_STORE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEY;
 
 /**
  * Utils for checking and mutating cluster state during remote migration
@@ -73,9 +74,8 @@ public class RemoteMigrationIndexMetadataUpdater {
                 index
             );
             Map<String, String> remoteRepoNames = getRemoteStoreRepoName(discoveryNodes);
-            String segmentRepoName = RemoteStoreNodeAttribute.getSegmentRepoName(remoteRepoNames);
-            String tlogRepoName = RemoteStoreNodeAttribute.getTranslogRepoName(remoteRepoNames);
-
+            String segmentRepoName = remoteRepoNames.get(REMOTE_STORE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEY);
+            String tlogRepoName = remoteRepoNames.get(REMOTE_STORE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEY);
             assert Objects.nonNull(segmentRepoName) && Objects.nonNull(tlogRepoName) : "Remote repo names cannot be null";
             Settings.Builder indexSettingsBuilder = Settings.builder().put(currentIndexSettings);
             updateRemoteStoreSettings(indexSettingsBuilder, segmentRepoName, tlogRepoName);

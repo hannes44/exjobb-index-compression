@@ -43,6 +43,7 @@ import org.opensearch.core.common.unit.ByteSizeValue;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.core.xcontent.ToXContentFragment;
 import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.index.store.StoreStats;
 import org.opensearch.index.store.remote.filecache.FileCacheStats;
 
 import java.io.IOException;
@@ -109,7 +110,11 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
         Map<String, Long> sizeMap = in.readMap(StreamInput::readString, StreamInput::readLong);
         Map<ShardRouting, String> routingMap = in.readMap(ShardRouting::new, StreamInput::readString);
         Map<NodeAndPath, ReservedSpace> reservedSpaceMap;
-        reservedSpaceMap = in.readMap(NodeAndPath::new, ReservedSpace::new);
+        if (in.getVersion().onOrAfter(StoreStats.RESERVED_BYTES_VERSION)) {
+            reservedSpaceMap = in.readMap(NodeAndPath::new, ReservedSpace::new);
+        } else {
+            reservedSpaceMap = Map.of();
+        }
 
         this.leastAvailableSpaceUsage = Collections.unmodifiableMap(leastMap);
         this.mostAvailableSpaceUsage = Collections.unmodifiableMap(mostMap);
@@ -128,7 +133,7 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
     /**
      * Returns a {@link DiskUsage} for the {@link RoutingNode} using the
      * average usage of other nodes in the disk usage map.
-     * @param usages Map of nodeId to DiskUsage for all known nodes
+     * @param usages Map of nodeId to DiskUsage for all known nodes.
      */
     private void calculateAvgFreeAndTotalBytes(final Map<String, DiskUsage> usages) {
         if (usages == null || usages.isEmpty()) {
@@ -162,7 +167,9 @@ public class ClusterInfo implements ToXContentFragment, Writeable {
         out.writeMap(this.mostAvailableSpaceUsage, StreamOutput::writeString, (o, v) -> v.writeTo(o));
         out.writeMap(this.shardSizes, StreamOutput::writeString, (o, v) -> out.writeLong(v == null ? -1 : v));
         out.writeMap(this.routingToDataPath, (o, k) -> k.writeTo(o), StreamOutput::writeString);
-        out.writeMap(this.reservedSpace, (o, v) -> v.writeTo(o), (o, v) -> v.writeTo(o));
+        if (out.getVersion().onOrAfter(StoreStats.RESERVED_BYTES_VERSION)) {
+            out.writeMap(this.reservedSpace, (o, v) -> v.writeTo(o), (o, v) -> v.writeTo(o));
+        }
         if (out.getVersion().onOrAfter(Version.V_2_10_0)) {
             out.writeMap(this.nodeFileCacheStats, StreamOutput::writeString, (o, v) -> v.writeTo(o));
         }

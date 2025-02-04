@@ -34,13 +34,11 @@ package org.opensearch.common.lucene;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Collector;
-import org.apache.lucene.search.FilterCollector;
-import org.apache.lucene.search.FilterLeafCollector;
 import org.apache.lucene.search.LeafCollector;
 import org.apache.lucene.search.Scorable;
 import org.apache.lucene.search.ScoreCachingWrappingScorer;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
 
@@ -49,46 +47,46 @@ import java.io.IOException;
  *
  * @opensearch.internal
  */
-public class MinimumScoreCollector extends FilterCollector {
+public class MinimumScoreCollector extends SimpleCollector {
 
+    private final Collector collector;
     private final float minimumScore;
 
+    private Scorable scorer;
+    private LeafCollector leafCollector;
+
     public MinimumScoreCollector(Collector collector, float minimumScore) {
-        super(collector);
+        this.collector = collector;
         this.minimumScore = minimumScore;
     }
 
     public Collector getCollector() {
-        return in;
+        return collector;
     }
 
     @Override
-    public LeafCollector getLeafCollector(LeafReaderContext context) throws IOException {
-        return ScoreCachingWrappingScorer.wrap(new FilterLeafCollector(super.getLeafCollector(context)) {
-            Scorable scorer;
-
-            @Override
-            public void setScorer(Scorable scorer) throws IOException {
-                this.scorer = scorer;
-                in.setScorer(scorer);
-            }
-
-            @Override
-            public void collect(int doc) throws IOException {
-                if (scorer.score() >= minimumScore) {
-                    in.collect(doc);
-                }
-            }
-        });
+    public void setScorer(Scorable scorer) throws IOException {
+        if (!(scorer instanceof ScoreCachingWrappingScorer)) {
+            scorer = ScoreCachingWrappingScorer.wrap(scorer);
+        }
+        this.scorer = scorer;
+        leafCollector.setScorer(scorer);
     }
 
     @Override
-    public void setWeight(Weight weight) {
-        // Not redirecting to delegate collector to maintain same behaviour when this extended SimpleCollector.
+    public void collect(int doc) throws IOException {
+        if (scorer.score() >= minimumScore) {
+            leafCollector.collect(doc);
+        }
+    }
+
+    @Override
+    public void doSetNextReader(LeafReaderContext context) throws IOException {
+        leafCollector = collector.getLeafCollector(context);
     }
 
     @Override
     public ScoreMode scoreMode() {
-        return in.scoreMode() == ScoreMode.TOP_SCORES ? ScoreMode.TOP_SCORES : ScoreMode.COMPLETE;
+        return collector.scoreMode() == ScoreMode.TOP_SCORES ? ScoreMode.TOP_SCORES : ScoreMode.COMPLETE;
     }
 }

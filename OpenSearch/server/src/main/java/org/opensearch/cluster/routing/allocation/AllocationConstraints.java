@@ -39,8 +39,8 @@ public class AllocationConstraints {
         this.constraints.get(constraint).setEnable(enable);
     }
 
-    public long weight(ShardsBalancer balancer, BalancedShardsAllocator.ModelNode node, String index, long primaryThresholdWeight) {
-        Constraint.ConstraintParams params = new Constraint.ConstraintParams(balancer, node, index, primaryThresholdWeight);
+    public long weight(ShardsBalancer balancer, BalancedShardsAllocator.ModelNode node, String index) {
+        Constraint.ConstraintParams params = new Constraint.ConstraintParams(balancer, node, index);
         return params.weight(constraints);
     }
 }

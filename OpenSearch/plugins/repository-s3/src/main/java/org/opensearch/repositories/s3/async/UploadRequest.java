@@ -26,8 +26,8 @@ public class UploadRequest {
     private final CheckedConsumer<Boolean, IOException> uploadFinalizer;
     private final boolean doRemoteDataIntegrityCheck;
     private final Long expectedChecksum;
-    private final Map<String, String> metadata;
     private final boolean uploadRetryEnabled;
+    private final Map<String, String> metadata;
 
     /**
      * Construct a new UploadRequest object

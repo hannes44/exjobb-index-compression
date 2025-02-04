@@ -83,7 +83,7 @@ public class HighlighterWithAnalyzersTests extends ParameterizedStaticSettingsOp
 
     @Override
     protected Collection<Class<? extends Plugin>> nodePlugins() {
-        return Arrays.asList(CommonAnalysisModulePlugin.class);
+        return Arrays.asList(CommonAnalysisPlugin.class);
     }
 
     public void testNgramHighlightingWithBrokenPositions() throws IOException {
@@ -310,7 +310,7 @@ public class HighlighterWithAnalyzersTests extends ParameterizedStaticSettingsOp
         ).highlighter(highlight().field("field1").order("score").preTags("<x>").postTags("</x>"));
 
         searchResponse = client().search(searchRequest("first_test_index").source(source)).actionGet();
-        assertThat(searchResponse.getHits().getTotalHits().value(), equalTo(2L));
+        assertThat(searchResponse.getHits().getTotalHits().value, equalTo(2L));
         for (int i = 0; i < 2; i++) {
             assertHighlight(
                 searchResponse,

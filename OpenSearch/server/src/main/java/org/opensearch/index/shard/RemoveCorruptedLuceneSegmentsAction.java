@@ -32,7 +32,6 @@
 package org.opensearch.index.shard;
 
 import org.apache.lucene.index.CheckIndex;
-import org.apache.lucene.index.CheckIndex.Level;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.opensearch.OpenSearchException;
@@ -59,7 +58,7 @@ public class RemoveCorruptedLuceneSegmentsAction {
 
         final CheckIndex.Status status;
         try (CheckIndex checker = new CheckIndex(indexDirectory, writeLock)) {
-            checker.setLevel(Level.MIN_LEVEL_FOR_CHECKSUM_CHECKS);
+            checker.setChecksumsOnly(true);
             checker.setInfoStream(printStream, verbose);
 
             status = checker.checkIndex(null);
@@ -90,7 +89,7 @@ public class RemoveCorruptedLuceneSegmentsAction {
         final CheckIndex.Status status;
         try (CheckIndex checker = new CheckIndex(indexDirectory, writeLock)) {
 
-            checker.setLevel(Level.MIN_LEVEL_FOR_CHECKSUM_CHECKS);
+            checker.setChecksumsOnly(true);
             checker.setInfoStream(printStream, verbose);
 
             status = checker.checkIndex(null);

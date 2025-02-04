@@ -34,7 +34,6 @@ package org.opensearch.common.settings;
 
 import org.opensearch.common.settings.Setting.Property;
 import org.opensearch.common.util.PageCacheRecycler;
-import org.opensearch.core.common.unit.ByteSizeUnit;
 import org.opensearch.core.common.unit.ByteSizeValue;
 import org.opensearch.indices.IndexingMemoryController;
 import org.opensearch.indices.IndicesQueryCache;
@@ -42,7 +41,6 @@ import org.opensearch.indices.IndicesRequestCache;
 import org.opensearch.indices.breaker.HierarchyCircuitBreakerService;
 import org.opensearch.indices.fielddata.cache.IndicesFieldDataCache;
 import org.opensearch.monitor.jvm.JvmInfo;
-import org.opensearch.repositories.blobstore.BlobStoreRepository;
 import org.opensearch.test.OpenSearchTestCase;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -80,9 +78,6 @@ public class MemorySizeSettingsTests extends OpenSearchTestCase {
             IndicesRequestCache.INDICES_CACHE_QUERY_SIZE,
             "indices.requests.cache.size",
             new ByteSizeValue((long) (JvmInfo.jvmInfo().getMem().getHeapMax().getBytes() * 0.01))
-        );
-        assertWarnings(
-            "[indices.requests.cache.size] setting was deprecated in OpenSearch and will be removed in a future release! See the breaking changes documentation for the next major version."
         );
     }
 
@@ -132,75 +127,22 @@ public class MemorySizeSettingsTests extends OpenSearchTestCase {
         );
     }
 
-    public void testSnapshotRepositoryDataCacheSizeSetting() {
-        assertMemorySizeSettingInRange(
-            BlobStoreRepository.SNAPSHOT_REPOSITORY_DATA_CACHE_THRESHOLD,
-            "snapshot.repository_data.cache.threshold",
-            new ByteSizeValue(BlobStoreRepository.calculateDefaultSnapshotRepositoryDataCacheThreshold()),
-            ByteSizeUnit.KB.toBytes(500),
-            1.0
-        );
-    }
-
     private void assertMemorySizeSetting(Setting<ByteSizeValue> setting, String settingKey, ByteSizeValue defaultValue) {
         assertMemorySizeSetting(setting, settingKey, defaultValue, Settings.EMPTY);
     }
 
     private void assertMemorySizeSetting(Setting<ByteSizeValue> setting, String settingKey, ByteSizeValue defaultValue, Settings settings) {
-        assertMemorySizeSetting(setting, settingKey, defaultValue, 25.0, 1024, settings);
-    }
-
-    private void assertMemorySizeSetting(
-        Setting<ByteSizeValue> setting,
-        String settingKey,
-        ByteSizeValue defaultValue,
-        double availablePercentage,
-        long availableBytes,
-        Settings settings
-    ) {
         assertThat(setting, notNullValue());
         assertThat(setting.getKey(), equalTo(settingKey));
         assertThat(setting.getProperties(), hasItem(Property.NodeScope));
         assertThat(setting.getDefault(settings), equalTo(defaultValue));
-        Settings settingWithPercentage = Settings.builder().put(settingKey, percentageAsString(availablePercentage)).build();
+        Settings settingWithPercentage = Settings.builder().put(settingKey, "25%").build();
         assertThat(
             setting.get(settingWithPercentage),
-            equalTo(
-                new ByteSizeValue((long) (JvmInfo.jvmInfo().getMem().getHeapMax().getBytes() * percentageAsFraction(availablePercentage)))
-            )
+            equalTo(new ByteSizeValue((long) (JvmInfo.jvmInfo().getMem().getHeapMax().getBytes() * 0.25)))
         );
-        Settings settingWithBytesValue = Settings.builder().put(settingKey, availableBytes + "b").build();
-        assertThat(setting.get(settingWithBytesValue), equalTo(new ByteSizeValue(availableBytes)));
+        Settings settingWithBytesValue = Settings.builder().put(settingKey, "1024b").build();
+        assertThat(setting.get(settingWithBytesValue), equalTo(new ByteSizeValue(1024)));
     }
 
-    private void assertMemorySizeSettingInRange(
-        Setting<ByteSizeValue> setting,
-        String settingKey,
-        ByteSizeValue defaultValue,
-        long minBytes,
-        double maxPercentage
-    ) {
-        assertMemorySizeSetting(setting, settingKey, defaultValue, maxPercentage, minBytes, Settings.EMPTY);
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            Settings settingWithTooSmallValue = Settings.builder().put(settingKey, minBytes - 1).build();
-            setting.get(settingWithTooSmallValue);
-        });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            double unavailablePercentage = maxPercentage + 0.1;
-            Settings settingWithPercentageExceedingLimit = Settings.builder()
-                .put(settingKey, percentageAsString(unavailablePercentage))
-                .build();
-            setting.get(settingWithPercentageExceedingLimit);
-        });
-    }
-
-    private double percentageAsFraction(double availablePercentage) {
-        return availablePercentage / 100.0;
-    }
-
-    private String percentageAsString(double availablePercentage) {
-        return availablePercentage + "%";
-    }
 }

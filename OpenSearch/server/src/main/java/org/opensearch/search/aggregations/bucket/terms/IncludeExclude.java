@@ -744,12 +744,7 @@ public class IncludeExclude implements Writeable, ToXContentFragment {
         } else if (excludeValues != null) {
             a = Operations.minus(a, Automata.makeStringUnion(excludeValues), Operations.DEFAULT_DETERMINIZE_WORK_LIMIT);
         }
-
-        if (a.isDeterministic()) {
-            return a;
-        } else {
-            return Operations.determinize(a, Operations.DEFAULT_DETERMINIZE_WORK_LIMIT);
-        }
+        return a;
     }
 
     private static void validateRegExpStringLength(String source, int maxRegexLength) {

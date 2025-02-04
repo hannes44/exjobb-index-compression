@@ -33,7 +33,7 @@
 package org.opensearch.rest.action.admin.cluster.dangling;
 
 import org.opensearch.action.admin.indices.dangling.delete.DeleteDanglingIndexRequest;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.node.NodeClient;
 import org.opensearch.common.logging.DeprecationLogger;
 import org.opensearch.core.rest.RestStatus;
@@ -76,7 +76,7 @@ public class RestDeleteDanglingIndexAction extends BaseRestHandler {
 
         deleteRequest.timeout(request.paramAsTime("timeout", deleteRequest.timeout()));
         deleteRequest.clusterManagerNodeTimeout(request.paramAsTime("cluster_manager_timeout", deleteRequest.clusterManagerNodeTimeout()));
-        parseDeprecatedMasterTimeoutParameter(deleteRequest, request, deprecationLogger, getName());
+        parseDeprecatedMasterTimeoutParameter(deleteRequest, request);
 
         return channel -> client.admin()
             .cluster()

@@ -32,11 +32,8 @@
 package org.opensearch.gradle.precommit;
 
 import org.gradle.api.DefaultTask;
-import org.gradle.api.Project;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-
-import javax.inject.Inject;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,16 +41,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 public class PrecommitTask extends DefaultTask {
-    private final Project project;
-
-    @Inject
-    public PrecommitTask(Project project) {
-        this.project = project;
-    }
 
     @OutputFile
     public File getSuccessMarker() {
-        return new File(project.getBuildDir(), "markers/" + this.getName());
+        return new File(getProject().getBuildDir(), "markers/" + this.getName());
     }
 
     @TaskAction

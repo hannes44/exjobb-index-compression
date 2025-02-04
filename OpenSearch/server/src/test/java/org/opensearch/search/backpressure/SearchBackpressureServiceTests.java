@@ -305,11 +305,10 @@ public class SearchBackpressureServiceTests extends OpenSearchTestCase {
         verify(mockTaskManager, times(10)).cancelTaskAndDescendants(any(), anyString(), anyBoolean(), any());
         assertEquals(3, service.getSearchBackpressureState(SearchTask.class).getLimitReachedCount());
 
-        // Verify search backpressure stats. Since we are not marking any task as completed the completionCount will be 0
-        // for SearchTaskStats here.
+        // Verify search backpressure stats.
         SearchBackpressureStats expectedStats = new SearchBackpressureStats(
-            new SearchTaskStats(10, 3, 0, Map.of(TaskResourceUsageTrackerType.CPU_USAGE_TRACKER, new MockStats(10))),
-            new SearchShardTaskStats(0, 0, 0, Collections.emptyMap()),
+            new SearchTaskStats(10, 3, Map.of(TaskResourceUsageTrackerType.CPU_USAGE_TRACKER, new MockStats(10))),
+            new SearchShardTaskStats(0, 0, Collections.emptyMap()),
             SearchBackpressureMode.ENFORCED
         );
         SearchBackpressureStats actualStats = service.nodeStats();
@@ -403,11 +402,10 @@ public class SearchBackpressureServiceTests extends OpenSearchTestCase {
         verify(mockTaskManager, times(12)).cancelTaskAndDescendants(any(), anyString(), anyBoolean(), any());
         assertEquals(3, service.getSearchBackpressureState(SearchShardTask.class).getLimitReachedCount());
 
-        // Verify search backpressure stats. We are marking 20 SearchShardTasks as completed this should get
-        // reflected in SearchShardTaskStats.
+        // Verify search backpressure stats.
         SearchBackpressureStats expectedStats = new SearchBackpressureStats(
-            new SearchTaskStats(0, 0, 0, Collections.emptyMap()),
-            new SearchShardTaskStats(12, 3, 20, Map.of(TaskResourceUsageTrackerType.CPU_USAGE_TRACKER, new MockStats(12))),
+            new SearchTaskStats(0, 0, Collections.emptyMap()),
+            new SearchShardTaskStats(12, 3, Map.of(TaskResourceUsageTrackerType.CPU_USAGE_TRACKER, new MockStats(12))),
             SearchBackpressureMode.ENFORCED
         );
         SearchBackpressureStats actualStats = service.nodeStats();
@@ -496,7 +494,6 @@ public class SearchBackpressureServiceTests extends OpenSearchTestCase {
             new SearchTaskStats(
                 5,
                 1,
-                0,
                 Map.of(
                     TaskResourceUsageTrackerType.CPU_USAGE_TRACKER,
                     new MockStats(5),
@@ -504,7 +501,7 @@ public class SearchBackpressureServiceTests extends OpenSearchTestCase {
                     new MockStats(0)
                 )
             ),
-            new SearchShardTaskStats(0, 0, 0, Collections.emptyMap()),
+            new SearchShardTaskStats(0, 0, Collections.emptyMap()),
             SearchBackpressureMode.ENFORCED
         );
 

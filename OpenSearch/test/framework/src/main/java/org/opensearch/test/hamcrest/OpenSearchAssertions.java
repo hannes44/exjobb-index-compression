@@ -49,8 +49,8 @@ import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.search.ShardSearchFailure;
 import org.opensearch.action.support.broadcast.BroadcastResponse;
-import org.opensearch.action.support.clustermanager.AcknowledgedRequestBuilder;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedRequestBuilder;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.cluster.block.ClusterBlock;
 import org.opensearch.cluster.block.ClusterBlockException;
 import org.opensearch.cluster.metadata.IndexMetadata;
@@ -272,7 +272,10 @@ public class OpenSearchAssertions {
             );
         }
         assertThat(
-            "Some expected ids were not found in search results: " + Arrays.toString(idsSet.toArray(new String[0])) + "." + shardStatus,
+            "Some expected ids were not found in search results: "
+                + Arrays.toString(idsSet.toArray(new String[idsSet.size()]))
+                + "."
+                + shardStatus,
             idsSet.size(),
             equalTo(0)
         );
@@ -299,16 +302,14 @@ public class OpenSearchAssertions {
 
     public static void assertHitCount(SearchResponse countResponse, long expectedHitCount) {
         final TotalHits totalHits = countResponse.getHits().getTotalHits();
-        if (totalHits.relation() != TotalHits.Relation.EQUAL_TO || totalHits.value() != expectedHitCount) {
+        if (totalHits.relation != TotalHits.Relation.EQUAL_TO || totalHits.value != expectedHitCount) {
             fail("Count is " + totalHits + " but " + expectedHitCount + " was expected. " + formatShardStatus(countResponse));
         }
     }
 
     public static void assertHitCount(SearchResponse countResponse, long minHitCount, long maxHitCount) {
         final TotalHits totalHits = countResponse.getHits().getTotalHits();
-        if (!(totalHits.relation() == TotalHits.Relation.EQUAL_TO
-            && totalHits.value() >= minHitCount
-            && totalHits.value() <= maxHitCount)) {
+        if (!(totalHits.relation == TotalHits.Relation.EQUAL_TO && totalHits.value >= minHitCount && totalHits.value <= maxHitCount)) {
             fail(
                 "Count is "
                     + totalHits
@@ -346,7 +347,7 @@ public class OpenSearchAssertions {
     public static void assertSearchHit(SearchResponse searchResponse, int number, Matcher<SearchHit> matcher) {
         assertThat(number, greaterThan(0));
         assertThat("SearchHit number must be greater than 0", number, greaterThan(0));
-        assertThat(searchResponse.getHits().getTotalHits().value(), greaterThanOrEqualTo((long) number));
+        assertThat(searchResponse.getHits().getTotalHits().value, greaterThanOrEqualTo((long) number));
         assertThat(searchResponse.getHits().getAt(number - 1), matcher);
     }
 
@@ -562,8 +563,8 @@ public class OpenSearchAssertions {
         assertThat(query, instanceOf(BooleanQuery.class));
         BooleanQuery q = (BooleanQuery) query;
         assertThat(q.clauses().size(), greaterThan(i));
-        assertThat(q.clauses().get(i).query(), instanceOf(subqueryType));
-        return subqueryType.cast(q.clauses().get(i).query());
+        assertThat(q.clauses().get(i).getQuery(), instanceOf(subqueryType));
+        return subqueryType.cast(q.clauses().get(i).getQuery());
     }
 
     /**

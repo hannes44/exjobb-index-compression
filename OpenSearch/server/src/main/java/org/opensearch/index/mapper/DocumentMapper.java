@@ -35,9 +35,12 @@ package org.opensearch.index.mapper;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.BitSet;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.BytesRef;
 import org.opensearch.OpenSearchGenerationException;
+import org.opensearch.Version;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.common.settings.Settings;
@@ -51,7 +54,6 @@ import org.opensearch.index.IndexSettings;
 import org.opensearch.index.analysis.IndexAnalyzers;
 import org.opensearch.index.mapper.MapperService.MergeReason;
 import org.opensearch.index.mapper.MetadataFieldMapper.TypeParser;
-import org.opensearch.index.query.NestedQueryBuilder;
 import org.opensearch.search.internal.SearchContext;
 
 import java.io.IOException;
@@ -91,8 +93,12 @@ public class DocumentMapper implements ToXContentFragment {
             this.builderContext = new Mapper.BuilderContext(indexSettings, new ContentPath(1));
             this.rootObjectMapper = builder.build(builderContext);
 
+            final String type = rootObjectMapper.name();
             final DocumentMapper existingMapper = mapperService.documentMapper();
-            final Map<String, TypeParser> metadataMapperParsers = mapperService.mapperRegistry.getMetadataMapperParsers();
+            final Version indexCreatedVersion = mapperService.getIndexSettings().getIndexVersionCreated();
+            final Map<String, TypeParser> metadataMapperParsers = mapperService.mapperRegistry.getMetadataMapperParsers(
+                indexCreatedVersion
+            );
             for (Map.Entry<String, MetadataFieldMapper.TypeParser> entry : metadataMapperParsers.entrySet()) {
                 final String name = entry.getKey();
                 final MetadataFieldMapper existingMetadataMapper = existingMapper == null
@@ -269,15 +275,25 @@ public class DocumentMapper implements ToXContentFragment {
      * Returns the best nested {@link ObjectMapper} instances that is in the scope of the specified nested docId.
      */
     public ObjectMapper findNestedObjectMapper(int nestedDocId, SearchContext sc, LeafReaderContext context) throws IOException {
-        if (sc instanceof NestedQueryBuilder.NestedInnerHitSubContext) {
-            ObjectMapper objectMapper = ((NestedQueryBuilder.NestedInnerHitSubContext) sc).getChildObjectMapper();
-            assert objectMappers().containsKey(objectMapper.fullPath());
-            assert containSubDocIdWithObjectMapper(nestedDocId, objectMapper, sc, context);
-            return objectMapper;
-        }
         ObjectMapper nestedObjectMapper = null;
         for (ObjectMapper objectMapper : objectMappers().values()) {
-            if (containSubDocIdWithObjectMapper(nestedDocId, objectMapper, sc, context)) {
+            if (!objectMapper.nested().isNested()) {
+                continue;
+            }
+
+            Query filter = objectMapper.nestedTypeFilter();
+            if (filter == null) {
+                continue;
+            }
+            // We can pass down 'null' as acceptedDocs, because nestedDocId is a doc to be fetched and
+            // therefore is guaranteed to be a live doc.
+            final Weight nestedWeight = filter.createWeight(sc.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1f);
+            Scorer scorer = nestedWeight.scorer(context);
+            if (scorer == null) {
+                continue;
+            }
+
+            if (scorer.iterator().advance(nestedDocId) == nestedDocId) {
                 if (nestedObjectMapper == null) {
                     nestedObjectMapper = objectMapper;
                 } else {
@@ -288,25 +304,6 @@ public class DocumentMapper implements ToXContentFragment {
             }
         }
         return nestedObjectMapper;
-    }
-
-    private boolean containSubDocIdWithObjectMapper(int nestedDocId, ObjectMapper objectMapper, SearchContext sc, LeafReaderContext context)
-        throws IOException {
-        if (!objectMapper.nested().isNested()) {
-            return false;
-        }
-        Query filter = objectMapper.nestedTypeFilter();
-        if (filter == null) {
-            return false;
-        }
-        // We can pass down 'null' as acceptedDocs, because nestedDocId is a doc to be fetched and
-        // therefore is guaranteed to be a live doc.
-        BitSet nestedDocIds = sc.bitsetFilterCache().getBitSetProducer(filter).getBitSet(context);
-        if (nestedDocIds != null && nestedDocIds.get(nestedDocId)) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
     public DocumentMapper merge(Mapping mapping, MergeReason reason) {

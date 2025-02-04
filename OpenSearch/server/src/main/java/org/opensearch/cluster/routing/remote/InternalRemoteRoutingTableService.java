@@ -33,6 +33,7 @@ import org.opensearch.gateway.remote.model.RemoteRoutingTableBlobStore;
 import org.opensearch.gateway.remote.routingtable.RemoteIndexRoutingTable;
 import org.opensearch.gateway.remote.routingtable.RemoteRoutingTableDiff;
 import org.opensearch.index.translog.transfer.BlobStoreTransferService;
+import org.opensearch.node.Node;
 import org.opensearch.node.remotestore.RemoteStoreNodeAttribute;
 import org.opensearch.repositories.RepositoriesService;
 import org.opensearch.repositories.Repository;
@@ -101,7 +102,6 @@ public class InternalRemoteRoutingTableService extends AbstractLifecycleComponen
 
     /**
      * Async action for writing one {@code IndexRoutingTable} to remote store
-     *
      * @param term current term
      * @param version current version
      * @param clusterUUID current cluster UUID
@@ -234,7 +234,9 @@ public class InternalRemoteRoutingTableService extends AbstractLifecycleComponen
     @Override
     protected void doStart() {
         assert isRemoteRoutingTableConfigured(settings) == true : "Remote routing table is not enabled";
-        final String remoteStoreRepo = RemoteStoreNodeAttribute.getRoutingTableRepoName(settings);
+        final String remoteStoreRepo = settings.get(
+            Node.NODE_ATTRIBUTES.getKey() + RemoteStoreNodeAttribute.REMOTE_STORE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEY
+        );
         assert remoteStoreRepo != null : "Remote routing table repository is not configured";
         final Repository repository = repositoriesService.get().repository(remoteStoreRepo);
         assert repository instanceof BlobStoreRepository : "Repository should be instance of BlobStoreRepository";

@@ -36,7 +36,7 @@ import org.opensearch.action.admin.cluster.snapshots.create.CreateSnapshotRespon
 import org.opensearch.action.admin.cluster.snapshots.status.SnapshotIndexStatus;
 import org.opensearch.action.admin.cluster.snapshots.status.SnapshotStatus;
 import org.opensearch.action.support.PlainActionFuture;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.Client;
 import org.opensearch.cluster.SnapshotsInProgress;
 import org.opensearch.cluster.metadata.RepositoryMetadata;
@@ -79,6 +79,14 @@ public class CloneSnapshotIT extends AbstractSnapshotIntegTestCase {
         final Path repoPath = randomRepoPath();
         createRepository(repoName, "fs", repoPath);
 
+        final boolean useBwCFormat = randomBoolean();
+        if (useBwCFormat) {
+            initWithSnapshotVersion(repoName, repoPath, SnapshotsService.OLD_SNAPSHOT_FORMAT);
+            // Re-create repo to clear repository data cache
+            assertAcked(clusterAdmin().prepareDeleteRepository(repoName).get());
+            createRepository(repoName, "fs", repoPath);
+        }
+
         final String indexName = "test-index";
         createIndexWithRandomDocs(indexName, randomIntBetween(5, 10));
         final String sourceSnapshot = "source-snapshot";
@@ -94,10 +102,20 @@ public class CloneSnapshotIT extends AbstractSnapshotIntegTestCase {
 
         final SnapshotId targetSnapshotId = new SnapshotId("target-snapshot", UUIDs.randomBase64UUID(random()));
 
-        final String currentShardGen = repositoryData.shardGenerations().getShardGen(indexId, shardId);
+        final String currentShardGen;
+        if (useBwCFormat) {
+            currentShardGen = null;
+        } else {
+            currentShardGen = repositoryData.shardGenerations().getShardGen(indexId, shardId);
+        }
         final String newShardGeneration = PlainActionFuture.get(
             f -> repository.cloneShardSnapshot(sourceSnapshotInfo.snapshotId(), targetSnapshotId, repositoryShardId, currentShardGen, f)
         );
+
+        if (useBwCFormat) {
+            final long gen = Long.parseLong(newShardGeneration);
+            assertEquals(gen, 1L); // Initial snapshot brought it to 0, clone increments it to 1
+        }
 
         final BlobStoreIndexShardSnapshot targetShardSnapshot = readShardSnapshot(repository, repositoryShardId, targetSnapshotId);
         final BlobStoreIndexShardSnapshot sourceShardSnapshot = readShardSnapshot(

@@ -445,16 +445,7 @@ public class AzureStorageService implements AutoCloseable {
         }
 
         public Thread newThread(Runnable r) {
-            final Thread t = new Thread(group, new Runnable() {
-                @SuppressWarnings({ "deprecation", "removal" })
-                @Override
-                public void run() {
-                    AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                        r.run();
-                        return null;
-                    });
-                }
-            }, namePrefix + threadNumber.getAndIncrement(), 0);
+            final Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
 
             if (t.isDaemon()) {
                 t.setDaemon(false);

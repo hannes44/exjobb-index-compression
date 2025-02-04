@@ -60,7 +60,7 @@ public class SegmentReplicationPressureService implements Closeable {
 
     public static final Setting<Integer> MAX_INDEXING_CHECKPOINTS = Setting.intSetting(
         "segrep.pressure.checkpoint.limit",
-        30,
+        4,
         1,
         Setting.Property.Dynamic,
         Setting.Property.NodeScope
@@ -96,6 +96,7 @@ public class SegmentReplicationPressureService implements Closeable {
 
     private final ThreadPool threadPool;
     private final SegmentReplicationStatsTracker tracker;
+
     private final ShardStateAction shardStateAction;
 
     private volatile AsyncFailStaleReplicaTask failStaleReplicaTask;
@@ -111,6 +112,7 @@ public class SegmentReplicationPressureService implements Closeable {
     ) {
         this.indicesService = indicesService;
         this.tracker = tracker;
+
         this.shardStateAction = shardStateAction;
         this.threadPool = threadPool;
 

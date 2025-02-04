@@ -74,20 +74,16 @@ import java.util.stream.Collectors;
  */
 public class CopyRestApiTask extends DefaultTask {
     private static final String REST_API_PREFIX = "rest-api-spec/api";
-    final ListProperty<String> includeCore;
+    final ListProperty<String> includeCore = getProject().getObjects().listProperty(String.class);
     String sourceSetName;
     boolean skipHasRestTestCheck;
     Configuration coreConfig;
     Configuration additionalConfig;
-    private final Project project;
 
     private final PatternFilterable corePatternSet;
 
-    @Inject
-    public CopyRestApiTask(Project project) {
-        this.project = project;
-        this.corePatternSet = getPatternSetFactory().create();
-        this.includeCore = project.getObjects().listProperty(String.class);
+    public CopyRestApiTask() {
+        corePatternSet = getPatternSetFactory().create();
     }
 
     @Inject
@@ -137,8 +133,8 @@ public class CopyRestApiTask extends DefaultTask {
         }
 
         ConfigurableFileCollection fileCollection = additionalConfig == null
-            ? project.files(coreFileTree)
-            : project.files(coreFileTree, additionalConfig.getAsFileTree());
+            ? getProject().files(coreFileTree)
+            : getProject().files(coreFileTree, additionalConfig.getAsFileTree());
 
         // if project has rest tests or the includes are explicitly configured execute the task, else NO-SOURCE due to the null input
         return projectHasYamlRestTests || includeCore.get().isEmpty() == false ? fileCollection.getAsFileTree() : null;
@@ -214,7 +210,7 @@ public class CopyRestApiTask extends DefaultTask {
                     .anyMatch(p -> p.getFileName().toString().endsWith("yml"));
             }
         } catch (IOException e) {
-            throw new IllegalStateException(String.format("Error determining if this project [%s] has rest tests.", project), e);
+            throw new IllegalStateException(String.format("Error determining if this project [%s] has rest tests.", getProject()), e);
         }
         return false;
     }
@@ -244,6 +240,7 @@ public class CopyRestApiTask extends DefaultTask {
     }
 
     private Optional<SourceSet> getSourceSet() {
+        Project project = getProject();
         return project.getExtensions().findByType(JavaPluginExtension.class) == null
             ? Optional.empty()
             : Optional.ofNullable(GradleUtils.getJavaSourceSets(project).findByName(getSourceSetName()));

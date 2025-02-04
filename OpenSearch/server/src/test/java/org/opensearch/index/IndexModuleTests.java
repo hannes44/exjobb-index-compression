@@ -59,7 +59,6 @@ import org.opensearch.common.UUIDs;
 import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Setting.Property;
 import org.opensearch.common.settings.Settings;
-import org.opensearch.common.settings.SettingsException;
 import org.opensearch.common.util.BigArrays;
 import org.opensearch.common.util.PageCacheRecycler;
 import org.opensearch.common.util.concurrent.ThreadContext;
@@ -345,7 +344,7 @@ public class IndexModuleTests extends OpenSearchTestCase {
         try {
             module.addSettingsUpdateConsumer(booleanSetting2, atomicBoolean::set);
             fail("not registered");
-        } catch (SettingsException ex) {
+        } catch (IllegalArgumentException ex) {
 
         }
 

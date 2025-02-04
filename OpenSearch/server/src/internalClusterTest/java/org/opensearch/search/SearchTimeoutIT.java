@@ -82,7 +82,8 @@ public class SearchTimeoutIT extends ParameterizedStaticSettingsOpenSearchIntegT
     }
 
     public void testSimpleTimeout() throws Exception {
-        for (int i = 0; i < 32; i++) {
+        final int numDocs = 1000;
+        for (int i = 0; i < numDocs; i++) {
             client().prepareIndex("test").setId(Integer.toString(i)).setSource("field", "value").get();
         }
         refresh("test");
@@ -110,7 +111,7 @@ public class SearchTimeoutIT extends ParameterizedStaticSettingsOpenSearchIntegT
             .get();
         assertFalse(searchResponse.isTimedOut());
         assertEquals(0, searchResponse.getFailedShards());
-        assertEquals(numDocs, searchResponse.getHits().getTotalHits().value());
+        assertEquals(numDocs, searchResponse.getHits().getTotalHits().value);
     }
 
     public void testPartialResultsIntolerantTimeout() throws Exception {

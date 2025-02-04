@@ -60,7 +60,12 @@ public abstract class AggregationCollectorManager implements CollectorManager<Co
         assert internals.stream().noneMatch(Objects::isNull);
         context.aggregations().resetBucketMultiConsumer();
 
-        final InternalAggregations internalAggregations = InternalAggregations.from(internals);
+        // PipelineTreeSource is serialized to the coordinators on older OpenSearch versions for bwc but is deprecated in latest release
+        // To handle that we need to add it in the InternalAggregations object sent in QuerySearchResult.
+        final InternalAggregations internalAggregations = new InternalAggregations(
+            internals,
+            context.request().source().aggregations()::buildPipelineTree
+        );
         return buildAggregationResult(internalAggregations);
     }
 

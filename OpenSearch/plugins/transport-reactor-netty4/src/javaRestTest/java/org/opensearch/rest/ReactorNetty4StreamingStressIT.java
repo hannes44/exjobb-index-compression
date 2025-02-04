@@ -8,7 +8,7 @@
 
 package org.opensearch.rest;
 
-import org.apache.hc.core5.http.ConnectionClosedException;
+import org.apache.http.ConnectionClosedException;
 import org.opensearch.client.Request;
 import org.opensearch.client.Response;
 import org.opensearch.client.StreamingRequest;

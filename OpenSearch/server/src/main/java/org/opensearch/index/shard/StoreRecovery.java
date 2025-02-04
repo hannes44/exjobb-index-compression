@@ -57,6 +57,7 @@ import org.opensearch.core.index.Index;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.index.engine.Engine;
 import org.opensearch.index.engine.EngineException;
+import org.opensearch.index.engine.InternalEngine;
 import org.opensearch.index.mapper.MapperService;
 import org.opensearch.index.remote.RemoteStorePathStrategy;
 import org.opensearch.index.remote.RemoteStoreUtils;
@@ -525,8 +526,8 @@ final class StoreRecovery {
                     indexShard.postRecovery("post recovery from remote_store");
                     SegmentInfos committedSegmentInfos = indexShard.store().readLastCommittedSegmentsInfo();
                     try {
-                        indexShard.getEngine()
-                            .translogManager()
+                        assert indexShard.getEngine() instanceof InternalEngine;
+                        ((InternalEngine) indexShard.getEngine()).translogManager()
                             .setMinSeqNoToKeep(Long.parseLong(committedSegmentInfos.getUserData().get(SequenceNumbers.MAX_SEQ_NO)) + 1);
                     } catch (IllegalArgumentException e) {
                         logger.warn("MinSeqNoToKeep is already past the maxSeqNo from commited segment infos");
@@ -544,7 +545,7 @@ final class StoreRecovery {
             // got closed on us, just ignore this recovery
             return false;
         }
-        if (indexShard.routingEntry().primary() == false && indexShard.routingEntry().isSearchOnly() == false) {
+        if (indexShard.routingEntry().primary() == false) {
             throw new IndexShardRecoveryException(shardId, "Trying to recover when the shard is in backup state", null);
         }
         return true;
@@ -747,17 +748,7 @@ final class StoreRecovery {
                 writeEmptyRetentionLeasesFile(indexShard);
                 indexShard.recoveryState().getIndex().setFileDetailsComplete();
             }
-            if (indexShard.routingEntry().isSearchOnly() == false) {
-                indexShard.openEngineAndRecoverFromTranslog();
-            } else {
-                // Opens the engine for pull based replica copies that are
-                // not primary eligible. This will skip any checkpoint tracking and ensure
-                // that the shards are sync'd with remote store before opening.
-                //
-                // first bootstrap new history / translog so that the TranslogUUID matches the UUID from the latest commit.
-                bootstrapForSnapshot(indexShard, store);
-                indexShard.openEngineAndSkipTranslogRecoveryFromSnapshot();
-            }
+            indexShard.openEngineAndRecoverFromTranslog();
             if (indexShard.shouldSeedRemoteStore()) {
                 indexShard.getThreadPool().executor(ThreadPool.Names.GENERIC).execute(() -> {
                     logger.info("Attempting to seed Remote Store via local recovery for {}", indexShard.shardId());
@@ -888,7 +879,6 @@ final class StoreRecovery {
         store.bootstrapNewHistory();
         final SegmentInfos segmentInfos = store.readLastCommittedSegmentsInfo();
         final long localCheckpoint = Long.parseLong(segmentInfos.userData.get(SequenceNumbers.LOCAL_CHECKPOINT_KEY));
-
         final String translogUUID = Translog.createEmptyTranslog(
             indexShard.shardPath().resolveTranslog(),
             localCheckpoint,

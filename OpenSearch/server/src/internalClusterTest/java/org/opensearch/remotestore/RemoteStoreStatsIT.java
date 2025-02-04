@@ -43,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_NUMBER_OF_REPLICAS;
 import static org.opensearch.test.hamcrest.OpenSearchAssertions.assertAcked;
@@ -75,7 +76,9 @@ public class RemoteStoreStatsIT extends RemoteStoreBaseIntegTestCase {
         // Step 2 - We find all the nodes that are present in the cluster. We make the remote store stats api call from
         // each of the node in the cluster and check that the response is coming as expected.
         ClusterState state = getClusterState();
-        List<String> nodes = state.nodes().getNodes().values().stream().map(DiscoveryNode::getName).collect(Collectors.toList());
+        List<String> nodes = StreamSupport.stream(state.nodes().getNodes().values().spliterator(), false)
+            .map(x -> x.getName())
+            .collect(Collectors.toList());
         String shardId = "0";
         for (String node : nodes) {
             RemoteStoreStatsResponse response = client(node).admin().cluster().prepareRemoteStoreStats(INDEX_NAME, shardId).get();
@@ -144,7 +147,10 @@ public class RemoteStoreStatsIT extends RemoteStoreBaseIntegTestCase {
         // Step 2 - We find all the nodes that are present in the cluster. We make the remote store stats api call from
         // each of the node in the cluster and check that the response is coming as expected.
         ClusterState state = getClusterState();
-        String node = state.nodes().getDataNodes().values().stream().map(DiscoveryNode::getName).findFirst().get();
+        String node = StreamSupport.stream(state.nodes().getDataNodes().values().spliterator(), false)
+            .map(x -> x.getName())
+            .findFirst()
+            .get();
         RemoteStoreStatsRequestBuilder remoteStoreStatsRequestBuilder = client(node).admin()
             .cluster()
             .prepareRemoteStoreStats(INDEX_NAME, null);
@@ -202,7 +208,9 @@ public class RemoteStoreStatsIT extends RemoteStoreBaseIntegTestCase {
         // Step 2 - We find a data node in the cluster. We make the remote store stats api call from
         // each of the data node in the cluster and check that only local shards are returned.
         ClusterState state = getClusterState();
-        List<String> nodes = state.nodes().getDataNodes().values().stream().map(DiscoveryNode::getName).collect(Collectors.toList());
+        List<String> nodes = StreamSupport.stream(state.nodes().getDataNodes().values().spliterator(), false)
+            .map(x -> x.getName())
+            .collect(Collectors.toList());
         for (String node : nodes) {
             RemoteStoreStatsRequestBuilder remoteStoreStatsRequestBuilder = client(node).admin()
                 .cluster()

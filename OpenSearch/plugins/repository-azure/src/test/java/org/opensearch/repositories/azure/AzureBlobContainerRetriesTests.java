@@ -38,6 +38,7 @@ import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.models.ParallelTransferOptions;
 import com.azure.storage.common.policy.RequestRetryOptions;
 import com.azure.storage.common.policy.RetryPolicyType;
+import org.apache.http.HttpStatus;
 import org.opensearch.cluster.metadata.RepositoryMetadata;
 import org.opensearch.common.SuppressForbidden;
 import org.opensearch.common.blobstore.BlobContainer;
@@ -88,7 +89,6 @@ import java.util.stream.Collectors;
 
 import fixture.azure.AzureHttpHandler;
 import reactor.core.scheduler.Schedulers;
-import reactor.netty.http.HttpResources;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.opensearch.repositories.azure.AzureRepository.Repository.CONTAINER_SETTING;
@@ -143,7 +143,6 @@ public class AzureBlobContainerRetriesTests extends OpenSearchTestCase {
 
     @AfterClass
     public static void shutdownSchedulers() {
-        HttpResources.disposeLoopsAndConnections();
         Schedulers.shutdownNow();
     }
 
@@ -490,4 +489,28 @@ public class AzureBlobContainerRetriesTests extends OpenSearchTestCase {
         return Optional.of(Math.toIntExact(rangeEnd));
     }
 
+    private static void sendIncompleteContent(HttpExchange exchange, byte[] bytes) throws IOException {
+        final int rangeStart = getRangeStart(exchange);
+        assertThat(rangeStart, lessThan(bytes.length));
+        final Optional<Integer> rangeEnd = getRangeEnd(exchange);
+        final int length;
+        if (rangeEnd.isPresent()) {
+            // adapt range end to be compliant to https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35
+            final int effectiveRangeEnd = Math.min(rangeEnd.get(), bytes.length - 1);
+            length = effectiveRangeEnd - rangeStart;
+        } else {
+            length = bytes.length - rangeStart - 1;
+        }
+        exchange.getResponseHeaders().add("Content-Type", "application/octet-stream");
+        exchange.getResponseHeaders().add("x-ms-blob-content-length", String.valueOf(length));
+        exchange.getResponseHeaders().add("x-ms-blob-type", "blockblob");
+        exchange.sendResponseHeaders(HttpStatus.SC_OK, length);
+        final int bytesToSend = randomIntBetween(0, length - 1);
+        if (bytesToSend > 0) {
+            exchange.getResponseBody().write(bytes, rangeStart, bytesToSend);
+        }
+        if (randomBoolean()) {
+            exchange.getResponseBody().flush();
+        }
+    }
 }

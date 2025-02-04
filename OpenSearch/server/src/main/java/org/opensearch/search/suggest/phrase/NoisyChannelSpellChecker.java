@@ -98,7 +98,7 @@ final class NoisyChannelSpellChecker {
                 if (posIncAttr.getPositionIncrement() == 0 && typeAttribute.type() == SynonymFilter.TYPE_SYNONYM) {
                     assert currentSet != null;
                     TermStats termStats = generator.termStats(term);
-                    if (termStats.docFreq() > 0) {
+                    if (termStats.docFreq > 0) {
                         currentSet.addOneCandidate(generator.createCandidate(BytesRef.deepCopyOf(term), termStats, realWordLikelihood));
                     }
                 } else {
@@ -129,7 +129,7 @@ final class NoisyChannelSpellChecker {
         }
         double cutoffScore = Double.MIN_VALUE;
         CandidateScorer scorer = new CandidateScorer(wordScorer, numCorrections, gramSize);
-        CandidateSet[] candidateSets = candidateSetsList.toArray(new CandidateSet[0]);
+        CandidateSet[] candidateSets = candidateSetsList.toArray(new CandidateSet[candidateSetsList.size()]);
         if (confidence > 0.0) {
             Candidate[] candidates = new Candidate[candidateSets.length];
             for (int i = 0; i < candidates.length; i++) {

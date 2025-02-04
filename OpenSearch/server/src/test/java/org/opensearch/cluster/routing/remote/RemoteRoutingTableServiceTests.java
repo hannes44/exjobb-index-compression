@@ -626,7 +626,7 @@ public class RemoteRoutingTableServiceTests extends OpenSearchTestCase {
         String indexName = randomAlphaOfLength(randomIntBetween(1, 50));
         ClusterState clusterState = createClusterState(indexName);
         Iterable<String> remotePath = HASHED_PREFIX.path(
-            RemoteStorePathStrategy.PathInput.builder()
+            RemoteStorePathStrategy.BasePathInput.builder()
                 .basePath(
                     new BlobPath().add("base-path")
                         .add(RemoteClusterStateUtils.encodeString(ClusterName.DEFAULT.toString()))
@@ -779,7 +779,7 @@ public class RemoteRoutingTableServiceTests extends OpenSearchTestCase {
     private BlobPath getPath() {
         BlobPath indexRoutingPath = basePath.add(INDEX_ROUTING_TABLE);
         return RemoteStoreEnums.PathType.HASHED_PREFIX.path(
-            RemoteStorePathStrategy.PathInput.builder().basePath(indexRoutingPath).indexUUID("uuid").build(),
+            RemoteStorePathStrategy.BasePathInput.builder().basePath(indexRoutingPath).indexUUID("uuid").build(),
             RemoteStoreEnums.PathHashAlgorithm.FNV_1A_BASE64
         );
     }

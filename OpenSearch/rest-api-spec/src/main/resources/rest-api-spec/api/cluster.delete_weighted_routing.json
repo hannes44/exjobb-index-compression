@@ -4,7 +4,7 @@
       "url": "https://opensearch.org/docs/latest/api-reference/cluster-api/cluster-awareness",
       "description": "Delete weighted shard routing weights"
     },
-    "stability": "stable",
+    "stability": "experimental",
     "url": {
       "paths": [
         {

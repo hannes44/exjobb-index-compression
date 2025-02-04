@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.FieldDoc;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TopDocs;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchException;
 import org.opensearch.action.ActionRunnable;
 import org.opensearch.action.OriginalIndices;
@@ -85,7 +86,6 @@ import org.opensearch.index.query.InnerHitContextBuilder;
 import org.opensearch.index.query.MatchAllQueryBuilder;
 import org.opensearch.index.query.MatchNoneQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryCoordinatorContext;
 import org.opensearch.index.query.QueryRewriteContext;
 import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.index.query.Rewriteable;
@@ -127,7 +127,6 @@ import org.opensearch.search.internal.SearchContext;
 import org.opensearch.search.internal.ShardSearchContextId;
 import org.opensearch.search.internal.ShardSearchRequest;
 import org.opensearch.search.lookup.SearchLookup;
-import org.opensearch.search.pipeline.PipelinedRequest;
 import org.opensearch.search.profile.Profilers;
 import org.opensearch.search.query.QueryPhase;
 import org.opensearch.search.query.QuerySearchRequest;
@@ -1777,8 +1776,8 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
     /**
      * Returns a new {@link QueryRewriteContext} with the given {@code now} provider
      */
-    public QueryRewriteContext getRewriteContext(LongSupplier nowInMillis, PipelinedRequest searchRequest) {
-        return new QueryCoordinatorContext(indicesService.getRewriteContext(nowInMillis), searchRequest);
+    public QueryRewriteContext getRewriteContext(LongSupplier nowInMillis) {
+        return indicesService.getRewriteContext(nowInMillis);
     }
 
     /**
@@ -1839,7 +1838,11 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
         public CanMatchResponse(StreamInput in) throws IOException {
             super(in);
             this.canMatch = in.readBoolean();
-            this.estimatedMinAndMax = in.readOptionalWriteable(MinAndMax::new);
+            if (in.getVersion().onOrAfter(LegacyESVersion.V_7_6_0)) {
+                estimatedMinAndMax = in.readOptionalWriteable(MinAndMax::new);
+            } else {
+                estimatedMinAndMax = null;
+            }
         }
 
         public CanMatchResponse(boolean canMatch, MinAndMax<?> estimatedMinAndMax) {
@@ -1851,7 +1854,9 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
         public void writeTo(StreamOutput out) throws IOException {
             super.writeTo(out);
             out.writeBoolean(canMatch);
-            out.writeOptionalWriteable(estimatedMinAndMax);
+            if (out.getVersion().onOrAfter(LegacyESVersion.V_7_6_0)) {
+                out.writeOptionalWriteable(estimatedMinAndMax);
+            }
         }
 
         public boolean canMatch() {

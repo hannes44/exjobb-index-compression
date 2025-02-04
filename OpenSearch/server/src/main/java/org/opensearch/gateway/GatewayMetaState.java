@@ -36,6 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.store.AlreadyClosedException;
 import org.opensearch.ExceptionsHelper;
+import org.opensearch.LegacyESVersion;
 import org.opensearch.OpenSearchException;
 import org.opensearch.Version;
 import org.opensearch.cluster.ClusterChangedEvent;
@@ -147,8 +148,8 @@ public class GatewayMetaState implements Closeable {
                 long currentTerm = onDiskState.currentTerm;
 
                 if (onDiskState.empty()) {
-                    assert Version.CURRENT.major <= Version.V_3_0_0.major + 1
-                        : "legacy metadata loader is not needed anymore from v4 onwards";
+                    assert Version.CURRENT.major <= LegacyESVersion.V_7_0_0.major + 1
+                        : "legacy metadata loader is not needed anymore from v9 onwards";
                     final Tuple<Manifest, Metadata> legacyState = metaStateService.loadFullState();
                     if (legacyState.v1().isEmpty() == false) {
                         metadata = legacyState.v2();
@@ -753,8 +754,12 @@ public class GatewayMetaState implements Closeable {
             }
             try {
                 final RemoteClusterStateManifestInfo manifestDetails;
+                // Decide the codec version
+                int codecVersion = ClusterMetadataManifest.getCodecForVersion(clusterState.nodes().getMinNodeVersion());
+                assert codecVersion >= 0 : codecVersion;
+                logger.info("codec version is {}", codecVersion);
 
-                if (shouldWriteFullClusterState(clusterState)) {
+                if (shouldWriteFullClusterState(clusterState, codecVersion)) {
                     final Optional<ClusterMetadataManifest> latestManifest = remoteClusterStateService.getLatestClusterMetadataManifest(
                         clusterState.getClusterName().value(),
                         clusterState.metadata().clusterUUID()
@@ -771,7 +776,7 @@ public class GatewayMetaState implements Closeable {
                             clusterState.metadata().clusterUUID()
                         );
                     }
-                    manifestDetails = remoteClusterStateService.writeFullMetadata(clusterState, previousClusterUUID);
+                    manifestDetails = remoteClusterStateService.writeFullMetadata(clusterState, previousClusterUUID, codecVersion);
                 } else {
                     assert verifyManifestAndClusterState(lastAcceptedManifest, lastAcceptedState) == true
                         : "Previous manifest and previous ClusterState are not in sync";
@@ -816,11 +821,13 @@ public class GatewayMetaState implements Closeable {
             return true;
         }
 
-        private boolean shouldWriteFullClusterState(ClusterState clusterState) {
+        private boolean shouldWriteFullClusterState(ClusterState clusterState, int codecVersion) {
+            assert lastAcceptedManifest == null || lastAcceptedManifest.getCodecVersion() <= codecVersion;
             if (lastAcceptedState == null
                 || lastAcceptedManifest == null
                 || (remoteClusterStateService.isRemotePublicationEnabled() == false && lastAcceptedState.term() != clusterState.term())
-                || lastAcceptedManifest.getOpensearchVersion() != Version.CURRENT) {
+                || lastAcceptedManifest.getOpensearchVersion() != Version.CURRENT
+                || lastAcceptedManifest.getCodecVersion() != codecVersion) {
                 return true;
             }
             return false;

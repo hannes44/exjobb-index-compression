@@ -105,7 +105,8 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
             Result lastResult = null;
             Version version = null;
             boolean isVersionHighEnough = false;
-            DockerComposeAvailability dockerComposeAvailability = null;
+            boolean isComposeAvailable = false;
+            boolean isComposeV2Available = false;
 
             // Check if the Docker binary exists
             final Optional<String> dockerBinary = getDockerPath();
@@ -113,7 +114,7 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
                 dockerPath = dockerBinary.get();
 
                 // Since we use a multi-stage Docker build, check the Docker version meets minimum requirement
-                lastResult = runCommand(execOperations, dockerPath, "version", "--format", "{{.Server.Version}}");
+                lastResult = runCommand(dockerPath, "version", "--format", "{{.Server.Version}}");
 
                 if (lastResult.isSuccess()) {
                     version = Version.fromString(lastResult.stdout.trim(), Version.Mode.RELAXED);
@@ -122,11 +123,15 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
 
                     if (isVersionHighEnough) {
                         // Check that we can execute a privileged command
-                        lastResult = runCommand(execOperations, dockerPath, "images");
+                        lastResult = runCommand(dockerPath, "images");
+
                         // If docker all checks out, see if docker-compose is available and working
-                        if (lastResult.isSuccess()) {
-                            dockerComposeAvailability = DockerComposeAvailability.detect(execOperations, dockerPath).orElse(null);
+                        Optional<String> composePath = getDockerComposePath();
+                        if (lastResult.isSuccess() && composePath.isPresent()) {
+                            isComposeAvailable = runCommand(composePath.get(), "version").isSuccess();
                         }
+
+                        isComposeV2Available = runCommand(dockerPath, "compose", "version").isSuccess();
                     }
                 }
             }
@@ -135,7 +140,8 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
 
             this.dockerAvailability = new DockerAvailability(
                 isAvailable,
-                dockerComposeAvailability,
+                isComposeAvailable,
+                isComposeV2Available,
                 isVersionHighEnough,
                 dockerPath,
                 version,
@@ -285,6 +291,17 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
         return Arrays.asList(DOCKER_BINARIES).stream().filter(path -> new File(path).exists()).findFirst();
     }
 
+    /**
+     * Searches the entries in {@link #DOCKER_COMPOSE_BINARIES} for the Docker Compose CLI. This method does
+     * not check whether the installation appears usable, see {@link #getDockerAvailability()} instead.
+     *
+     * @return the path to a CLI, if available.
+     */
+    private Optional<String> getDockerComposePath() {
+        // Check if the Docker binary exists
+        return Arrays.asList(DOCKER_COMPOSE_BINARIES).stream().filter(path -> new File(path).exists()).findFirst();
+    }
+
     private void throwDockerRequiredException(final String message) {
         throwDockerRequiredException(message, null);
     }
@@ -304,7 +321,7 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
      * while running the command, or the process was killed after reaching the 10s timeout,
      * then the exit code will be -1.
      */
-    private static Result runCommand(ExecOperations execOperations, String... args) {
+    private Result runCommand(String... args) {
         if (args.length == 0) {
             throw new IllegalArgumentException("Cannot execute with no command");
         }
@@ -339,9 +356,14 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
         public final boolean isAvailable;
 
         /**
-         * Non-null if docker-compose v1 or v2 is available.
+         * True if docker-compose is available.
          */
-        public final DockerComposeAvailability dockerComposeAvailability;
+        public final boolean isComposeAvailable;
+
+        /**
+         * True if docker compose is available.
+         */
+        public final boolean isComposeV2Available;
 
         /**
          * True if the installed Docker version is &gt;= 17.05
@@ -365,69 +387,22 @@ public abstract class DockerSupportService implements BuildService<DockerSupport
 
         DockerAvailability(
             boolean isAvailable,
-            DockerComposeAvailability dockerComposeAvailability,
+            boolean isComposeAvailable,
+            boolean isComposeV2Available,
             boolean isVersionHighEnough,
             String path,
             Version version,
             Result lastCommand
         ) {
             this.isAvailable = isAvailable;
-            this.dockerComposeAvailability = dockerComposeAvailability;
+            this.isComposeAvailable = isComposeAvailable;
+            this.isComposeV2Available = isComposeV2Available;
             this.isVersionHighEnough = isVersionHighEnough;
             this.path = path;
             this.version = version;
             this.lastCommand = lastCommand;
         }
-
-        public boolean isDockerComposeAvailable() {
-            return dockerComposeAvailability != null;
-        }
     }
-
-    /**
-     * Marker interface for Docker Compose availability
-     */
-    private interface DockerComposeAvailability {
-        /**
-         * Detects Docker Compose V1/V2 availability
-         */
-        private static Optional<DockerComposeAvailability> detect(ExecOperations execOperations, String dockerPath) {
-            Optional<String> composePath = getDockerComposePath();
-            if (composePath.isPresent()) {
-                if (runCommand(execOperations, composePath.get(), "version").isSuccess()) {
-                    return Optional.of(new DockerComposeV1Availability());
-                }
-            }
-
-            if (runCommand(execOperations, dockerPath, "compose", "version").isSuccess()) {
-                return Optional.of(new DockerComposeV2Availability());
-            }
-
-            return Optional.empty();
-        }
-
-        /**
-         * Searches the entries in {@link #DOCKER_COMPOSE_BINARIES} for the Docker Compose CLI. This method does
-         * not check whether the installation appears usable, see {@link #getDockerAvailability()} instead.
-         *
-         * @return the path to a CLI, if available.
-         */
-        private static Optional<String> getDockerComposePath() {
-            // Check if the Docker binary exists
-            return Arrays.asList(DOCKER_COMPOSE_BINARIES).stream().filter(path -> new File(path).exists()).findFirst();
-        }
-
-    }
-
-    /**
-     * Docker Compose V1 availability
-     */
-    public static class DockerComposeV1Availability implements DockerComposeAvailability {}
-
-    /**
-     * Docker Compose V2 availability
-     */
-    public static class DockerComposeV2Availability implements DockerComposeAvailability {}
 
     /**
      * This class models the result of running a command. It captures the exit code, standard output and standard error.

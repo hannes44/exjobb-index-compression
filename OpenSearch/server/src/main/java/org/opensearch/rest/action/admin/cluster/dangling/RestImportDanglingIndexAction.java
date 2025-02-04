@@ -33,7 +33,7 @@
 package org.opensearch.rest.action.admin.cluster.dangling;
 
 import org.opensearch.action.admin.indices.dangling.import_index.ImportDanglingIndexRequest;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.client.node.NodeClient;
 import org.opensearch.common.logging.DeprecationLogger;
 import org.opensearch.core.rest.RestStatus;
@@ -75,7 +75,7 @@ public class RestImportDanglingIndexAction extends BaseRestHandler {
 
         importRequest.timeout(request.paramAsTime("timeout", importRequest.timeout()));
         importRequest.clusterManagerNodeTimeout(request.paramAsTime("cluster_manager_timeout", importRequest.clusterManagerNodeTimeout()));
-        parseDeprecatedMasterTimeoutParameter(importRequest, request, deprecationLogger, getName());
+        parseDeprecatedMasterTimeoutParameter(importRequest, request);
 
         return channel -> client.admin()
             .cluster()

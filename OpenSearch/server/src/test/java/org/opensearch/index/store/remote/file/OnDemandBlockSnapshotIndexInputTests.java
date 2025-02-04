@@ -170,7 +170,7 @@ public class OnDemandBlockSnapshotIndexInputTests extends OpenSearchTestCase {
 
         doAnswer(invocation -> {
             BlobFetchRequest blobFetchRequest = invocation.getArgument(0);
-            return blobFetchRequest.getDirectory().openInput(blobFetchRequest.getFileName(), IOContext.READONCE);
+            return blobFetchRequest.getDirectory().openInput(blobFetchRequest.getFileName(), IOContext.READ);
         }).when(transferManager).fetchBlob(any());
 
         FSDirectory directory = null;

@@ -116,11 +116,10 @@ class HttpTracer {
     ) {
         logger.trace(
             new ParameterizedMessage(
-                "[{}][{}][{}][{}][{}][{}] sent response to [{}] success [{}]",
+                "[{}][{}][{}][{}][{}] sent response to [{}] success [{}]",
                 requestId,
                 opaqueHeader,
                 restResponse.status(),
-                restResponse.status().getStatus(),
                 restResponse.contentType(),
                 contentLength,
                 httpChannel,

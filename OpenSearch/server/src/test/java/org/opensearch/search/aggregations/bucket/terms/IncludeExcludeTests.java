@@ -81,7 +81,7 @@ public class IncludeExcludeTests extends OpenSearchTestCase {
             @Override
             public long nextOrd() {
                 if (consumed) {
-                    return NO_MORE_DOCS;
+                    return SortedSetDocValues.NO_MORE_ORDS;
                 } else {
                     consumed = true;
                     return 0;

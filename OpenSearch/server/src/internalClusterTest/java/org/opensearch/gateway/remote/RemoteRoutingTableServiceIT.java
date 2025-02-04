@@ -315,7 +315,7 @@ public class RemoteRoutingTableServiceIT extends RemoteStoreBaseIntegTestCase {
     private BlobPath getIndexRoutingPath(BlobPath indexRoutingPath, String indexUUID) {
         RemoteStoreEnums.PathHashAlgorithm pathHashAlgo = RemoteStoreEnums.PathHashAlgorithm.FNV_1A_BASE64;
         return pathType.path(
-            RemoteStorePathStrategy.PathInput.builder().basePath(indexRoutingPath).indexUUID(indexUUID).build(),
+            RemoteStorePathStrategy.BasePathInput.builder().basePath(indexRoutingPath).indexUUID(indexUUID).build(),
             pathHashAlgo
         );
     }

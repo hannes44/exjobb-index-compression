@@ -25,7 +25,7 @@ public class MaxTargetSliceSupplierTests extends OpenSearchTestCase {
         // verify slice count is same as leaf count
         assertEquals(expectedSliceCount, slices.length);
         for (int i = 0; i < expectedSliceCount; ++i) {
-            assertEquals(1, slices[i].partitions.length);
+            assertEquals(1, slices[i].leaves.length);
         }
     }
 
@@ -37,7 +37,7 @@ public class MaxTargetSliceSupplierTests extends OpenSearchTestCase {
         int leafCount = randomIntBetween(1, 10);
         IndexSearcher.LeafSlice[] slices = MaxTargetSliceSupplier.getSlices(getLeaves(leafCount), 1);
         assertEquals(1, slices.length);
-        assertEquals(leafCount, slices[0].partitions.length);
+        assertEquals(leafCount, slices[0].leaves.length);
     }
 
     public void testSliceCountLessThanLeafCount() throws Exception {
@@ -51,7 +51,7 @@ public class MaxTargetSliceSupplierTests extends OpenSearchTestCase {
 
         assertEquals(expectedSliceCount, slices.length);
         for (int i = 0; i < expectedSliceCount; ++i) {
-            assertEquals(expectedLeavesPerSlice, slices[i].partitions.length);
+            assertEquals(expectedLeavesPerSlice, slices[i].leaves.length);
         }
 
         // Case 2: test with first 2 slice more leaves than others
@@ -63,9 +63,9 @@ public class MaxTargetSliceSupplierTests extends OpenSearchTestCase {
         assertEquals(expectedSliceCount, slices.length);
         for (int i = 0; i < expectedSliceCount; ++i) {
             if (i < 2) {
-                assertEquals(expectedLeavesInFirst2Slice, slices[i].partitions.length);
+                assertEquals(expectedLeavesInFirst2Slice, slices[i].leaves.length);
             } else {
-                assertEquals(expectedLeavesInOtherSlice, slices[i].partitions.length);
+                assertEquals(expectedLeavesInOtherSlice, slices[i].leaves.length);
             }
         }
     }

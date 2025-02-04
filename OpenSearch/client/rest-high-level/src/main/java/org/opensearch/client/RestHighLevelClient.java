@@ -32,7 +32,7 @@
 
 package org.opensearch.client;
 
-import org.apache.hc.core5.http.HttpEntity;
+import org.apache.http.HttpEntity;
 import org.opensearch.OpenSearchException;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.action.ActionRequest;
@@ -68,7 +68,7 @@ import org.opensearch.action.search.MultiSearchResponse;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.search.SearchScrollRequest;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.action.update.UpdateRequest;
 import org.opensearch.action.update.UpdateResponse;
 import org.opensearch.client.core.CountRequest;
@@ -2227,9 +2227,9 @@ public class RestHighLevelClient implements Closeable {
         if (entity.getContentType() == null) {
             throw new IllegalStateException("OpenSearch didn't return the [Content-Type] header, unable to parse response body");
         }
-        MediaType mediaType = MediaType.fromMediaType(entity.getContentType());
+        MediaType mediaType = MediaType.fromMediaType(entity.getContentType().getValue());
         if (mediaType == null) {
-            throw new IllegalStateException("Unsupported Content-Type: " + entity.getContentType());
+            throw new IllegalStateException("Unsupported Content-Type: " + entity.getContentType().getValue());
         }
         try (XContentParser parser = mediaType.xContent().createParser(registry, DEPRECATION_HANDLER, entity.getContent())) {
             return entityParser.apply(parser);

@@ -44,7 +44,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.DocIdSetBuilder;
@@ -75,11 +74,10 @@ public final class TermsSliceQuery extends SliceQuery {
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new ConstantScoreWeight(this, boost) {
             @Override
-            public ScorerSupplier scorerSupplier(LeafReaderContext context) throws IOException {
+            public Scorer scorer(LeafReaderContext context) throws IOException {
                 final DocIdSet disi = build(context.reader());
                 final DocIdSetIterator leafIt = disi.iterator();
-                final Scorer scorer = new ConstantScoreScorer(score(), scoreMode, leafIt);
-                return new DefaultScorerSupplier(scorer);
+                return new ConstantScoreScorer(this, score(), scoreMode, leafIt);
             }
 
             @Override

@@ -8,8 +8,8 @@
 
 package org.opensearch.client;
 
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HttpResponse;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
 
 import java.util.ArrayList;
 import java.util.List;

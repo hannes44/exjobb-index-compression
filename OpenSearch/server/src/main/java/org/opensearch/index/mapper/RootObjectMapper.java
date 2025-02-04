@@ -32,6 +32,7 @@
 
 package org.opensearch.index.mapper;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.common.Explicit;
 import org.opensearch.common.Nullable;
 import org.opensearch.common.annotation.PublicApi;
@@ -467,7 +468,8 @@ public class RootObjectMapper extends ObjectMapper {
             }
         }
 
-        if (dynamicTemplateInvalid) {
+        final boolean shouldEmitDeprecationWarning = parserContext.indexVersionCreated().onOrAfter(LegacyESVersion.V_7_7_0);
+        if (dynamicTemplateInvalid && shouldEmitDeprecationWarning) {
             String message = String.format(
                 Locale.ROOT,
                 "dynamic template [%s] has invalid content [%s]",

@@ -32,6 +32,7 @@
 
 package org.opensearch.cluster.node;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.cluster.AbstractDiffable;
 import org.opensearch.cluster.Diff;
@@ -41,11 +42,10 @@ import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.regex.Regex;
 import org.opensearch.common.util.set.Sets;
 import org.opensearch.core.common.Strings;
-import org.opensearch.core.common.io.stream.BufferedChecksumStreamOutput;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
-import org.opensearch.core.common.io.stream.VerifiableWriteable;
 import org.opensearch.core.common.transport.TransportAddress;
+import org.opensearch.index.translog.BufferedChecksumStreamOutput;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,7 +68,7 @@ import java.util.stream.StreamSupport;
  * @opensearch.api
  */
 @PublicApi(since = "1.0.0")
-public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements Iterable<DiscoveryNode>, VerifiableWriteable {
+public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements Iterable<DiscoveryNode> {
 
     public static final DiscoveryNodes EMPTY_NODES = builder().build();
 
@@ -281,6 +281,18 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
     public boolean nodeExistsWithSameRoles(DiscoveryNode discoveryNode) {
         final DiscoveryNode existing = nodes.get(discoveryNode.getId());
         return existing != null && existing.equals(discoveryNode) && existing.getRoles().equals(discoveryNode.getRoles());
+    }
+
+    /**
+     * Determine if the given node exists and has the right version. During upgrade from Elasticsearch version as OpenSearch node run in
+     * BWC mode and can have the version as 7.10.2 in cluster state from older cluster-manager to OpenSearch cluster-manager.
+     */
+    public boolean nodeExistsWithBWCVersion(DiscoveryNode discoveryNode) {
+        final DiscoveryNode existing = nodes.get(discoveryNode.getId());
+        return existing != null
+            && existing.equals(discoveryNode)
+            && existing.getVersion().equals(LegacyESVersion.V_7_10_2)
+            && discoveryNode.getVersion().onOrAfter(Version.V_1_0_0);
     }
 
     /**
@@ -697,7 +709,7 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
         writeToUtil((output, value) -> value.writeToWithAttribute(output), out);
     }
 
-    public void writeToUtil(final Writer<DiscoveryNode> writer, StreamOutput out) throws IOException {
+    private void writeToUtil(final Writer<DiscoveryNode> writer, StreamOutput out) throws IOException {
         writeClusterManager(out);
         out.writeVInt(nodes.size());
         for (DiscoveryNode node : this) {
@@ -705,7 +717,6 @@ public class DiscoveryNodes extends AbstractDiffable<DiscoveryNodes> implements 
         }
     }
 
-    @Override
     public void writeVerifiableTo(BufferedChecksumStreamOutput out) throws IOException {
         writeClusterManager(out);
         out.writeMapValues(nodes, (stream, val) -> val.writeVerifiableTo((BufferedChecksumStreamOutput) stream));

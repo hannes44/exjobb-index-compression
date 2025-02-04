@@ -491,7 +491,7 @@ public class Task {
     /**
      * Individual tasks can override this if they want to support task resource tracking. We just need to make sure that
      * the ThreadPool on which the task runs on have runnable wrapper similar to
-     * {@link org.opensearch.common.util.concurrent.OpenSearchExecutors#newResizable}
+     * {@link org.opensearch.common.util.concurrent.OpenSearchExecutors#newAutoQueueFixed}
      *
      * @return true if resource tracking is supported by the task
      */

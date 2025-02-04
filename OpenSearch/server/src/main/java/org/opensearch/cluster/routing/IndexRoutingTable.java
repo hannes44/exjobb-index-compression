@@ -45,12 +45,11 @@ import org.opensearch.cluster.routing.RecoverySource.RemoteStoreRecoverySource;
 import org.opensearch.cluster.routing.RecoverySource.SnapshotRecoverySource;
 import org.opensearch.common.Randomness;
 import org.opensearch.common.annotation.PublicApi;
-import org.opensearch.core.common.io.stream.BufferedChecksumStreamOutput;
 import org.opensearch.core.common.io.stream.StreamInput;
 import org.opensearch.core.common.io.stream.StreamOutput;
-import org.opensearch.core.common.io.stream.VerifiableWriteable;
 import org.opensearch.core.index.Index;
 import org.opensearch.core.index.shard.ShardId;
+import org.opensearch.index.translog.BufferedChecksumStreamOutput;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -81,10 +80,7 @@ import java.util.function.Predicate;
  * @opensearch.api
  */
 @PublicApi(since = "1.0.0")
-public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
-    implements
-        Iterable<IndexShardRoutingTable>,
-        VerifiableWriteable {
+public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable> implements Iterable<IndexShardRoutingTable> {
 
     private final Index index;
     private final ShardShuffler shuffler;
@@ -149,10 +145,7 @@ public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
                     "Shard ["
                         + indexShardRoutingTable.shardId().id()
                         + "] routing table has wrong number of replicas, expected ["
-                        + "Replicas:  "
                         + indexMetadata.getNumberOfReplicas()
-                        + "Search Replicas: "
-                        + indexMetadata.getNumberOfSearchOnlyReplicas()
                         + "], got ["
                         + routingNumberOfReplicas
                         + "]"
@@ -393,7 +386,10 @@ public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
 
     public void writeVerifiableTo(BufferedChecksumStreamOutput out) throws IOException {
         index.writeTo(out);
-        out.writeMapValues(shards, (stream, value) -> IndexShardRoutingTable.Builder.writeVerifiableTo(value, stream));
+        out.writeMapValues(
+            shards,
+            (stream, value) -> IndexShardRoutingTable.Builder.writeVerifiableTo(value, (BufferedChecksumStreamOutput) stream)
+        );
     }
 
     public static Builder builder(Index index) {
@@ -517,31 +513,15 @@ public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
                             ShardRouting.newUnassigned(shardId, false, PeerRecoverySource.INSTANCE, unassignedInfo)
                         );
                     }
-                    // if writers are red we do not want to re-recover search only shards if already assigned.
-                    for (ShardRouting shardRouting : indexShardRoutingTable.searchOnlyReplicas()) {
-                        if (shardRouting.unassigned()) {
-                            indexShardRoutingBuilder.addShard(
-                                ShardRouting.newUnassigned(shardId, false, true, EmptyStoreRecoverySource.INSTANCE, unassignedInfo)
-                            );
-                        } else {
-                            indexShardRoutingBuilder.addShard(shardRouting);
-                        }
-                    }
                 } else {
                     // Primary is either active or initializing. Do not trigger restore.
                     indexShardRoutingBuilder.addShard(indexShardRoutingTable.primaryShard());
                     // Replica, if unassigned, trigger peer recovery else no action.
                     for (ShardRouting shardRouting : indexShardRoutingTable.replicaShards()) {
                         if (shardRouting.unassigned()) {
-                            if (shardRouting.isSearchOnly()) {
-                                indexShardRoutingBuilder.addShard(
-                                    ShardRouting.newUnassigned(shardId, false, true, EmptyStoreRecoverySource.INSTANCE, unassignedInfo)
-                                );
-                            } else {
-                                indexShardRoutingBuilder.addShard(
-                                    ShardRouting.newUnassigned(shardId, false, PeerRecoverySource.INSTANCE, unassignedInfo)
-                                );
-                            }
+                            indexShardRoutingBuilder.addShard(
+                                ShardRouting.newUnassigned(shardId, false, PeerRecoverySource.INSTANCE, unassignedInfo)
+                            );
                         } else {
                             indexShardRoutingBuilder.addShard(shardRouting);
                         }
@@ -592,11 +572,6 @@ public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
                         );
                     }
                 }
-                for (int i = 0; i < indexMetadata.getNumberOfSearchOnlyReplicas(); i++) {
-                    indexShardRoutingBuilder.addShard(
-                        ShardRouting.newUnassigned(shardId, false, true, EmptyStoreRecoverySource.INSTANCE, unassignedInfo)
-                    );
-                }
                 shards.put(shardNumber, indexShardRoutingBuilder.build());
             }
             return this;
@@ -637,7 +612,13 @@ public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
                 }
                 for (int i = 0; i < indexMetadata.getNumberOfSearchOnlyReplicas(); i++) {
                     indexShardRoutingBuilder.addShard(
-                        ShardRouting.newUnassigned(shardId, false, true, EmptyStoreRecoverySource.INSTANCE, unassignedInfo)
+                        ShardRouting.newUnassigned(
+                            shardId,
+                            false,
+                            true,
+                            PeerRecoverySource.INSTANCE, // TODO: Update to remote store if enabled
+                            unassignedInfo
+                        )
                     );
                 }
                 shards.put(shardNumber, indexShardRoutingBuilder.build());
@@ -672,7 +653,7 @@ public class IndexRoutingTable extends AbstractDiffable<IndexRoutingTable>
                     shardId,
                     false,
                     true,
-                    EmptyStoreRecoverySource.INSTANCE,
+                    PeerRecoverySource.INSTANCE, // TODO: Change to remote store if enabled
                     new UnassignedInfo(UnassignedInfo.Reason.REPLICA_ADDED, null)
                 );
                 shards.put(shardNumber, new IndexShardRoutingTable.Builder(shards.get(shard.id())).addShard(shard).build());

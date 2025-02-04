@@ -357,12 +357,12 @@ public class FuzzyQueryBuilder extends AbstractQueryBuilder<FuzzyQueryBuilder> i
             throw new IllegalStateException("Rewrite first");
         }
         String rewrite = this.rewrite;
-        MultiTermQuery.RewriteMethod rewriteMethod = QueryParsers.parseRewriteMethod(
-            rewrite,
-            FuzzyQuery.defaultRewriteMethod(maxExpansions),
-            LoggingDeprecationHandler.INSTANCE
-        );
-        return fieldType.fuzzyQuery(value, fuzziness, prefixLength, maxExpansions, transpositions, rewriteMethod, context);
+        Query query = fieldType.fuzzyQuery(value, fuzziness, prefixLength, maxExpansions, transpositions, null, context);
+        if (query instanceof MultiTermQuery) {
+            MultiTermQuery.RewriteMethod rewriteMethod = QueryParsers.parseRewriteMethod(rewrite, null, LoggingDeprecationHandler.INSTANCE);
+            QueryParsers.setRewriteMethod((MultiTermQuery) query, rewriteMethod);
+        }
+        return query;
     }
 
     @Override

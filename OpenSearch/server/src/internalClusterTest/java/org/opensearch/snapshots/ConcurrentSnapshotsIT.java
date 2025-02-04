@@ -39,7 +39,7 @@ import org.opensearch.action.admin.cluster.snapshots.status.SnapshotStatus;
 import org.opensearch.action.admin.cluster.snapshots.status.SnapshotsStatusResponse;
 import org.opensearch.action.support.GroupedActionListener;
 import org.opensearch.action.support.PlainActionFuture;
-import org.opensearch.action.support.clustermanager.AcknowledgedResponse;
+import org.opensearch.action.support.master.AcknowledgedResponse;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.SnapshotDeletionsInProgress;
 import org.opensearch.cluster.SnapshotsInProgress;
@@ -55,6 +55,7 @@ import org.opensearch.discovery.AbstractDisruptionTestCase;
 import org.opensearch.plugins.Plugin;
 import org.opensearch.repositories.RepositoryData;
 import org.opensearch.repositories.RepositoryException;
+import org.opensearch.repositories.ShardGenerations;
 import org.opensearch.repositories.blobstore.BlobStoreRepository;
 import org.opensearch.snapshots.mockstore.MockRepository;
 import org.opensearch.test.InternalTestCluster;
@@ -1000,7 +1001,7 @@ public class ConcurrentSnapshotsIT extends AbstractSnapshotIntegTestCase {
             index(testIndex, "_doc", Integer.toString(i), "foo", "bar" + i);
         }
         refresh();
-        assertThat(client().prepareSearch(testIndex).setSize(0).get().getHits().getTotalHits().value(), equalTo(100L));
+        assertThat(client().prepareSearch(testIndex).setSize(0).get().getHits().getTotalHits().value, equalTo(100L));
 
         logger.info("--> start relocations");
         allowNodes(testIndex, 1);
@@ -1347,6 +1348,43 @@ public class ConcurrentSnapshotsIT extends AbstractSnapshotIntegTestCase {
         for (ActionFuture<CreateSnapshotResponse> snapshotFuture : snapshotFutures) {
             assertSuccessful(snapshotFuture);
         }
+    }
+
+    public void testConcurrentSnapshotWorksWithOldVersionRepo() throws Exception {
+        internalCluster().startClusterManagerOnlyNode();
+        final String dataNode = internalCluster().startDataOnlyNode();
+        final String repoName = "test-repo";
+        final Path repoPath = randomRepoPath();
+        createRepository(
+            repoName,
+            "mock",
+            Settings.builder().put(BlobStoreRepository.CACHE_REPOSITORY_DATA.getKey(), false).put("location", repoPath)
+        );
+        initWithSnapshotVersion(repoName, repoPath, SnapshotsService.OLD_SNAPSHOT_FORMAT);
+
+        createIndexWithContent("index-slow");
+
+        final ActionFuture<CreateSnapshotResponse> createSlowFuture = startFullSnapshotBlockedOnDataNode(
+            "slow-snapshot",
+            repoName,
+            dataNode
+        );
+
+        final String dataNode2 = internalCluster().startDataOnlyNode();
+        ensureStableCluster(3);
+        final String indexFast = "index-fast";
+        createIndexWithContent(indexFast, dataNode2, dataNode);
+
+        final ActionFuture<CreateSnapshotResponse> createFastSnapshot = startFullSnapshot(repoName, "fast-snapshot");
+
+        assertThat(createSlowFuture.isDone(), is(false));
+        unblockNode(repoName, dataNode);
+
+        assertSuccessful(createFastSnapshot);
+        assertSuccessful(createSlowFuture);
+
+        final RepositoryData repositoryData = getRepositoryData(repoName);
+        assertThat(repositoryData.shardGenerations(), is(ShardGenerations.EMPTY));
     }
 
     public void testQueuedDeleteAfterFinalizationFailure() throws Exception {

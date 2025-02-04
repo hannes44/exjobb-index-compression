@@ -32,7 +32,6 @@
 
 package org.opensearch.cluster.routing;
 
-import org.apache.lucene.util.CollectionUtil;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.cluster.metadata.WeightedRoutingMetadata;
@@ -45,17 +44,14 @@ import org.opensearch.common.settings.Setting;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.util.FeatureFlags;
 import org.opensearch.core.common.Strings;
-import org.opensearch.core.index.Index;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.index.IndexModule;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.node.ResponseCollectorService;
-import org.opensearch.search.slice.SliceBuilder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -234,7 +230,7 @@ public class OperationRouting {
         @Nullable Map<String, Set<String>> routing,
         @Nullable String preference
     ) {
-        return searchShards(clusterState, concreteIndices, routing, preference, null, null, null);
+        return searchShards(clusterState, concreteIndices, routing, preference, null, null);
     }
 
     public GroupShardsIterator<ShardIterator> searchShards(
@@ -243,14 +239,11 @@ public class OperationRouting {
         @Nullable Map<String, Set<String>> routing,
         @Nullable String preference,
         @Nullable ResponseCollectorService collectorService,
-        @Nullable Map<String, Long> nodeCounts,
-        @Nullable SliceBuilder slice
+        @Nullable Map<String, Long> nodeCounts
     ) {
         final Set<IndexShardRoutingTable> shards = computeTargetedShards(clusterState, concreteIndices, routing);
-
-        Map<Index, List<ShardIterator>> shardIterators = new HashMap<>();
+        final Set<ShardIterator> set = new HashSet<>(shards.size());
         for (IndexShardRoutingTable shard : shards) {
-
             IndexMetadata indexMetadataForShard = indexMetadata(clusterState, shard.shardId.getIndex().getName());
             if (indexMetadataForShard.isRemoteSnapshot() && (preference == null || preference.isEmpty())) {
                 preference = Preference.PRIMARY.type();
@@ -281,31 +274,10 @@ public class OperationRouting {
                 clusterState.metadata().weightedRoutingMetadata()
             );
             if (iterator != null) {
-                shardIterators.computeIfAbsent(iterator.shardId().getIndex(), k -> new ArrayList<>()).add(iterator);
+                set.add(iterator);
             }
         }
-        List<ShardIterator> allShardIterators = new ArrayList<>();
-        if (slice != null) {
-            for (List<ShardIterator> indexIterators : shardIterators.values()) {
-                // Filter the returned shards for the given slice
-                CollectionUtil.timSort(indexIterators);
-                // We use the ordinal of the iterator in the group (after sorting) rather than the shard id, because
-                // computeTargetedShards may return a subset of shards for an index, if a routing parameter was
-                // specified. In that case, the set of routable shards is considered the full universe of available
-                // shards for each index, when mapping shards to slices. If no routing parameter was specified,
-                // then ordinals and shard IDs are the same. This mimics the logic in
-                // org.opensearch.search.slice.SliceBuilder.toFilter.
-                for (int i = 0; i < indexIterators.size(); i++) {
-                    if (slice.shardMatches(i, indexIterators.size())) {
-                        allShardIterators.add(indexIterators.get(i));
-                    }
-                }
-            }
-        } else {
-            shardIterators.values().forEach(allShardIterators::addAll);
-        }
-
-        return GroupShardsIterator.sortAndCreate(allShardIterators);
+        return GroupShardsIterator.sortAndCreate(new ArrayList<>(set));
     }
 
     public static ShardIterator getShards(ClusterState clusterState, ShardId shardId) {
@@ -339,7 +311,6 @@ public class OperationRouting {
                     set.add(indexShard);
                 }
             }
-
         }
         return set;
     }
@@ -356,7 +327,6 @@ public class OperationRouting {
         if (preference == null || preference.isEmpty()) {
             return shardRoutings(indexShard, nodes, collectorService, nodeCounts, weightedRoutingMetadata);
         }
-
         if (preference.charAt(0) == '_') {
             Preference preferenceType = Preference.parse(preference);
             if (preferenceType == Preference.SHARDS) {

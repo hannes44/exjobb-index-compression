@@ -32,6 +32,7 @@
 
 package org.opensearch.action.admin.indices.stats;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.cache.CacheType;
@@ -94,9 +95,14 @@ public class CommonStatsFlags implements Writeable, Cloneable {
         fieldDataFields = in.readStringArray();
         completionDataFields = in.readStringArray();
         includeSegmentFileSizes = in.readBoolean();
-        includeUnloadedSegments = in.readBoolean();
-        includeAllShardIndexingPressureTrackers = in.readBoolean();
-        includeOnlyTopIndexingPressureMetrics = in.readBoolean();
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_2_0)) {
+            includeUnloadedSegments = in.readBoolean();
+        }
+        if (in.getVersion().onOrAfter(Version.V_1_2_0)) {
+            includeAllShardIndexingPressureTrackers = in.readBoolean();
+            includeOnlyTopIndexingPressureMetrics = in.readBoolean();
+        }
+        // TODO: change from V_3_0_0 to V_2_14_0 on main after backport to 2.x
         if (in.getVersion().onOrAfter(Version.V_2_14_0)) {
             includeCaches = in.readEnumSet(CacheType.class);
             levels = in.readStringArray();
@@ -121,9 +127,14 @@ public class CommonStatsFlags implements Writeable, Cloneable {
         out.writeStringArrayNullable(fieldDataFields);
         out.writeStringArrayNullable(completionDataFields);
         out.writeBoolean(includeSegmentFileSizes);
-        out.writeBoolean(includeUnloadedSegments);
-        out.writeBoolean(includeAllShardIndexingPressureTrackers);
-        out.writeBoolean(includeOnlyTopIndexingPressureMetrics);
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_2_0)) {
+            out.writeBoolean(includeUnloadedSegments);
+        }
+        if (out.getVersion().onOrAfter(Version.V_1_2_0)) {
+            out.writeBoolean(includeAllShardIndexingPressureTrackers);
+            out.writeBoolean(includeOnlyTopIndexingPressureMetrics);
+        }
+        // TODO: change from V_3_0_0 to V_2_14_0 on main after backport to 2.x
         if (out.getVersion().onOrAfter(Version.V_2_14_0)) {
             out.writeEnumSet(includeCaches);
             out.writeStringArrayNullable(levels);
@@ -172,7 +183,7 @@ public class CommonStatsFlags implements Writeable, Cloneable {
     }
 
     public Flag[] getFlags() {
-        return flags.toArray(new Flag[0]);
+        return flags.toArray(new Flag[flags.size()]);
     }
 
     public Set<CacheType> getIncludeCaches() {

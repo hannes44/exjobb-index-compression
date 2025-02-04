@@ -32,6 +32,7 @@
 
 package org.opensearch.action.admin.cluster.node.stats;
 
+import org.opensearch.LegacyESVersion;
 import org.opensearch.Version;
 import org.opensearch.action.support.nodes.BaseNodeResponse;
 import org.opensearch.cluster.node.DiscoveryNode;
@@ -185,11 +186,23 @@ public class NodeStats extends BaseNodeResponse implements ToXContentFragment {
         ingestStats = in.readOptionalWriteable(IngestStats::new);
         adaptiveSelectionStats = in.readOptionalWriteable(AdaptiveSelectionStats::new);
         scriptCacheStats = null;
-        if (scriptStats != null) {
-            scriptCacheStats = scriptStats.toScriptCacheStats();
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_8_0)) {
+            if (in.getVersion().before(LegacyESVersion.V_7_9_0)) {
+                scriptCacheStats = in.readOptionalWriteable(ScriptCacheStats::new);
+            } else if (scriptStats != null) {
+                scriptCacheStats = scriptStats.toScriptCacheStats();
+            }
         }
-        indexingPressureStats = in.readOptionalWriteable(IndexingPressureStats::new);
-        shardIndexingPressureStats = in.readOptionalWriteable(ShardIndexingPressureStats::new);
+        if (in.getVersion().onOrAfter(LegacyESVersion.V_7_9_0)) {
+            indexingPressureStats = in.readOptionalWriteable(IndexingPressureStats::new);
+        } else {
+            indexingPressureStats = null;
+        }
+        if (in.getVersion().onOrAfter(Version.V_1_2_0)) {
+            shardIndexingPressureStats = in.readOptionalWriteable(ShardIndexingPressureStats::new);
+        } else {
+            shardIndexingPressureStats = null;
+        }
 
         if (in.getVersion().onOrAfter(Version.V_2_4_0)) {
             searchBackpressureStats = in.readOptionalWriteable(SearchBackpressureStats::new);
@@ -237,11 +250,13 @@ public class NodeStats extends BaseNodeResponse implements ToXContentFragment {
         } else {
             repositoriesStats = null;
         }
+        // TODO: change to V_2_12_0 on main after backport to 2.x
         if (in.getVersion().onOrAfter(Version.V_2_12_0)) {
             admissionControlStats = in.readOptionalWriteable(AdmissionControlStats::new);
         } else {
             admissionControlStats = null;
         }
+        // TODO: change from V_3_0_0 to V_2_14_0 on main after backport to 2.x
         if (in.getVersion().onOrAfter(Version.V_2_14_0)) {
             nodeCacheStats = in.readOptionalWriteable(NodeCacheStats::new);
         } else {
@@ -505,9 +520,15 @@ public class NodeStats extends BaseNodeResponse implements ToXContentFragment {
         out.writeOptionalWriteable(discoveryStats);
         out.writeOptionalWriteable(ingestStats);
         out.writeOptionalWriteable(adaptiveSelectionStats);
-        out.writeOptionalWriteable(indexingPressureStats);
-        out.writeOptionalWriteable(shardIndexingPressureStats);
-
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_8_0) && out.getVersion().before(LegacyESVersion.V_7_9_0)) {
+            out.writeOptionalWriteable(scriptCacheStats);
+        }
+        if (out.getVersion().onOrAfter(LegacyESVersion.V_7_9_0)) {
+            out.writeOptionalWriteable(indexingPressureStats);
+        }
+        if (out.getVersion().onOrAfter(Version.V_1_2_0)) {
+            out.writeOptionalWriteable(shardIndexingPressureStats);
+        }
         if (out.getVersion().onOrAfter(Version.V_2_4_0)) {
             out.writeOptionalWriteable(searchBackpressureStats);
         }
@@ -535,6 +556,7 @@ public class NodeStats extends BaseNodeResponse implements ToXContentFragment {
         if (out.getVersion().onOrAfter(Version.V_2_12_0)) {
             out.writeOptionalWriteable(repositoriesStats);
         }
+
         if (out.getVersion().onOrAfter(Version.V_2_12_0)) {
             out.writeOptionalWriteable(admissionControlStats);
         }
@@ -640,7 +662,6 @@ public class NodeStats extends BaseNodeResponse implements ToXContentFragment {
         if (getSegmentReplicationRejectionStats() != null) {
             getSegmentReplicationRejectionStats().toXContent(builder, params);
         }
-
         if (getRepositoriesStats() != null) {
             getRepositoriesStats().toXContent(builder, params);
         }

@@ -53,7 +53,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
-import static org.opensearch.action.support.clustermanager.AcknowledgedRequest.DEFAULT_TASK_EXECUTION_TIMEOUT;
+import static org.opensearch.action.support.master.AcknowledgedRequest.DEFAULT_TASK_EXECUTION_TIMEOUT;
 import static org.opensearch.rest.RestRequest.Method.POST;
 import static org.opensearch.rest.RestRequest.Method.PUT;
 
@@ -102,8 +102,8 @@ public abstract class RestResizeHandler extends BaseRestHandler {
         resizeRequest.timeout(request.paramAsTime("timeout", resizeRequest.timeout()));
         resizeRequest.getTargetIndexRequest().timeout(resizeRequest.timeout());
         resizeRequest.clusterManagerNodeTimeout(request.paramAsTime("cluster_manager_timeout", resizeRequest.clusterManagerNodeTimeout()));
+        parseDeprecatedMasterTimeoutParameter(resizeRequest, request);
         resizeRequest.getTargetIndexRequest().clusterManagerNodeTimeout(resizeRequest.clusterManagerNodeTimeout());
-        parseDeprecatedMasterTimeoutParameter(resizeRequest, request, deprecationLogger, getName());
         resizeRequest.setWaitForActiveShards(ActiveShardCount.parseString(request.param("wait_for_active_shards")));
         if (request.paramAsBoolean("wait_for_completion", true)) {
             return channel -> client.admin().indices().resizeIndex(resizeRequest, new RestToXContentListener<>(channel));

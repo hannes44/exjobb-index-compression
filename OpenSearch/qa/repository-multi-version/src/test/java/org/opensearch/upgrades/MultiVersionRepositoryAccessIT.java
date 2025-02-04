@@ -32,6 +32,7 @@
 
 package org.opensearch.upgrades;
 
+import org.opensearch.OpenSearchStatusException;
 import com.sun.jna.StringArray;
 import org.opensearch.action.admin.cluster.repositories.put.PutRepositoryRequest;
 import org.opensearch.action.admin.cluster.snapshots.delete.DeleteSnapshotRequest;
@@ -42,6 +43,7 @@ import org.opensearch.client.Node;
 import org.opensearch.client.Request;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.Response;
+import org.opensearch.client.ResponseException;
 import org.opensearch.client.RestClient;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.common.settings.Settings;
@@ -49,11 +51,13 @@ import org.opensearch.core.common.Strings;
 import org.opensearch.core.xcontent.DeprecationHandler;
 import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.common.xcontent.json.JsonXContent;
+import org.opensearch.snapshots.SnapshotsService;
 import org.opensearch.test.rest.OpenSearchRestTestCase;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -229,10 +233,20 @@ public class MultiVersionRepositoryAccessIT extends OpenSearchRestTestCase {
                     ensureSnapshotRestoreWorks(repoName, "snapshot-2", shards);
                 }
             } else {
-                assertThat(listSnapshots(repoName), hasSize(2));
-                if (TEST_STEP == TestStep.STEP4_NEW_CLUSTER) {
-                    ensureSnapshotRestoreWorks(repoName, "snapshot-1", shards);
-                    ensureSnapshotRestoreWorks(repoName, "snapshot-2", shards);
+                if (SnapshotsService.useIndexGenerations(minimumNodeVersion()) == false) {
+                    assertThat(TEST_STEP, is(TestStep.STEP3_OLD_CLUSTER));
+                    final List<Class<? extends Exception>> expectedExceptions =
+                        Arrays.asList(ResponseException.class, OpenSearchStatusException.class);
+                    expectThrowsAnyOf(expectedExceptions, () -> listSnapshots(repoName));
+                    expectThrowsAnyOf(expectedExceptions, () -> deleteSnapshot(client, repoName, "snapshot-1"));
+                    expectThrowsAnyOf(expectedExceptions, () -> deleteSnapshot(client, repoName, "snapshot-2"));
+                    expectThrowsAnyOf(expectedExceptions, () -> createSnapshot(client, repoName, "snapshot-impossible", index));
+                } else {
+                    assertThat(listSnapshots(repoName), hasSize(2));
+                    if (TEST_STEP == TestStep.STEP4_NEW_CLUSTER) {
+                        ensureSnapshotRestoreWorks(repoName, "snapshot-1", shards);
+                        ensureSnapshotRestoreWorks(repoName, "snapshot-2", shards);
+                    }
                 }
             }
         } finally {

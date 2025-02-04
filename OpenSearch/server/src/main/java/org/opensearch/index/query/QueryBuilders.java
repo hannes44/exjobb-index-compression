@@ -50,7 +50,6 @@ import org.opensearch.script.Script;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Utility class to create search queries.
@@ -780,14 +779,5 @@ public final class QueryBuilders {
      */
     public static ExistsQueryBuilder existsQuery(String name) {
         return new ExistsQueryBuilder(name);
-    }
-
-    /**
-     *  A query that contains a template with holder that should be resolved by search processors
-     *
-     * @param content The content of the template
-     */
-    public static TemplateQueryBuilder templateQuery(Map<String, Object> content) {
-        return new TemplateQueryBuilder(content);
     }
 }

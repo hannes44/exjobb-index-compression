@@ -349,7 +349,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
     }
 
     void assertPlugin(String name, Path original, Environment env) throws IOException {
-        assertPluginInternal(name, env.pluginsDir(), original);
+        assertPluginInternal(name, env.pluginsFile(), original);
         assertConfigAndBin(name, original, env);
         assertInstallCleaned(env);
     }
@@ -385,12 +385,12 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
 
     void assertConfigAndBin(String name, Path original, Environment env) throws IOException {
         if (Files.exists(original.resolve("bin"))) {
-            Path binDir = env.binDir().resolve(name);
+            Path binDir = env.binFile().resolve(name);
             assertTrue("bin dir exists", Files.exists(binDir));
             assertTrue("bin is a dir", Files.isDirectory(binDir));
             PosixFileAttributes binAttributes = null;
             if (isPosix) {
-                binAttributes = Files.readAttributes(env.binDir(), PosixFileAttributes.class);
+                binAttributes = Files.readAttributes(env.binFile(), PosixFileAttributes.class);
             }
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(binDir)) {
                 for (Path file : stream) {
@@ -403,7 +403,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             }
         }
         if (Files.exists(original.resolve("config"))) {
-            Path configDir = env.configDir().resolve(name);
+            Path configDir = env.configFile().resolve(name);
             assertTrue("config dir exists", Files.exists(configDir));
             assertTrue("config is a dir", Files.isDirectory(configDir));
 
@@ -411,7 +411,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             GroupPrincipal group = null;
 
             if (isPosix) {
-                PosixFileAttributes configAttributes = Files.getFileAttributeView(env.configDir(), PosixFileAttributeView.class)
+                PosixFileAttributes configAttributes = Files.getFileAttributeView(env.configFile(), PosixFileAttributeView.class)
                     .readAttributes();
                 user = configAttributes.owner();
                 group = configAttributes.group();
@@ -440,7 +440,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
     }
 
     void assertInstallCleaned(Environment env) throws IOException {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(env.pluginsDir())) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(env.pluginsFile())) {
             for (Path file : stream) {
                 if (file.getFileName().toString().startsWith(".installing")) {
                     fail("Installation dir still exists, " + file);
@@ -490,7 +490,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             () -> installPlugins(Arrays.asList(pluginZip, pluginZip + "does-not-exist"), env.v1())
         );
         assertThat(e, hasToString(containsString("does-not-exist")));
-        final Path fakeInstallPath = env.v2().pluginsDir().resolve("fake");
+        final Path fakeInstallPath = env.v2().pluginsFile().resolve("fake");
         // fake should have been removed when the file not found exception occurred
         assertFalse(Files.exists(fakeInstallPath));
         assertInstallCleaned(env.v2());
@@ -500,7 +500,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         Tuple<Path, Environment> env = createEnv(fs, temp);
         Path pluginDir = createPluginDir(temp);
         String pluginZip = createPluginUrl("fake", pluginDir);
-        final Path removing = env.v2().pluginsDir().resolve(".removing-failed");
+        final Path removing = env.v2().pluginsFile().resolve(".removing-failed");
         Files.createDirectory(removing);
         final IllegalStateException e = expectThrows(IllegalStateException.class, () -> installPlugin(pluginZip, env.v1()));
         final String expected = String.format(
@@ -552,11 +552,11 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         assumeTrue("posix and filesystem", isPosix && isReal);
         Tuple<Path, Environment> env = createEnv(fs, temp);
         Path pluginDir = createPluginDir(temp);
-        try (PosixPermissionsResetter pluginsAttrs = new PosixPermissionsResetter(env.v2().pluginsDir())) {
+        try (PosixPermissionsResetter pluginsAttrs = new PosixPermissionsResetter(env.v2().pluginsFile())) {
             pluginsAttrs.setPermissions(new HashSet<>());
             String pluginZip = createPluginUrl("fake", pluginDir);
             IOException e = expectThrows(IOException.class, () -> installPlugin(pluginZip, env.v1()));
-            assertTrue(e.getMessage(), e.getMessage().contains(env.v2().pluginsDir().toString()));
+            assertTrue(e.getMessage(), e.getMessage().contains(env.v2().pluginsFile().toString()));
         }
         assertInstallCleaned(env.v2());
     }
@@ -661,7 +661,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         Files.createFile(binDir.resolve("somescript"));
         String pluginZip = createPluginUrl("opensearch", pluginDir);
         FileAlreadyExistsException e = expectThrows(FileAlreadyExistsException.class, () -> installPlugin(pluginZip, env.v1()));
-        assertTrue(e.getMessage(), e.getMessage().contains(env.v2().binDir().resolve("opensearch").toString()));
+        assertTrue(e.getMessage(), e.getMessage().contains(env.v2().binFile().resolve("opensearch").toString()));
         assertInstallCleaned(env.v2());
     }
 
@@ -673,7 +673,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         Files.createDirectory(binDir);
         Files.createFile(binDir.resolve("somescript"));
         String pluginZip = createPluginUrl("fake", pluginDir);
-        try (PosixPermissionsResetter binAttrs = new PosixPermissionsResetter(env.v2().binDir())) {
+        try (PosixPermissionsResetter binAttrs = new PosixPermissionsResetter(env.v2().binFile())) {
             Set<PosixFilePermission> perms = binAttrs.getCopyPermissions();
             // make sure at least one execute perm is missing, so we know we forced it during installation
             perms.remove(PosixFilePermission.GROUP_EXECUTE);
@@ -704,7 +704,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         installPlugin(pluginZip, env.v1());
         assertPlugin("fake", pluginDir, env.v2());
 
-        final Path fake = env.v2().pluginsDir().resolve("fake");
+        final Path fake = env.v2().pluginsFile().resolve("fake");
         final Path resources = fake.resolve("resources");
         final Path platform = fake.resolve("platform");
         final Path platformName = platform.resolve("linux-x64");
@@ -757,7 +757,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
 
     public void testExistingConfig() throws Exception {
         Tuple<Path, Environment> env = createEnv(fs, temp);
-        Path envConfigDir = env.v2().configDir().resolve("fake");
+        Path envConfigDir = env.v2().configFile().resolve("fake");
         Files.createDirectories(envConfigDir);
         Files.write(envConfigDir.resolve("custom.yml"), "existing config".getBytes(StandardCharsets.UTF_8));
         Path pluginDir = createPluginDir(temp);
@@ -960,7 +960,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             e.getMessage(),
             equalTo(
                 "plugin directory ["
-                    + env.v2().pluginsDir().resolve("fake")
+                    + env.v2().pluginsFile().resolve("fake")
                     + "] already exists; "
                     + "if you need to update the plugin, uninstall it first using command 'remove fake'"
             )
@@ -990,6 +990,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         final String pluginId,
         final String name,
         final String url,
+        final String stagingHash,
         final boolean isSnapshot,
         final String shaExtension,
         final Function<byte[], String> shaCalculator,
@@ -1065,6 +1066,11 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             }
 
             @Override
+            String getStagingHash() {
+                return stagingHash;
+            }
+
+            @Override
             boolean isSnapshot() {
                 return isSnapshot;
             }
@@ -1078,13 +1084,19 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         assertPlugin(name, pluginDir, env.v2());
     }
 
-    public void assertInstallPluginFromUrl(final String pluginId, final String name, final String url, boolean isSnapshot)
-        throws Exception {
+    public void assertInstallPluginFromUrl(
+        final String pluginId,
+        final String name,
+        final String url,
+        final String stagingHash,
+        boolean isSnapshot
+    ) throws Exception {
         final MessageDigest digest = MessageDigest.getInstance("SHA-512");
         assertInstallPluginFromUrl(
             pluginId,
             name,
             url,
+            stagingHash,
             isSnapshot,
             ".sha512",
             checksumAndFilename(digest, url),
@@ -1099,17 +1111,42 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             + "/analysis-icu-"
             + Build.CURRENT.getQualifiedVersion()
             + ".zip";
-        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, false);
+        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, null, false);
     }
 
     public void testOfficialPluginSnapshot() throws Exception {
         String url = String.format(
             Locale.ROOT,
-            "https://artifacts.opensearch.org/snapshots/plugins/analysis-icu/%s-SNAPSHOT/analysis-icu-%s.zip",
+            "https://artifacts.opensearch.org/snapshots/plugins/analysis-icu/%s-abc123/analysis-icu-%s.zip",
             Version.CURRENT,
             Build.CURRENT.getQualifiedVersion()
         );
-        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, true);
+        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, "abc123", true);
+    }
+
+    public void testInstallReleaseBuildOfPluginOnSnapshotBuild() {
+        String url = String.format(
+            Locale.ROOT,
+            "https://artifacts.opensearch.org/snapshots/plugins/analysis-icu/%s-abc123/analysis-icu-%s.zip",
+            Version.CURRENT,
+            Build.CURRENT.getQualifiedVersion()
+        );
+        // attemping to install a release build of a plugin (no staging ID) on a snapshot build should throw a user exception
+        final UserException e = expectThrows(
+            UserException.class,
+            () -> assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, null, true)
+        );
+        assertThat(e.exitCode, equalTo(ExitCodes.CONFIG));
+        assertThat(e, hasToString(containsString("attempted to install release build of official plugin on snapshot build of OpenSearch")));
+    }
+
+    public void testOfficialPluginStaging() throws Exception {
+        String url = "https://artifacts.opensearch.org/snapshots/plugins/analysis-icu/"
+            + Version.CURRENT
+            + "-abc123/analysis-icu-"
+            + Build.CURRENT.getQualifiedVersion()
+            + ".zip";
+        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, "abc123", false);
     }
 
     public void testOfficialPlatformPlugin() throws Exception {
@@ -1120,30 +1157,62 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             + "-"
             + Build.CURRENT.getQualifiedVersion()
             + ".zip";
-        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, false);
+        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, null, false);
+    }
+
+    public void testOfficialPlatformPluginSnapshot() throws Exception {
+        String url = String.format(
+            Locale.ROOT,
+            "https://artifacts.opensearch.org/snapshots/plugins/analysis-icu/%s-abc123/analysis-icu-%s-%s.zip",
+            Version.CURRENT,
+            Platforms.PLATFORM_NAME,
+            Build.CURRENT.getQualifiedVersion()
+        );
+        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, "abc123", true);
+    }
+
+    public void testOfficialPlatformPluginStaging() throws Exception {
+        String url = "https://artifacts.opensearch.org/snapshots/plugins/analysis-icu/"
+            + Version.CURRENT
+            + "-abc123/analysis-icu-"
+            + Platforms.PLATFORM_NAME
+            + "-"
+            + Build.CURRENT.getQualifiedVersion()
+            + ".zip";
+        assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, "abc123", false);
     }
 
     public void testMavenPlugin() throws Exception {
         String url = "https://repo1.maven.org/maven2/mygroup/myplugin/1.0.0/myplugin-1.0.0.zip";
-        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, false);
+        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, null, false);
     }
 
     public void testMavenPlatformPlugin() throws Exception {
         String url = "https://repo1.maven.org/maven2/mygroup/myplugin/1.0.0/myplugin-" + Platforms.PLATFORM_NAME + "-1.0.0.zip";
-        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, false);
+        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, null, false);
     }
 
     public void testMavenSha1Backcompat() throws Exception {
         String url = "https://repo1.maven.org/maven2/mygroup/myplugin/1.0.0/myplugin-1.0.0.zip";
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
-        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, false, ".sha1", checksum(digest), null, (b, p) -> null);
+        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, null, false, ".sha1", checksum(digest), null, (b, p) -> null);
         assertTrue(terminal.getOutput(), terminal.getOutput().contains("sha512 not found, falling back to sha1"));
     }
 
     public void testMavenChecksumWithoutFilename() throws Exception {
         String url = "https://repo1.maven.org/maven2/mygroup/myplugin/1.0.0/myplugin-1.0.0.zip";
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
-        assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, false, ".sha512", checksum(digest), null, (b, p) -> null);
+        assertInstallPluginFromUrl(
+            "mygroup:myplugin:1.0.0",
+            "myplugin",
+            url,
+            null,
+            false,
+            ".sha512",
+            checksum(digest),
+            null,
+            (b, p) -> null
+        );
     }
 
     public void testOfficialChecksumWithoutFilename() throws Exception {
@@ -1155,7 +1224,17 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
         UserException e = expectThrows(
             UserException.class,
-            () -> assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, false, ".sha512", checksum(digest), null, (b, p) -> null)
+            () -> assertInstallPluginFromUrl(
+                "analysis-icu",
+                "analysis-icu",
+                url,
+                null,
+                false,
+                ".sha512",
+                checksum(digest),
+                null,
+                (b, p) -> null
+            )
         );
         assertEquals(ExitCodes.IO_ERROR, e.exitCode);
         assertThat(e.getMessage(), startsWith("Invalid checksum file"));
@@ -1170,7 +1249,17 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         UserException e = expectThrows(
             UserException.class,
-            () -> assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, false, ".sha1", checksum(digest), null, (b, p) -> null)
+            () -> assertInstallPluginFromUrl(
+                "analysis-icu",
+                "analysis-icu",
+                url,
+                null,
+                false,
+                ".sha1",
+                checksum(digest),
+                null,
+                (b, p) -> null
+            )
         );
         assertEquals(ExitCodes.IO_ERROR, e.exitCode);
         assertEquals("Plugin checksum missing: " + url + ".sha512", e.getMessage());
@@ -1180,7 +1269,17 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         String url = "https://repo1.maven.org/maven2/mygroup/myplugin/1.0.0/myplugin-1.0.0.zip";
         UserException e = expectThrows(
             UserException.class,
-            () -> assertInstallPluginFromUrl("mygroup:myplugin:1.0.0", "myplugin", url, false, ".dne", bytes -> null, null, (b, p) -> null)
+            () -> assertInstallPluginFromUrl(
+                "mygroup:myplugin:1.0.0",
+                "myplugin",
+                url,
+                null,
+                false,
+                ".dne",
+                bytes -> null,
+                null,
+                (b, p) -> null
+            )
         );
         assertEquals(ExitCodes.IO_ERROR, e.exitCode);
         assertEquals("Plugin checksum missing: " + url + ".sha1", e.getMessage());
@@ -1195,7 +1294,17 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
         UserException e = expectThrows(
             UserException.class,
-            () -> assertInstallPluginFromUrl("analysis-icu", "analysis-icu", url, false, ".sha512", checksum(digest), null, (b, p) -> null)
+            () -> assertInstallPluginFromUrl(
+                "analysis-icu",
+                "analysis-icu",
+                url,
+                null,
+                false,
+                ".sha512",
+                checksum(digest),
+                null,
+                (b, p) -> null
+            )
         );
         assertEquals(ExitCodes.IO_ERROR, e.exitCode);
         assertTrue(e.getMessage(), e.getMessage().startsWith("Invalid checksum file"));
@@ -1214,6 +1323,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
                 "analysis-icu",
                 "analysis-icu",
                 url,
+                null,
                 false,
                 ".sha512",
                 checksumAndString(digest, "  repository-s3-" + Build.CURRENT.getQualifiedVersion() + ".zip"),
@@ -1238,6 +1348,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
                 "analysis-icu",
                 "analysis-icu",
                 url,
+                null,
                 false,
                 ".sha512",
                 checksumAndString(digest, "  analysis-icu-" + Build.CURRENT.getQualifiedVersion() + ".zip\nfoobar"),
@@ -1261,6 +1372,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
                 "analysis-icu",
                 "analysis-icu",
                 url,
+                null,
                 false,
                 ".sha512",
                 bytes -> "foobar  analysis-icu-" + Build.CURRENT.getQualifiedVersion() + ".zip",
@@ -1280,6 +1392,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
                 "mygroup:myplugin:1.0.0",
                 "myplugin",
                 url,
+                null,
                 false,
                 ".sha1",
                 bytes -> "foobar",
@@ -1313,7 +1426,17 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         final String expectedID = Long.toHexString(verifyingKey.getKeyID()).toUpperCase(Locale.ROOT);
         final IllegalStateException e = expectThrows(
             IllegalStateException.class,
-            () -> assertInstallPluginFromUrl(icu, icu, url, false, ".sha512", checksumAndFilename(digest, url), verifyingKey, signature)
+            () -> assertInstallPluginFromUrl(
+                icu,
+                icu,
+                url,
+                null,
+                false,
+                ".sha512",
+                checksumAndFilename(digest, url),
+                verifyingKey,
+                signature
+            )
         );
         assertThat(e, hasToString(containsString("key id [" + actualID + "] does not match expected key id [" + expectedID + "]")));
     }
@@ -1340,7 +1463,17 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
         };
         final IllegalStateException e = expectThrows(
             IllegalStateException.class,
-            () -> assertInstallPluginFromUrl(icu, icu, url, false, ".sha512", checksumAndFilename(digest, url), newSecretKey(), signature)
+            () -> assertInstallPluginFromUrl(
+                icu,
+                icu,
+                url,
+                null,
+                false,
+                ".sha512",
+                checksumAndFilename(digest, url),
+                newSecretKey(),
+                signature
+            )
         );
         assertThat(e, hasToString(equalTo("java.lang.IllegalStateException: signature verification for [" + url + "] failed")));
     }
@@ -1418,7 +1551,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             assertEquals("installation aborted by user", e.getMessage());
 
             assertThat(terminal.getErrorOutput(), containsString("WARNING: " + warning));
-            try (Stream<Path> fileStream = Files.list(env.v2().pluginsDir())) {
+            try (Stream<Path> fileStream = Files.list(env.v2().pluginsFile())) {
                 assertThat(fileStream.collect(Collectors.toList()), empty());
             }
 
@@ -1431,7 +1564,7 @@ public class InstallPluginCommandTests extends OpenSearchTestCase {
             e = expectThrows(UserException.class, () -> installPlugin(pluginZip, env.v1()));
             assertEquals("installation aborted by user", e.getMessage());
             assertThat(terminal.getErrorOutput(), containsString("WARNING: " + warning));
-            try (Stream<Path> fileStream = Files.list(env.v2().pluginsDir())) {
+            try (Stream<Path> fileStream = Files.list(env.v2().pluginsFile())) {
                 assertThat(fileStream.collect(Collectors.toList()), empty());
             }
         }
