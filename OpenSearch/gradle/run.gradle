@@ -43,6 +43,12 @@ testClusters {
   }
 }
 
+allprojects {
+    repositories {
+        mavenLocal()
+    }
+}
+
 tasks.register("run", RunTask) {
   useCluster testClusters.runTask;
   description = 'Runs opensearch in the foreground'
