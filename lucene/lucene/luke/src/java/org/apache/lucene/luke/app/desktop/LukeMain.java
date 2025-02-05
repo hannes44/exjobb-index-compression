@@ -34,6 +34,10 @@ import org.apache.lucene.luke.app.desktop.util.DialogOpener;
 import org.apache.lucene.luke.app.desktop.util.FontUtils;
 import org.apache.lucene.luke.app.desktop.util.MessageUtils;
 import org.apache.lucene.luke.util.LoggerFactory;
+import javax.swing.JOptionPane;
+import java.io.PrintStream;
+import java.io.FileOutputStream;
+import java.io.FileDescriptor;
 
 /** Entry class for desktop Luke */
 public class LukeMain {
@@ -74,6 +78,13 @@ public class LukeMain {
   }
 
   public static void main(String[] args) throws Exception {
+    System.out.println("dgsfh");
+
+
+
+    if (true)
+      return;
+
     boolean sanityCheck = Arrays.asList(args).contains("--sanity-check");
 
     if (sanityCheck && GraphicsEnvironment.isHeadless()) {
@@ -91,6 +102,7 @@ public class LukeMain {
 
     GraphicsEnvironment genv = GraphicsEnvironment.getLocalGraphicsEnvironment();
     genv.registerFont(FontUtils.createElegantIconFont());
+
 
     var guiThreadResult = new SynchronousQueue<Boolean>();
     javax.swing.SwingUtilities.invokeLater(
@@ -118,6 +130,8 @@ public class LukeMain {
           }
         });
 
+
+
     if (Boolean.FALSE.equals(guiThreadResult.take())) {
       Logger.getGlobal().log(Level.SEVERE, "Luke could not start.");
       Runtime.getRuntime().exit(1);
@@ -128,5 +142,7 @@ public class LukeMain {
       Logger.getGlobal().log(Level.SEVERE, "[Vader] Hello, Luke. We seem to be fine.");
       Runtime.getRuntime().exit(0);
     }
+
+
   }
 }
