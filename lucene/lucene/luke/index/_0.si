@@ -1,0 +1,29 @@
+    version 9.12.0
+    min version 9.12.0
+    number of documents 1
+    uses compound file true
+    has blocks false
+    diagnostics 8
+      key os
+      value Windows 10
+      key java.vendor
+      value Eclipse Adoptium
+      key java.runtime.version
+      value 21.0.6+7-LTS
+      key timestamp
+      value 1739287740320
+      key source
+      value flush
+      key lucene.version
+      value 9.12.0
+      key os.version
+      value 10.0
+      key os.arch
+      value amd64
+    attributes 0
+    files 2
+      file _0.si
+      file _0.scf
+    id [25 f0 80 67 64 a1 a d5 ed 2 f c8 c9 67 f5 42]
+    sort 0
+checksum 00000000000240174105

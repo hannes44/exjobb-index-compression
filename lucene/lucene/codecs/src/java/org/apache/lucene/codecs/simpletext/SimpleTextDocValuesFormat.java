@@ -129,7 +129,7 @@ import org.apache.lucene.index.SegmentWriteState;
  *
  * @lucene.experimental
  */
-class SimpleTextDocValuesFormat extends DocValuesFormat {
+public class SimpleTextDocValuesFormat extends DocValuesFormat {
 
   public SimpleTextDocValuesFormat() {
     super("SimpleText");

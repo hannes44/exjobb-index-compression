@@ -70,7 +70,7 @@ import org.apache.lucene.util.fst.PairOutputs;
 import org.apache.lucene.util.fst.PositiveIntOutputs;
 import org.apache.lucene.util.fst.Util;
 
-class SimpleTextFieldsReader extends FieldsProducer {
+public class SimpleTextFieldsReader extends FieldsProducer {
 
   private final TreeMap<String, Long> fields;
   private final IndexInput in;
@@ -438,7 +438,7 @@ class SimpleTextFieldsReader extends FieldsProducer {
     }
   }
 
-  private class SimpleTextPostingsEnum extends ImpactsEnum {
+  public class SimpleTextPostingsEnum extends ImpactsEnum {
     private final IndexInput inStart;
     private final IndexInput in;
     private int docID = -1;

@@ -32,7 +32,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 
-class SimpleTextFieldsWriter extends FieldsConsumer {
+public class SimpleTextFieldsWriter extends FieldsConsumer {
 
   private IndexOutput out;
   private final BytesRefBuilder scratch = new BytesRefBuilder();
@@ -47,15 +47,15 @@ class SimpleTextFieldsWriter extends FieldsConsumer {
       new CompetitiveImpactAccumulator();
   private long lastDocFilePointer = -1;
 
-  static final BytesRef END = new BytesRef("END");
-  static final BytesRef FIELD = new BytesRef("field ");
-  static final BytesRef TERM = new BytesRef("  term ");
-  static final BytesRef DOC = new BytesRef("    doc ");
-  static final BytesRef FREQ = new BytesRef("      freq ");
-  static final BytesRef POS = new BytesRef("      pos ");
-  static final BytesRef START_OFFSET = new BytesRef("      startOffset ");
-  static final BytesRef END_OFFSET = new BytesRef("      endOffset ");
-  static final BytesRef PAYLOAD = new BytesRef("        payload ");
+  public static final BytesRef END = new BytesRef("END");
+  public static final BytesRef FIELD = new BytesRef("field ");
+  public static final BytesRef TERM = new BytesRef("  term ");
+  public static final BytesRef DOC = new BytesRef("    doc ");
+  public static final BytesRef FREQ = new BytesRef("      freq ");
+  public static final BytesRef POS = new BytesRef("      pos ");
+  public static final BytesRef START_OFFSET = new BytesRef("      startOffset ");
+  public static final BytesRef END_OFFSET = new BytesRef("      endOffset ");
+  public static final BytesRef PAYLOAD = new BytesRef("        payload ");
 
   public SimpleTextFieldsWriter(SegmentWriteState writeState) throws IOException {
     final String fileName =

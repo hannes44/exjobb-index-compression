@@ -51,7 +51,7 @@ import org.apache.lucene.util.StringHelper;
  *
  * @lucene.experimental
  */
-class SimpleTextSkipReader extends MultiLevelSkipListReader {
+public class SimpleTextSkipReader extends MultiLevelSkipListReader {
 
   private final CharsRefBuilder scratchUTF16 = new CharsRefBuilder();
   private final BytesRefBuilder scratch = new BytesRefBuilder();
@@ -61,7 +61,7 @@ class SimpleTextSkipReader extends MultiLevelSkipListReader {
   private int numLevels = 1;
   private boolean hasSkipList = false;
 
-  SimpleTextSkipReader(IndexInput skipStream) {
+  public SimpleTextSkipReader(IndexInput skipStream) {
     super(
         skipStream,
         SimpleTextSkipWriter.maxSkipLevels,
@@ -165,7 +165,7 @@ class SimpleTextSkipReader extends MultiLevelSkipListReader {
     return Long.parseLong(scratchUTF16.toString());
   }
 
-  void reset(long skipPointer, int docFreq) throws IOException {
+  public void reset(long skipPointer, int docFreq) throws IOException {
     init();
     if (skipPointer > 0) {
       super.init(skipPointer, docFreq);
@@ -185,15 +185,15 @@ class SimpleTextSkipReader extends MultiLevelSkipListReader {
     hasSkipList = false;
   }
 
-  Impacts getImpacts() {
+  public Impacts getImpacts() {
     return impacts;
   }
 
-  long getNextSkipDocFP() {
+  public long getNextSkipDocFP() {
     return nextSkipDocFP;
   }
 
-  int getNextSkipDoc() {
+  public int getNextSkipDoc() {
     if (!hasSkipList) {
       return DocIdSetIterator.NO_MORE_DOCS;
     }

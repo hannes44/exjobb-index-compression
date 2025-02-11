@@ -24,4 +24,5 @@ module org.apache.lucene.luke {
   requires org.apache.lucene.queries;
   requires org.apache.lucene.queryparser;
   requires org.apache.lucene.misc;
+    requires org.apache.lucene.codecs;
 }

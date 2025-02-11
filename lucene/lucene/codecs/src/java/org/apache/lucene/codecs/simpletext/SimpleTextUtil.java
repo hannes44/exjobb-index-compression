@@ -27,7 +27,7 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 import org.apache.lucene.util.StringHelper;
 
-class SimpleTextUtil {
+public class SimpleTextUtil {
   public static final byte NEWLINE = 10;
   public static final byte ESCAPE = 92;
   static final BytesRef CHECKSUM = new BytesRef("checksum ");

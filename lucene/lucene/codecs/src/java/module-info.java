@@ -29,8 +29,9 @@ module org.apache.lucene.codecs {
   exports org.apache.lucene.codecs.simpletext;
   exports org.apache.lucene.codecs.uniformsplit;
   exports org.apache.lucene.codecs.uniformsplit.sharedterms;
+    exports org.apache.lucene.codecs.customcodec;
 
-  provides org.apache.lucene.codecs.KnnVectorsFormat with
+    provides org.apache.lucene.codecs.KnnVectorsFormat with
       HnswBitVectorsFormat;
   provides org.apache.lucene.codecs.PostingsFormat with
       org.apache.lucene.codecs.blocktreeords.BlockTreeOrdsPostingsFormat,

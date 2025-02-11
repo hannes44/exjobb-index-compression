@@ -34,19 +34,20 @@ import org.apache.lucene.util.BytesRefBuilder;
  *
  * @lucene.experimental
  */
-class SimpleTextSkipWriter extends MultiLevelSkipListWriter {
+public class SimpleTextSkipWriter extends MultiLevelSkipListWriter {
+
 
   static final int skipMultiplier = 3;
   static final int maxSkipLevels = 4;
 
-  static final int BLOCK_SIZE = 8;
+  public static final int BLOCK_SIZE = 8;
   private Map<Integer, Boolean> wroteHeaderPerLevelMap = new HashMap<>();
   private int curDoc;
   private long curDocFilePointer;
   private CompetitiveImpactAccumulator[] curCompetitiveFreqNorms;
   private final BytesRefBuilder scratch = new BytesRefBuilder();
 
-  static final BytesRef SKIP_LIST = new BytesRef("    skipList ");
+  public static final BytesRef SKIP_LIST = new BytesRef("    skipList ");
   static final BytesRef LEVEL_LENGTH = new BytesRef("      levelLength ");
   static final BytesRef LEVEL = new BytesRef("      level ");
   static final BytesRef SKIP_DOC = new BytesRef("        skipDoc ");
@@ -58,7 +59,7 @@ class SimpleTextSkipWriter extends MultiLevelSkipListWriter {
   static final BytesRef IMPACTS_END = new BytesRef("        impactsEnd ");
   static final BytesRef CHILD_POINTER = new BytesRef("        childPointer ");
 
-  SimpleTextSkipWriter(SegmentWriteState writeState) throws IOException {
+  public SimpleTextSkipWriter(SegmentWriteState writeState) throws IOException {
     super(BLOCK_SIZE, skipMultiplier, maxSkipLevels, writeState.segmentInfo.maxDoc());
     curCompetitiveFreqNorms = new CompetitiveImpactAccumulator[maxSkipLevels];
     for (int i = 0; i < maxSkipLevels; ++i) {
@@ -109,7 +110,7 @@ class SimpleTextSkipWriter extends MultiLevelSkipListWriter {
   }
 
   @Override
-  protected void resetSkip() {
+  public void resetSkip() {
     super.resetSkip();
     wroteHeaderPerLevelMap.clear();
     this.curDoc = -1;
@@ -128,11 +129,11 @@ class SimpleTextSkipWriter extends MultiLevelSkipListWriter {
     return skipOffset;
   }
 
-  void bufferSkip(
-      int doc,
-      long docFilePointer,
-      int numDocs,
-      final CompetitiveImpactAccumulator competitiveImpactAccumulator)
+  public void bufferSkip(
+          int doc,
+          long docFilePointer,
+          int numDocs,
+          final CompetitiveImpactAccumulator competitiveImpactAccumulator)
       throws IOException {
     assert doc > curDoc;
     this.curDoc = doc;

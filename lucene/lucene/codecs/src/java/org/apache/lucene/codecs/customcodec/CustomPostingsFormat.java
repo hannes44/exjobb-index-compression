@@ -1,3 +1,5 @@
+package org.apache.lucene.codecs.customcodec;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -14,12 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.lucene.codecs.simpletext;
+
 
 import java.io.IOException;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
+import org.apache.lucene.codecs.simpletext.SimpleTextFieldsReader;
+import org.apache.lucene.codecs.simpletext.SimpleTextFieldsWriter;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.SegmentWriteState;
@@ -32,26 +36,26 @@ import org.apache.lucene.index.SegmentWriteState;
  *
  * @lucene.experimental
  */
-public final class SimpleTextPostingsFormat extends PostingsFormat {
+public final class CustomPostingsFormat extends PostingsFormat {
 
-  public SimpleTextPostingsFormat() {
-    super("SimpleText");
-  }
+    public CustomPostingsFormat() {
+        super("SimpleText");
+    }
 
-  @Override
-  public FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
-    return new SimpleTextFieldsWriter(state);
-  }
+    @Override
+    public FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
+        return new CustomFieldsWriter(state);
+    }
 
-  @Override
-  public FieldsProducer fieldsProducer(SegmentReadState state) throws IOException {
-    return new SimpleTextFieldsReader(state);
-  }
+    @Override
+    public FieldsProducer fieldsProducer(SegmentReadState state) throws IOException {
+        return new CustomFieldsReader(state);
+    }
 
-  /** Extension of freq postings file */
-  static final String POSTINGS_EXTENSION = "pst";
+    /** Extension of freq postings file */
+    static final String POSTINGS_EXTENSION = "pst";
 
-  public static String getPostingsFileName(String segment, String segmentSuffix) {
-    return IndexFileNames.segmentFileName(segment, segmentSuffix, POSTINGS_EXTENSION);
-  }
+    static String getPostingsFileName(String segment, String segmentSuffix) {
+        return IndexFileNames.segmentFileName(segment, segmentSuffix, POSTINGS_EXTENSION);
+    }
 }

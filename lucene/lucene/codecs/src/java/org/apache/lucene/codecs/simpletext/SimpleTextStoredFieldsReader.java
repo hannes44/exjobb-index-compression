@@ -91,7 +91,7 @@ public class SimpleTextStoredFieldsReader extends StoredFieldsReader {
   }
 
   // used by clone
-  SimpleTextStoredFieldsReader(long[] offsets, IndexInput in, FieldInfos fieldInfos) {
+  public SimpleTextStoredFieldsReader(long[] offsets, IndexInput in, FieldInfos fieldInfos) {
     this.offsets = offsets;
     this.in = in;
     this.fieldInfos = fieldInfos;
