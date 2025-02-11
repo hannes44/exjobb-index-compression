@@ -351,14 +351,14 @@ public final class Lucene912PostingsFormat extends PostingsFormat {
 
   public static final int LEVEL1_MASK = LEVEL1_NUM_DOCS - 1;
 
-  static final String TERMS_CODEC = "Lucene90PostingsWriterTerms";
-  static final String META_CODEC = "Lucene912PostingsWriterMeta";
-  static final String DOC_CODEC = "Lucene912PostingsWriterDoc";
-  static final String POS_CODEC = "Lucene912PostingsWriterPos";
-  static final String PAY_CODEC = "Lucene912PostingsWriterPay";
+  public static final String TERMS_CODEC = "Lucene90PostingsWriterTerms";
+  public static final String META_CODEC = "Lucene912PostingsWriterMeta";
+  public static final String DOC_CODEC = "Lucene912PostingsWriterDoc";
+  public static final String POS_CODEC = "Lucene912PostingsWriterPos";
+  public static final String PAY_CODEC = "Lucene912PostingsWriterPay";
 
   static final int VERSION_START = 0;
-  static final int VERSION_CURRENT = VERSION_START;
+  public static final int VERSION_CURRENT = VERSION_START;
 
   private final int minTermBlockSize;
   private final int maxTermBlockSize;
