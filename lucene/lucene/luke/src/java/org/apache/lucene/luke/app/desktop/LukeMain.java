@@ -195,7 +195,7 @@ public class LukeMain {
 
       // Index writer configuration
       IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      config.setCodec(new CustomCodec());
+      config.setCodec(new Lucene912Codec());
 
       IndexWriter writer = new IndexWriter(directory, config);
 
