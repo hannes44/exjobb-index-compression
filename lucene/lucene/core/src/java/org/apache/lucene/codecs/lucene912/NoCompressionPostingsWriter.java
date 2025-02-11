@@ -565,6 +565,8 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                         }
                     } else {
                         posOut.writeVInt(posDelta);
+                        //posOut.writeString("POS XD XD:");
+                        //posOut.writeInt(posDelta);
                     }
 
                     if (writeOffsets) {

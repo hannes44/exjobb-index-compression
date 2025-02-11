@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
-import org.apache.lucene.codecs.customcodec.CustomCodec;
+import org.apache.lucene.codecs.lucene912.CustomCodec;
 import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.luke.app.desktop.components.LukeWindowProvider;
 import org.apache.lucene.luke.app.desktop.components.dialog.menubar.OpenIndexDialogFactory;
@@ -195,7 +195,7 @@ public class LukeMain {
 
       // Index writer configuration
       IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      config.setCodec(new Lucene912Codec());
+      config.setCodec(new CustomCodec());
 
       IndexWriter writer = new IndexWriter(directory, config);
 
