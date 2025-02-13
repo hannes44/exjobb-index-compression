@@ -31,6 +31,7 @@ import javax.swing.UIManager;
 
 import org.apache.lucene.codecs.lucene912.CustomCodec;
 import org.apache.lucene.codecs.lucene912.Lucene912Codec;
+import org.apache.lucene.document.*;
 import org.apache.lucene.luke.app.desktop.components.LukeWindowProvider;
 import org.apache.lucene.luke.app.desktop.components.dialog.menubar.OpenIndexDialogFactory;
 import org.apache.lucene.luke.app.desktop.util.DialogOpener;
@@ -43,10 +44,6 @@ import java.io.FileOutputStream;
 import java.io.FileDescriptor;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -185,7 +182,7 @@ public class LukeMain {
     try {
       deleteExistingIndex(indexPath);
 
-      int numDocs = 3; // Number of documents to index
+      int numDocs = 100; // Number of documents to index
 
       // Directory where the index will be stored
       Directory directory = FSDirectory.open(Paths.get(indexPath));
@@ -195,7 +192,7 @@ public class LukeMain {
 
       // Index writer configuration
       IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      config.setCodec(new CustomCodec());
+      config.setCodec(new SimpleTextCodec());
 
       IndexWriter writer = new IndexWriter(directory, config);
 
@@ -238,9 +235,17 @@ public class LukeMain {
         // Add the ID field to the document (make sure it is indexed if needed for searching)
         doc.add(new StringField("id", docId, Field.Store.NO));  // Use StringField for non-analyzed ID
 
+        FieldType fieldType = new FieldType(TextField.TYPE_NOT_STORED);
+        fieldType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
+      //  fieldType.setStoreTermVectorPositions(true); // Ensure positions are stored
+        //Document doc = new Document();
+        //doc.add(new Field("content", "hello world", fieldType));
+
+
         String randomContent = generateRandomContent(10000, words, random); // Generate random content with real words
-        doc.add(new TextField("content", "Hej jag heter bob", Field.Store.NO));
-       // doc.add(new TextField("content", "Hej jag heter bob", Field.Store.NO));
+       // System.out.println(randomContent);
+        doc.add(new TextField("content", randomContent, Field.Store.NO));
+       // doc.add(new TextField("content", "bob hehe potatis", Field.Store.NO));
 
         writer.addDocument(doc);
         break;
@@ -350,9 +355,18 @@ public class LukeMain {
       IndexSearcher searcher = new IndexSearcher(reader);
 
       QueryParser parser = new QueryParser("content", new StandardAnalyzer());
+
       try {
-        Query query = parser.parse("alcohol");
-        TopDocs topDocs = searcher.search(query, 10);
+        Query query = parser.parse("noble mature");
+
+        // Create a phrase query for the phrase "quick brown fox"
+        PhraseQuery.Builder builder = new PhraseQuery.Builder();
+        builder.add(new Term("content", "decide"), 0); // "quick" at position 0
+        builder.add(new Term("content", "alcohol"), 1); // "brown" at position 1
+       // builder.add(new Term("content", "define"), 2);   // "fox" at position 2
+        PhraseQuery phraseQuery = builder.build();
+
+        TopDocs topDocs = searcher.search(phraseQuery, 10);
         System.out.println("Total hits: " + topDocs.totalHits.value);
 
         for (int i = 0; i < topDocs.scoreDocs.length; i++) {

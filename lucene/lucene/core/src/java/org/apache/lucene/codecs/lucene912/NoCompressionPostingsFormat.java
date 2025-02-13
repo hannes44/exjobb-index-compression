@@ -378,7 +378,7 @@ public final class NoCompressionPostingsFormat extends PostingsFormat {
      *     Lucene90BlockTreeTermsWriter#Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)
      */
     public NoCompressionPostingsFormat(int minTermBlockSize, int maxTermBlockSize) {
-        super("Lucene912");
+        super("SimpleText");
         Lucene90BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);
         this.minTermBlockSize = minTermBlockSize;
         this.maxTermBlockSize = maxTermBlockSize;

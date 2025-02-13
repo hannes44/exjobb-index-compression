@@ -35,6 +35,7 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
+import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -1088,7 +1089,8 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 int offsetLength = 0;
                 payloadByteUpto = 0;
                 for (int i = 0; i < count; i++) {
-                    int code = posIn.readVInt();
+                    //int code = posIn.readVInt();
+                    int code = posIn.readInt();
                     if (indexHasPayloads) {
                         if ((code & 1) != 0) {
                             payloadLength = posIn.readVInt();
@@ -1118,7 +1120,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 payloadByteUpto = 0;
             } else {
                 pforUtil.decode(posInUtil, posDeltaBuffer);
-
+               // NoCompressionUtils.decode(posInUtil, posDeltaBuffer);
                 if (indexHasPayloads) {
                     if (needsPayloads) {
                         pforUtil.decode(payInUtil, payloadLengthBuffer);
@@ -1971,6 +1973,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 final int count = (int) (totalTermFreq % BLOCK_SIZE);
                 int payloadLength = 0;
                 for (int i = 0; i < count; i++) {
+                    String temp = posIn.readString();
                     int code = posIn.readVInt();
                     if (indexHasPayloads) {
                         if ((code & 1) != 0) {

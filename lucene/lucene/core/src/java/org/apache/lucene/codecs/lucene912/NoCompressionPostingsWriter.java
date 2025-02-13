@@ -32,6 +32,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
+import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.FieldInfo;
@@ -325,7 +326,8 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         posBufferUpto++;
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
-            pforUtil.encode(posDeltaBuffer, posOut);
+         //   pforUtil.encode(posDeltaBuffer, posOut);
+            NoCompressionUtils.encode(posDeltaBuffer, posOut);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -564,9 +566,10 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                             payloadBytesReadUpto += payloadLength;
                         }
                     } else {
-                        posOut.writeVInt(posDelta);
-                        //posOut.writeString("POS XD XD:");
-                        //posOut.writeInt(posDelta);
+                        posOut.writeInt(posDelta);
+                     //   posOut.writeString("POS XD XD:");
+                       // posOut.writeString(String.valueOf(posDelta));
+                       // posOut.writeInt(posDelta);
                     }
 
                     if (writeOffsets) {

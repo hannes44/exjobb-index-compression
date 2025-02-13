@@ -30,6 +30,7 @@ import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.lucene90.Lucene90StoredFieldsFormat;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat;
+import org.apache.lucene.codecs.lucene912.NoCompressionPostingsFormat;
 
 /**
  * plain text index format.
@@ -39,7 +40,7 @@ import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat;
  * @lucene.experimental
  */
 public final class SimpleTextCodec extends Codec {
-  private final PostingsFormat postings = new SimpleTextPostingsFormat();
+  private final PostingsFormat postings = new NoCompressionPostingsFormat();
   private final StoredFieldsFormat storedFields = new SimpleTextStoredFieldsFormat();
   private final SegmentInfoFormat segmentInfos = new SimpleTextSegmentInfoFormat();
   private final FieldInfosFormat fieldInfosFormat = new SimpleTextFieldInfosFormat();

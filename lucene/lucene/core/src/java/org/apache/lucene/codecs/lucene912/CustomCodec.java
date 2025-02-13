@@ -115,7 +115,7 @@ public class CustomCodec extends Codec {
      * @param mode stored fields compression mode to use for newly flushed/merged segments.
      */
     public CustomCodec(Mode mode) {
-        super("Lucene912");
+        super("Custom");
         this.storedFieldsFormat =
                 new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
         this.defaultPostingsFormat = new NoCompressionPostingsFormat();
