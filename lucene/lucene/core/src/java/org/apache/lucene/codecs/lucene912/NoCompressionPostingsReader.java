@@ -35,7 +35,6 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
-import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -633,7 +632,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
         private final long[] docBuffer = new long[BLOCK_SIZE + 1];
         private final long[] freqBuffer = new long[BLOCK_SIZE + 1];
-        private final long[] posDeltaBuffer = new long[BLOCK_SIZE];
+        private final long[] posBuffer = new long[BLOCK_SIZE];
 
         private final long[] payloadLengthBuffer;
         private final long[] offsetStartDeltaBuffer;
@@ -1096,7 +1095,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                             payloadLength = posIn.readVInt();
                         }
                         payloadLengthBuffer[i] = payloadLength;
-                        posDeltaBuffer[i] = code >>> 1;
+                        posBuffer[i] = code >>> 1;
                         if (payloadLength != 0) {
                             if (payloadByteUpto + payloadLength > payloadBytes.length) {
                                 payloadBytes = ArrayUtil.grow(payloadBytes, payloadByteUpto + payloadLength);
@@ -1105,7 +1104,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                             payloadByteUpto += payloadLength;
                         }
                     } else {
-                        posDeltaBuffer[i] = code;
+                        posBuffer[i] = code;
                     }
 
                     if (indexHasOffsets) {
@@ -1119,7 +1118,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 }
                 payloadByteUpto = 0;
             } else {
-                pforUtil.decode(posInUtil, posDeltaBuffer);
+                pforUtil.decode(posInUtil, posBuffer);
                // NoCompressionUtils.decode(posInUtil, posDeltaBuffer);
                 if (indexHasPayloads) {
                     if (needsPayloads) {
@@ -1167,7 +1166,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 refillPositions();
                 posBufferUpto = 0;
             }
-            position += posDeltaBuffer[posBufferUpto];
+            position = (int) posBuffer[posBufferUpto];
 
             if (indexHasPayloads) {
                 payloadLength = (int) payloadLengthBuffer[posBufferUpto];

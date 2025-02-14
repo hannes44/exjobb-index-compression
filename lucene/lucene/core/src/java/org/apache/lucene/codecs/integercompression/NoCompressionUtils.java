@@ -12,29 +12,18 @@ public class NoCompressionUtils {
     /** Delta Encode 128 integers from {@code longs} into {@code out}. */
     public static void encode(long[] longs, DataOutput out) throws IOException
     {
-
-        //out.writeByte(bytesRequiredPerValue);
-
-        // Write the first value as-is
-      //  out.writeLong(longs[0]);
-
         for (int i = 0; i < longs.length; i++) {
             out.writeLong(longs[i]);
-     //       out.writeBytes(longToBytes(longs[i], bytesRequiredPerValue), 0, bytesRequiredPerValue);
         }
+    }
 
+    public static void encodeSingleInt(int input, DataOutput out) throws IOException {
+        out.writeInt(input);
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public static void decode(PostingDecodingUtil pdu, long[] longs) throws IOException {
         pdu.in.readLongs(longs, 0, 128);
-
-
-      //  for (int i = 0; i < longs.length; i++) {
-      //      longs[i] =  pdu.in.readLong();
-      //  }
     }
-
-
 }

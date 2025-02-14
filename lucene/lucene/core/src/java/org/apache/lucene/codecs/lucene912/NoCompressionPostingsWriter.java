@@ -70,7 +70,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
     final long[] freqBuffer;
     private int docBufferUpto;
 
-    final long[] posDeltaBuffer;
+    final long[] posBuffer;
     final long[] payloadLengthBuffer;
     final long[] offsetStartDeltaBuffer;
     final long[] offsetLengthBuffer;
@@ -147,7 +147,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
             forDeltaUtil = new ForDeltaUtil();
             pforUtil = new PForUtil(forUtil);
             if (state.fieldInfos.hasProx()) {
-                posDeltaBuffer = new long[BLOCK_SIZE];
+                posBuffer = new long[BLOCK_SIZE];
                 String posFileName =
                         IndexFileNames.segmentFileName(
                                 state.segmentInfo.name, state.segmentSuffix, Lucene912PostingsFormat.POS_EXTENSION);
@@ -182,7 +182,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                             payOut, PAY_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
                 }
             } else {
-                posDeltaBuffer = null;
+                posBuffer = null;
                 payloadLengthBuffer = null;
                 offsetStartDeltaBuffer = null;
                 offsetLengthBuffer = null;
@@ -299,7 +299,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         if (position < 0) {
             throw new CorruptIndexException("position=" + position + " is < 0", docOut);
         }
-        posDeltaBuffer[posBufferUpto] = position - lastPosition;
+        posBuffer[posBufferUpto] = position;
         if (writePayloads) {
             if (payload == null || payload.length == 0) {
                 // no payload
@@ -327,7 +327,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
          //   pforUtil.encode(posDeltaBuffer, posOut);
-            NoCompressionUtils.encode(posDeltaBuffer, posOut);
+            NoCompressionUtils.encode(posBuffer, posOut);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -550,15 +550,16 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                 int lastOffsetLength = -1; // force first offset length to be written
                 int payloadBytesReadUpto = 0;
                 for (int i = 0; i < posBufferUpto; i++) {
-                    final int posDelta = (int) posDeltaBuffer[i];
+                    final int position = (int) posBuffer[i];
                     if (writePayloads) {
+                        // TODO
                         final int payloadLength = (int) payloadLengthBuffer[i];
                         if (payloadLength != lastPayloadLength) {
                             lastPayloadLength = payloadLength;
-                            posOut.writeVInt((posDelta << 1) | 1);
+                            posOut.writeVInt((position << 1) | 1);
                             posOut.writeVInt(payloadLength);
                         } else {
-                            posOut.writeVInt(posDelta << 1);
+                            posOut.writeVInt(position << 1);
                         }
 
                         if (payloadLength != 0) {
@@ -566,10 +567,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                             payloadBytesReadUpto += payloadLength;
                         }
                     } else {
-                        posOut.writeInt(posDelta);
-                     //   posOut.writeString("POS XD XD:");
-                       // posOut.writeString(String.valueOf(posDelta));
-                       // posOut.writeInt(posDelta);
+                        NoCompressionUtils.encodeSingleInt(position, posOut);
                     }
 
                     if (writeOffsets) {
