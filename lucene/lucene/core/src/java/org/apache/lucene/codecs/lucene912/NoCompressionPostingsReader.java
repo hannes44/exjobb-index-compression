@@ -35,6 +35,7 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
+import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -1118,8 +1119,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 }
                 payloadByteUpto = 0;
             } else {
-                pforUtil.decode(posInUtil, posBuffer);
-               // NoCompressionUtils.decode(posInUtil, posDeltaBuffer);
+               NoCompressionUtils.decode(posInUtil, posBuffer);
                 if (indexHasPayloads) {
                     if (needsPayloads) {
                         pforUtil.decode(payInUtil, payloadLengthBuffer);
@@ -1575,7 +1575,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
         private final long[] docBuffer = new long[BLOCK_SIZE + 1];
         private final long[] freqBuffer = new long[BLOCK_SIZE];
-        private final long[] posDeltaBuffer = new long[BLOCK_SIZE];
+        private final long[] posBuffer = new long[BLOCK_SIZE];
 
         private int docBufferUpto;
         private int posBufferUpto;
@@ -1972,18 +1972,17 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 final int count = (int) (totalTermFreq % BLOCK_SIZE);
                 int payloadLength = 0;
                 for (int i = 0; i < count; i++) {
-                    String temp = posIn.readString();
-                    int code = posIn.readVInt();
+                    int code = posIn.readInt();
                     if (indexHasPayloads) {
                         if ((code & 1) != 0) {
                             payloadLength = posIn.readVInt();
                         }
-                        posDeltaBuffer[i] = code >>> 1;
+                        posBuffer[i] = code >>> 1;
                         if (payloadLength != 0) {
                             posIn.skipBytes(payloadLength);
                         }
                     } else {
-                        posDeltaBuffer[i] = code;
+                        posBuffer[i] = code;
                     }
 
                     if (indexHasOffsets) {
@@ -1994,7 +1993,8 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                     }
                 }
             } else {
-                pforUtil.decode(posInUtil, posDeltaBuffer);
+                //pforUtil.decode(posInUtil, posDeltaBuffer);
+                NoCompressionUtils.decode(posInUtil, posBuffer);
             }
         }
 
@@ -2011,7 +2011,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 refillPositions();
                 posBufferUpto = 0;
             }
-            position += posDeltaBuffer[posBufferUpto];
+            position = (int) posBuffer[posBufferUpto];
 
             posBufferUpto++;
             posPendingCount--;

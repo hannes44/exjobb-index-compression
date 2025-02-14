@@ -182,7 +182,7 @@ public class LukeMain {
     try {
       deleteExistingIndex(indexPath);
 
-      int numDocs = 100; // Number of documents to index
+      int numDocs = 1000; // Number of documents to index
 
       // Directory where the index will be stored
       Directory directory = FSDirectory.open(Paths.get(indexPath));
@@ -248,7 +248,7 @@ public class LukeMain {
        // doc.add(new TextField("content", "bob hehe potatis", Field.Store.NO));
 
         writer.addDocument(doc);
-        break;
+      //  break;
       }
 
       // Commit changes and close writer
