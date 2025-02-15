@@ -832,7 +832,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         code |= 1;
       }
       termsOut.writeVInt(code);
-
+    //  termsOut.writeString("NUM OF TERMS: ");
+    //  termsOut.writeString(String.valueOf(numEntries));
       /*
       if (DEBUG) {
         System.out.println("  writeBlock " + (isFloor ? "(floor) " : "") + "seg=" + segment + " pending.size()=" +

@@ -7,15 +7,14 @@ import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 
-public class DeltaCompression {
+public class NoCompressionUtils {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Encode 128 integers from {@code longs} into {@code out}. */
-    // TODO: try using normal bitpacking instead of variable integers
-    public static void encode(long[] deltas, DataOutput out) throws IOException
+    public static void encode(long[] longs, DataOutput out) throws IOException
     {
-        for (int i = 0; i < deltas.length; i++) {
-            out.writeVInt((int)(deltas[i]));
+        for (int i = 0; i < longs.length; i++) {
+            out.writeLong(longs[i]);
         }
     }
 
@@ -31,9 +30,6 @@ public class DeltaCompression {
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public static void decode(PostingDecodingUtil pdu, long[] longs) throws IOException {
-        longs[0] = pdu.in.readVInt();
-        for (int i = 1; i < longs.length; i++) {
-            longs[i] = pdu.in.readVInt(); //+ longs[i-1];
-        }
+        pdu.in.readLongs(longs, 0, 128);
     }
 }

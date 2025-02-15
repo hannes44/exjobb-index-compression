@@ -32,7 +32,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
-import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
+import org.apache.lucene.codecs.integercompression.DeltaCompression;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.FieldInfo;
@@ -50,7 +50,7 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 
 /** Writer for {@link Lucene912PostingsFormat}. */
-public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
+public class DeltaCompressionPostingsWriter extends PushPostingsWriterBase {
 
     static final IntBlockTermState EMPTY_STATE = new IntBlockTermState();
 
@@ -70,7 +70,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
     final long[] freqBuffer;
     private int docBufferUpto;
 
-    final long[] posBuffer;
+    final long[] posDeltaBuffer;
     final long[] payloadLengthBuffer;
     final long[] offsetStartDeltaBuffer;
     final long[] offsetLengthBuffer;
@@ -126,7 +126,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
     private final ByteBuffersDataOutput level1Output = ByteBuffersDataOutput.newResettableInstance();
 
     /** Sole constructor. */
-    public NoCompressionPostingsWriter(SegmentWriteState state) throws IOException {
+    public DeltaCompressionPostingsWriter(SegmentWriteState state) throws IOException {
         String metaFileName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene912PostingsFormat.META_EXTENSION);
@@ -147,7 +147,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
             forDeltaUtil = new ForDeltaUtil();
             pforUtil = new PForUtil(forUtil);
             if (state.fieldInfos.hasProx()) {
-                posBuffer = new long[BLOCK_SIZE];
+                posDeltaBuffer = new long[BLOCK_SIZE];
                 String posFileName =
                         IndexFileNames.segmentFileName(
                                 state.segmentInfo.name, state.segmentSuffix, Lucene912PostingsFormat.POS_EXTENSION);
@@ -182,7 +182,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                             payOut, PAY_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
                 }
             } else {
-                posBuffer = null;
+                posDeltaBuffer = null;
                 payloadLengthBuffer = null;
                 offsetStartDeltaBuffer = null;
                 offsetLengthBuffer = null;
@@ -299,7 +299,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         if (position < 0) {
             throw new CorruptIndexException("position=" + position + " is < 0", docOut);
         }
-        posBuffer[posBufferUpto] = position;
+        posDeltaBuffer[posBufferUpto] = position - lastPosition;
         if (writePayloads) {
             if (payload == null || payload.length == 0) {
                 // no payload
@@ -326,8 +326,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         posBufferUpto++;
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
-         //   pforUtil.encode(posDeltaBuffer, posOut);
-            NoCompressionUtils.encode(posBuffer, posOut);
+            DeltaCompression.encode(posDeltaBuffer, posOut);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -550,16 +549,15 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                 int lastOffsetLength = -1; // force first offset length to be written
                 int payloadBytesReadUpto = 0;
                 for (int i = 0; i < posBufferUpto; i++) {
-                    final int position = (int) posBuffer[i];
+                    final int posDelta = (int) posDeltaBuffer[i];
                     if (writePayloads) {
-                        // TODO
                         final int payloadLength = (int) payloadLengthBuffer[i];
                         if (payloadLength != lastPayloadLength) {
                             lastPayloadLength = payloadLength;
-                            posOut.writeVInt((position << 1) | 1);
+                            posOut.writeVInt((posDelta << 1) | 1);
                             posOut.writeVInt(payloadLength);
                         } else {
-                            posOut.writeVInt(position << 1);
+                            posOut.writeVInt(posDelta << 1);
                         }
 
                         if (payloadLength != 0) {
@@ -567,7 +565,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                             payloadBytesReadUpto += payloadLength;
                         }
                     } else {
-                        NoCompressionUtils.encodeSingleInt(position, posOut);
+                        posOut.writeVInt(posDelta);
                     }
 
                     if (writeOffsets) {
