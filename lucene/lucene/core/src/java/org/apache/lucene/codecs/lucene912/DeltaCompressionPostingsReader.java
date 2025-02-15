@@ -35,7 +35,7 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
-import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
+import org.apache.lucene.codecs.integercompression.DeltaCompression;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -65,7 +65,7 @@ import org.apache.lucene.util.IOUtils;
  *
  * @lucene.experimental
  */
-public final class NoCompressionPostingsReader extends PostingsReaderBase {
+public final class DeltaCompressionPostingsReader extends PostingsReaderBase {
 
     static final VectorizationProvider VECTORIZATION_PROVIDER = VectorizationProvider.getInstance();
 
@@ -81,7 +81,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
     private final int version;
 
     /** Sole constructor. */
-    public NoCompressionPostingsReader(SegmentReadState state) throws IOException {
+    public DeltaCompressionPostingsReader(SegmentReadState state) throws IOException {
         String metaName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene912PostingsFormat.META_EXTENSION);
@@ -380,7 +380,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         private long freqFP;
 
         public BlockDocsEnum(FieldInfo fieldInfo) throws IOException {
-            this.startDocIn = NoCompressionPostingsReader.this.docIn;
+            this.startDocIn = DeltaCompressionPostingsReader.this.docIn;
             this.docIn = null;
             indexHasFreq = fieldInfo.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS) >= 0;
             indexHasPos =
@@ -633,7 +633,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
         private final long[] docBuffer = new long[BLOCK_SIZE + 1];
         private final long[] freqBuffer = new long[BLOCK_SIZE + 1];
-        private final long[] posBuffer = new long[BLOCK_SIZE];
+        private final long[] posDeltaBuffer = new long[BLOCK_SIZE];
 
         private final long[] payloadLengthBuffer;
         private final long[] offsetStartDeltaBuffer;
@@ -711,7 +711,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         private int singletonDocID; // docid when there is a single pulsed posting, otherwise -1
 
         public EverythingEnum(FieldInfo fieldInfo) throws IOException {
-            this.startDocIn = NoCompressionPostingsReader.this.docIn;
+            this.startDocIn = DeltaCompressionPostingsReader.this.docIn;
             this.docIn = null;
             indexHasFreq = fieldInfo.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS) >= 0;
             indexHasPos =
@@ -724,10 +724,10 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
             indexHasPayloads = fieldInfo.hasPayloads();
             indexHasOffsetsOrPayloads = indexHasOffsets || indexHasPayloads;
 
-            this.posIn = NoCompressionPostingsReader.this.posIn.clone();
+            this.posIn = DeltaCompressionPostingsReader.this.posIn.clone();
             posInUtil = VECTORIZATION_PROVIDER.newPostingDecodingUtil(posIn);
             if (indexHasOffsetsOrPayloads) {
-                this.payIn = NoCompressionPostingsReader.this.payIn.clone();
+                this.payIn = DeltaCompressionPostingsReader.this.payIn.clone();
                 payInUtil = VECTORIZATION_PROVIDER.newPostingDecodingUtil(payIn);
             } else {
                 this.payIn = null;
@@ -1089,14 +1089,13 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 int offsetLength = 0;
                 payloadByteUpto = 0;
                 for (int i = 0; i < count; i++) {
-                    //int code = posIn.readVInt();
-                    int code = NoCompressionUtils.decodeSingleInt(posIn);
+                    int code = posIn.readVInt();
                     if (indexHasPayloads) {
                         if ((code & 1) != 0) {
                             payloadLength = posIn.readVInt();
                         }
                         payloadLengthBuffer[i] = payloadLength;
-                        posBuffer[i] = code >>> 1;
+                        posDeltaBuffer[i] = code >>> 1;
                         if (payloadLength != 0) {
                             if (payloadByteUpto + payloadLength > payloadBytes.length) {
                                 payloadBytes = ArrayUtil.grow(payloadBytes, payloadByteUpto + payloadLength);
@@ -1105,7 +1104,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                             payloadByteUpto += payloadLength;
                         }
                     } else {
-                        posBuffer[i] = code;
+                        posDeltaBuffer[i] = code;
                     }
 
                     if (indexHasOffsets) {
@@ -1119,7 +1118,8 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 }
                 payloadByteUpto = 0;
             } else {
-               NoCompressionUtils.decode(posInUtil, posBuffer);
+                DeltaCompression.decode(posInUtil, posDeltaBuffer);
+
                 if (indexHasPayloads) {
                     if (needsPayloads) {
                         pforUtil.decode(payInUtil, payloadLengthBuffer);
@@ -1166,7 +1166,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 refillPositions();
                 posBufferUpto = 0;
             }
-            position = (int) posBuffer[posBufferUpto];
+            position += posDeltaBuffer[posBufferUpto];
 
             if (indexHasPayloads) {
                 payloadLength = (int) payloadLengthBuffer[posBufferUpto];
@@ -1256,7 +1256,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
         public BlockImpactsDocsEnum(FieldInfo fieldInfo, IntBlockTermState termState)
                 throws IOException {
-            this.startDocIn = NoCompressionPostingsReader.this.docIn;
+            this.startDocIn = DeltaCompressionPostingsReader.this.docIn;
             indexHasFreq = fieldInfo.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS) >= 0;
             indexHasPos =
                     fieldInfo.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS) >= 0;
@@ -1575,7 +1575,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
         private final long[] docBuffer = new long[BLOCK_SIZE + 1];
         private final long[] freqBuffer = new long[BLOCK_SIZE];
-        private final long[] posBuffer = new long[BLOCK_SIZE];
+        private final long[] posDeltaBuffer = new long[BLOCK_SIZE];
 
         private int docBufferUpto;
         private int posBufferUpto;
@@ -1638,7 +1638,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
         public BlockImpactsPostingsEnum(FieldInfo fieldInfo, IntBlockTermState termState)
                 throws IOException {
-            this.startDocIn = NoCompressionPostingsReader.this.docIn;
+            this.startDocIn = DeltaCompressionPostingsReader.this.docIn;
             indexHasFreq = fieldInfo.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS) >= 0;
             indexHasPos =
                     fieldInfo.getIndexOptions().compareTo(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS) >= 0;
@@ -1650,7 +1650,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
             indexHasPayloads = fieldInfo.hasPayloads();
             indexHasOffsetsOrPayloads = indexHasOffsets || indexHasPayloads;
 
-            this.posIn = NoCompressionPostingsReader.this.posIn.clone();
+            this.posIn = DeltaCompressionPostingsReader.this.posIn.clone();
             posInUtil = VECTORIZATION_PROVIDER.newPostingDecodingUtil(posIn);
 
             // We set the last element of docBuffer to NO_MORE_DOCS, it helps save conditionals in
@@ -1972,17 +1972,17 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 final int count = (int) (totalTermFreq % BLOCK_SIZE);
                 int payloadLength = 0;
                 for (int i = 0; i < count; i++) {
-                    int code = posIn.readInt();
+                    int code = posIn.readVInt();
                     if (indexHasPayloads) {
                         if ((code & 1) != 0) {
                             payloadLength = posIn.readVInt();
                         }
-                        posBuffer[i] = code >>> 1;
+                        posDeltaBuffer[i] = code >>> 1;
                         if (payloadLength != 0) {
                             posIn.skipBytes(payloadLength);
                         }
                     } else {
-                        posBuffer[i] = code;
+                        posDeltaBuffer[i] = code;
                     }
 
                     if (indexHasOffsets) {
@@ -1993,8 +1993,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                     }
                 }
             } else {
-                //pforUtil.decode(posInUtil, posDeltaBuffer);
-                NoCompressionUtils.decode(posInUtil, posBuffer);
+                DeltaCompression.decode(posInUtil, posDeltaBuffer);
             }
         }
 
@@ -2011,7 +2010,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 refillPositions();
                 posBufferUpto = 0;
             }
-            position = (int) posBuffer[posBufferUpto];
+            position += posDeltaBuffer[posBufferUpto];
 
             posBufferUpto++;
             posPendingCount--;

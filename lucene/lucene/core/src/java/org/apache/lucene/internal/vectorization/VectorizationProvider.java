@@ -214,7 +214,8 @@ public abstract class VectorizationProvider {
           "org.apache.lucene.util.VectorUtil",
           "org.apache.lucene.codecs.lucene912.Lucene912PostingsReader",
           "org.apache.lucene.codecs.lucene912.PostingIndexInput",
-              "org.apache.lucene.codecs.lucene912.NoCompressionPostingsReader");
+              "org.apache.lucene.codecs.lucene912.NoCompressionPostingsReader",
+              "org.apache.lucene.codecs.lucene912.DeltaCompressionPostingsReader");
 
   private static void ensureCaller() {
     final boolean validCaller =

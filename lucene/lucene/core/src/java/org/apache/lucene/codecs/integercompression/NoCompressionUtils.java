@@ -2,6 +2,7 @@ package org.apache.lucene.codecs.integercompression;
 
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
@@ -19,6 +20,11 @@ public class NoCompressionUtils {
 
     public static void encodeSingleInt(int input, DataOutput out) throws IOException {
         out.writeInt(input);
+    }
+
+    public static int decodeSingleInt(IndexInput input) throws IOException
+    {
+        return input.readInt();
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
