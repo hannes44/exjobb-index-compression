@@ -363,11 +363,14 @@ public final class NoCompressionPostingsFormat extends PostingsFormat {
     private final int minTermBlockSize;
     private final int maxTermBlockSize;
 
+    private IntegerCompressor integerCompressor;
+
     /** Creates {@code Lucene912PostingsFormat} with default settings. */
-    public NoCompressionPostingsFormat() {
+    public NoCompressionPostingsFormat(IntegerCompressionType integerCompressionType) {
         this(
                 Lucene90BlockTreeTermsWriter.DEFAULT_MIN_BLOCK_SIZE,
-                Lucene90BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE);
+                Lucene90BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE,
+                integerCompressionType);
     }
 
     /**
@@ -377,16 +380,18 @@ public final class NoCompressionPostingsFormat extends PostingsFormat {
      * @see
      *     Lucene90BlockTreeTermsWriter#Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)
      */
-    public NoCompressionPostingsFormat(int minTermBlockSize, int maxTermBlockSize) {
+    public NoCompressionPostingsFormat(int minTermBlockSize, int maxTermBlockSize, IntegerCompressionType integerCompressionType) {
         super("SimpleText");
         Lucene90BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);
         this.minTermBlockSize = minTermBlockSize;
         this.maxTermBlockSize = maxTermBlockSize;
+
+        integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
     }
 
     @Override
     public FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
-        PostingsWriterBase postingsWriter = new NoCompressionPostingsWriter(state);
+        PostingsWriterBase postingsWriter = new NoCompressionPostingsWriter(state, integerCompressor);
         boolean success = false;
         try {
             FieldsConsumer ret =

@@ -32,7 +32,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
-import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
+import org.apache.lucene.codecs.integercompression.NoCompressor;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.FieldInfo;
@@ -125,8 +125,13 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
      */
     private final ByteBuffersDataOutput level1Output = ByteBuffersDataOutput.newResettableInstance();
 
+
+    private IntegerCompressor integerCompressor;
+
     /** Sole constructor. */
-    public NoCompressionPostingsWriter(SegmentWriteState state) throws IOException {
+    public NoCompressionPostingsWriter(SegmentWriteState state, IntegerCompressor integerCompressor) throws IOException {
+        this.integerCompressor = integerCompressor;
+
         String metaFileName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene912PostingsFormat.META_EXTENSION);
@@ -139,6 +144,9 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         boolean success = false;
         try {
             docOut = state.directory.createOutput(docFileName, state.context);
+
+            metaOut.writeString(integerCompressor.getType().name());
+
             CodecUtil.writeIndexHeader(
                     metaOut, META_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
             CodecUtil.writeIndexHeader(
@@ -327,7 +335,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
          //   pforUtil.encode(posDeltaBuffer, posOut);
-            NoCompressionUtils.encode(posBuffer, posOut);
+            integerCompressor.encode(posBuffer, posOut);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -567,7 +575,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
                             payloadBytesReadUpto += payloadLength;
                         }
                     } else {
-                        NoCompressionUtils.encodeSingleInt(position, posOut);
+                        integerCompressor.encodeSingleInt(position, posOut);
                     }
 
                     if (writeOffsets) {

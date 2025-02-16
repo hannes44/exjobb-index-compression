@@ -30,6 +30,7 @@ import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.lucene90.Lucene90StoredFieldsFormat;
 import org.apache.lucene.codecs.lucene912.DeltaCompressionPostingsFormat;
+import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat;
 import org.apache.lucene.codecs.lucene912.NoCompressionPostingsFormat;
 
@@ -41,7 +42,7 @@ import org.apache.lucene.codecs.lucene912.NoCompressionPostingsFormat;
  * @lucene.experimental
  */
 public final class SimpleTextCodec extends Codec {
-  private final PostingsFormat postings = new DeltaCompressionPostingsFormat();
+  private PostingsFormat postings = new NoCompressionPostingsFormat(IntegerCompressionType.NONE);
   private final StoredFieldsFormat storedFields = new SimpleTextStoredFieldsFormat();
   private final SegmentInfoFormat segmentInfos = new SimpleTextSegmentInfoFormat();
   private final FieldInfosFormat fieldInfosFormat = new SimpleTextFieldInfosFormat();
@@ -56,6 +57,11 @@ public final class SimpleTextCodec extends Codec {
   public SimpleTextCodec() {
     super("SimpleText");
   }
+  public SimpleTextCodec(IntegerCompressionType integerCompressionType) {
+    super("SimpleText");
+    postings = new NoCompressionPostingsFormat(integerCompressionType);
+  }
+
 
   @Override
   public PostingsFormat postingsFormat() {
