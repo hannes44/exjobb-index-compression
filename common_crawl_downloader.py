@@ -1,0 +1,37 @@
+import os
+import gzip
+import shutil
+
+# URL base and range of file numbers
+url_base = "https://data.commoncrawl.org/crawl-data/CC-MAIN-2025-05/segments/1736703361941.29/wet/CC-MAIN-20250126135402-20250126165402-"
+start_index = 0
+end_index = 50  # Change this to the desired number of iterations
+
+# Destination directory where the files will be saved
+destination_dir = "./Datasets/CommonCrawl-2025-05/"
+
+# Ensure the destination directory exists
+os.makedirs(destination_dir, exist_ok=True)
+
+# Loop through numbers and download the files
+for i in range(start_index, end_index):
+    file_num = f"{i:05d}"  # Format the number to 5 digits (e.g., 00001, 00002)
+    file_url = f"{url_base}{file_num}.warc.wet.gz"
+    
+    # Create the full file paths
+    gz_file_path = os.path.join(destination_dir, f"CC-MAIN-20250126135402-20250126165402-{file_num}.warc.wet.gz")
+    output_file_path = gz_file_path.replace(".gz", "")
+    
+    # Use curl to download the file to the destination directory
+    os.system(f"curl -o {gz_file_path} {file_url}")
+    print(f"Downloaded {file_url} to {gz_file_path}")
+    
+    # Unzip the downloaded .gz file
+    with gzip.open(gz_file_path, 'rb') as f_in:
+        with open(output_file_path, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    print(f"Unzipped {gz_file_path} to {output_file_path}")
+    
+    # Optionally remove the .gz file after extraction
+    os.remove(gz_file_path)
+    print(f"Removed {gz_file_path}")
