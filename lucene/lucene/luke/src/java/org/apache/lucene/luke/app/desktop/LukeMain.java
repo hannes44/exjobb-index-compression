@@ -30,6 +30,7 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.apache.lucene.codecs.lucene912.CustomCodec;
+import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.document.*;
 import org.apache.lucene.luke.app.desktop.components.LukeWindowProvider;
@@ -192,8 +193,8 @@ public class LukeMain {
 
       // Index writer configuration
       IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      config.setCodec(new SimpleTextCodec());
-
+      config.setCodec(new SimpleTextCodec(IntegerCompressionType.DELTA));
+      //config.setCodec(new Lucene912Codec());
       IndexWriter writer = new IndexWriter(directory, config);
 
       // Fixed seed for deterministic random content generation
@@ -248,7 +249,6 @@ public class LukeMain {
        // doc.add(new TextField("content", "bob hehe potatis", Field.Store.NO));
 
         writer.addDocument(doc);
-      //  break;
       }
 
       // Commit changes and close writer

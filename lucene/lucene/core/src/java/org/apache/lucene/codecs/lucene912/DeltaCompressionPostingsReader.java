@@ -35,7 +35,7 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
-import org.apache.lucene.codecs.integercompression.DeltaCompression;
+import org.apache.lucene.codecs.integercompression.DeltaCompressor;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -1118,7 +1118,7 @@ public final class DeltaCompressionPostingsReader extends PostingsReaderBase {
                 }
                 payloadByteUpto = 0;
             } else {
-                DeltaCompression.decode(posInUtil, posDeltaBuffer);
+             //   DeltaCompressor.decode(posInUtil, posDeltaBuffer);
 
                 if (indexHasPayloads) {
                     if (needsPayloads) {
@@ -1993,7 +1993,7 @@ public final class DeltaCompressionPostingsReader extends PostingsReaderBase {
                     }
                 }
             } else {
-                DeltaCompression.decode(posInUtil, posDeltaBuffer);
+             //   DeltaCompressor.decode(posInUtil, posDeltaBuffer);
             }
         }
 

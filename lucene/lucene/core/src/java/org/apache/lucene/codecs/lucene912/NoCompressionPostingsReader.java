@@ -35,7 +35,7 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
-import org.apache.lucene.codecs.integercompression.NoCompressionUtils;
+import org.apache.lucene.codecs.integercompression.NoCompressor;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -80,6 +80,8 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
     private final int version;
 
+    private IntegerCompressor integerCompressor;
+
     /** Sole constructor. */
     public NoCompressionPostingsReader(SegmentReadState state) throws IOException {
         String metaName =
@@ -90,6 +92,15 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         boolean success = false;
         try {
             metaIn = state.directory.openChecksumInput(metaName, IOContext.READONCE);
+
+            String integerCompressionTypeString = metaIn.readString();
+
+            for (IntegerCompressionType type : IntegerCompressionType.values())
+            {
+                if (type.name().equals(integerCompressionTypeString))
+                    integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(type);
+            }
+
             version =
                     CodecUtil.checkIndexHeader(
                             metaIn,
@@ -1090,7 +1101,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 payloadByteUpto = 0;
                 for (int i = 0; i < count; i++) {
                     //int code = posIn.readVInt();
-                    int code = NoCompressionUtils.decodeSingleInt(posIn);
+                    int code = integerCompressor.decodeSingleInt(posIn);
                     if (indexHasPayloads) {
                         if ((code & 1) != 0) {
                             payloadLength = posIn.readVInt();
@@ -1119,7 +1130,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 }
                 payloadByteUpto = 0;
             } else {
-               NoCompressionUtils.decode(posInUtil, posBuffer);
+               integerCompressor.decode(posInUtil, posBuffer);
                 if (indexHasPayloads) {
                     if (needsPayloads) {
                         pforUtil.decode(payInUtil, payloadLengthBuffer);
@@ -1994,7 +2005,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 }
             } else {
                 //pforUtil.decode(posInUtil, posDeltaBuffer);
-                NoCompressionUtils.decode(posInUtil, posBuffer);
+                integerCompressor.decode(posInUtil, posBuffer);
             }
         }
 

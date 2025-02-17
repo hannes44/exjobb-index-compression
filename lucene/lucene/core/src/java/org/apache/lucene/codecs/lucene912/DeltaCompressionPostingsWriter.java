@@ -32,7 +32,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
-import org.apache.lucene.codecs.integercompression.DeltaCompression;
+import org.apache.lucene.codecs.integercompression.DeltaCompressor;
 import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.FieldInfo;
@@ -326,7 +326,7 @@ public class DeltaCompressionPostingsWriter extends PushPostingsWriterBase {
         posBufferUpto++;
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
-            DeltaCompression.encode(posDeltaBuffer, posOut);
+           // DeltaCompressor.encode(posDeltaBuffer, posOut);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
