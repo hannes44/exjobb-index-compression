@@ -9,9 +9,9 @@ import org.apache.lucene.store.IndexInput;
 
 import java.io.IOException;
 
-
-
-
+/**
+ * Factory class for creating IntegerCompressor objects.
+ */
 public class IntegerCompressionFactory {
     public static IntegerCompressor CreateIntegerCompressor(IntegerCompressionType compressionType)
     {

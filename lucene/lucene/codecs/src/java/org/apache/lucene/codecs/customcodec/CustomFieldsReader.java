@@ -74,6 +74,7 @@ import org.apache.lucene.util.fst.PairOutputs;
 import org.apache.lucene.util.fst.PositiveIntOutputs;
 import org.apache.lucene.util.fst.Util;
 
+/** Reads plain-text stored fields. */
 public class CustomFieldsReader extends FieldsProducer {
 
     private final TreeMap<String, Long> fields;
@@ -442,6 +443,9 @@ public class CustomFieldsReader extends FieldsProducer {
         }
     }
 
+    /**
+     * PostingsEnum for the custom postings format.
+     */
     public class CustomPostingsEnum extends ImpactsEnum {
         private final IndexInput inStart;
         private final IndexInput in;

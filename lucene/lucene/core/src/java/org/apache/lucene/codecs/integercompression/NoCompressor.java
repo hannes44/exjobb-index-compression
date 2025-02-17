@@ -9,6 +9,9 @@ import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 
+/**
+ * Implements no compression for integer sequences.
+ */
 public class NoCompressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding

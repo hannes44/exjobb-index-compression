@@ -35,6 +35,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.BytesRefBuilder;
 
+/** Writes plain text custom postings format. */
 public class CustomFieldsWriter extends FieldsConsumer {
 
     private IndexOutput out;

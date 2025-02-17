@@ -8,7 +8,9 @@ import org.apache.lucene.store.IndexInput;
 
 import java.io.IOException;
 
-// Frame of Reference compression
+/**
+ * Implements FOR compression for integer sequences.
+ */
 public class FORCompression implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
