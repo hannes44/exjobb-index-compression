@@ -6,6 +6,9 @@ import org.apache.lucene.store.IndexInput;
 
 import java.io.IOException;
 
+/**
+ * Interface for IntegerCompressor classes.
+ */
 public interface IntegerCompressor {
     public void encode(long[] deltas, DataOutput out) throws IOException;
 

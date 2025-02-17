@@ -70,6 +70,7 @@ import org.apache.lucene.util.fst.PairOutputs;
 import org.apache.lucene.util.fst.PositiveIntOutputs;
 import org.apache.lucene.util.fst.Util;
 
+/** Reads plain-text stored fields. */
 public class SimpleTextFieldsReader extends FieldsProducer {
 
   private final TreeMap<String, Long> fields;
@@ -438,6 +439,9 @@ public class SimpleTextFieldsReader extends FieldsProducer {
     }
   }
 
+  /**
+   * PostingsEnum for the simple text postings format.
+   */
   public class SimpleTextPostingsEnum extends ImpactsEnum {
     private final IndexInput inStart;
     private final IndexInput in;
