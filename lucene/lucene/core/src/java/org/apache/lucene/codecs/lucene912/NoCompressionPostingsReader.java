@@ -461,7 +461,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         public int freq() throws IOException {
             if (freqFP != -1) {
                 docIn.seek(freqFP);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 freqFP = -1;
             }
 
@@ -850,7 +850,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
             if (left >= BLOCK_SIZE) {
                 forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 docCountUpto += BLOCK_SIZE;
             } else if (docFreq == 1) {
                 docBuffer[0] = singletonDocID;
@@ -1322,7 +1322,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         public int freq() throws IOException {
             if (freqFP != -1) {
                 docIn.seek(freqFP);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 freqFP = -1;
             }
             return (int) freqBuffer[docBufferUpto - 1];
@@ -1731,7 +1731,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
             if (left >= BLOCK_SIZE) {
                 forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 docCountUpto += BLOCK_SIZE;
             } else if (docFreq == 1) {
                 docBuffer[0] = singletonDocID;

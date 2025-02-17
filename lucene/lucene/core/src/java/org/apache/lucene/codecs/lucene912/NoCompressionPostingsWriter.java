@@ -418,7 +418,7 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
             long numSkipBytes = level0Output.size();
             forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
             if (writeFreqs) {
-                pforUtil.encode(freqBuffer, level0Output);
+                integerCompressor.encode(freqBuffer, level0Output);
             }
 
             // docID - lastBlockDocID is at least 128, so it can never fit a single byte with a vint
