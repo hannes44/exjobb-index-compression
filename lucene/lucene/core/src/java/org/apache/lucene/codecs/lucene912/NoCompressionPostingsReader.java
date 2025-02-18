@@ -93,6 +93,8 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         try {
             metaIn = state.directory.openChecksumInput(metaName, IOContext.READONCE);
 
+            integerCompressor = Lucene912Codec.integerCompressor; //IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.DELTA);
+/*
             String integerCompressionTypeString = metaIn.readString();
 
             for (IntegerCompressionType type : IntegerCompressionType.values())
@@ -100,6 +102,12 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 if (type.name().equals(integerCompressionTypeString))
                     integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(type);
             }
+
+
+ */
+
+
+
 
             version =
                     CodecUtil.checkIndexHeader(
@@ -141,6 +149,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 IOUtils.closeWhileHandlingException(metaIn);
             }
         }
+
 
         success = false;
         IndexInput docIn = null;

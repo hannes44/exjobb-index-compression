@@ -42,7 +42,7 @@ import org.apache.lucene.codecs.lucene912.NoCompressionPostingsFormat;
  * @lucene.experimental
  */
 public final class SimpleTextCodec extends Codec {
-  private PostingsFormat postings = new NoCompressionPostingsFormat(IntegerCompressionType.NONE);
+  private PostingsFormat postings = new SimpleTextPostingsFormat();
   private final StoredFieldsFormat storedFields = new SimpleTextStoredFieldsFormat();
   private final SegmentInfoFormat segmentInfos = new SimpleTextSegmentInfoFormat();
   private final FieldInfosFormat fieldInfosFormat = new SimpleTextFieldInfosFormat();
@@ -56,10 +56,6 @@ public final class SimpleTextCodec extends Codec {
 
   public SimpleTextCodec() {
     super("SimpleText");
-  }
-  public SimpleTextCodec(IntegerCompressionType integerCompressionType) {
-    super("SimpleText");
-    postings = new NoCompressionPostingsFormat(integerCompressionType);
   }
 
 

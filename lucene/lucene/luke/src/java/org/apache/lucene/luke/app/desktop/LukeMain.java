@@ -20,6 +20,7 @@ package org.apache.lucene.luke.app.desktop;
 import static org.apache.lucene.luke.app.desktop.util.ExceptionHandler.handle;
 
 import java.awt.GraphicsEnvironment;
+import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.concurrent.SynchronousQueue;
@@ -29,6 +30,7 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
 
+import org.apache.lucene.codecs.benchmarking.commoncrawl.CommonCrawlBenchmarker;
 import org.apache.lucene.codecs.lucene912.CustomCodec;
 import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 import org.apache.lucene.codecs.lucene912.Lucene912Codec;
@@ -40,9 +42,6 @@ import org.apache.lucene.luke.app.desktop.util.FontUtils;
 import org.apache.lucene.luke.app.desktop.util.MessageUtils;
 import org.apache.lucene.luke.util.LoggerFactory;
 import javax.swing.JOptionPane;
-import java.io.PrintStream;
-import java.io.FileOutputStream;
-import java.io.FileDescriptor;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
@@ -51,7 +50,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -60,7 +58,6 @@ import java.util.Random;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -193,9 +190,20 @@ public class LukeMain {
 
       // Index writer configuration
       IndexWriterConfig config = new IndexWriterConfig(analyzer);
-      config.setCodec(new SimpleTextCodec(IntegerCompressionType.DELTA));
-      //config.setCodec(new Lucene912Codec());
+
+
+      boolean useDefaultLuceneCompression = false;
+      if (useDefaultLuceneCompression)
+        config.setCodec(new Lucene912Codec());
+      else
+        config.setCodec(new Lucene912Codec(Lucene912Codec.Mode.BEST_SPEED, IntegerCompressionType.DELTA));
+
       IndexWriter writer = new IndexWriter(directory, config);
+
+      CommonCrawlBenchmarker.BenchmarkIndexingCommonCrawl(writer);
+
+      if (true)
+        return;
 
       // Fixed seed for deterministic random content generation
       long seed = 12345L; // You can change this to any constant value
@@ -225,7 +233,7 @@ public class LukeMain {
               "vocal", "wallet", "wedding", "weight", "welfare", "window", "winter", "workshop", "yogurt", "zone", "zenith"
       );
 
-
+      long start = System.currentTimeMillis();
       // Create and add documents
       for (int i = 0; i < numDocs; i++) {
         Document doc = new Document();
@@ -238,15 +246,11 @@ public class LukeMain {
 
         FieldType fieldType = new FieldType(TextField.TYPE_NOT_STORED);
         fieldType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-      //  fieldType.setStoreTermVectorPositions(true); // Ensure positions are stored
-        //Document doc = new Document();
-        //doc.add(new Field("content", "hello world", fieldType));
 
 
         String randomContent = generateRandomContent(10000, words, random); // Generate random content with real words
-       // System.out.println(randomContent);
         doc.add(new TextField("content", randomContent, Field.Store.NO));
-       // doc.add(new TextField("content", "bob hehe potatis", Field.Store.NO));
+
 
         writer.addDocument(doc);
       }
@@ -256,6 +260,11 @@ public class LukeMain {
       writer.close();
 
       System.out.println(numDocs + " documents indexed.");
+
+      long elapsedTime = System.currentTimeMillis() - start;
+
+      System.out.println("Indexing time in Milli seconds: " + elapsedTime);
+
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -386,5 +395,6 @@ public class LukeMain {
   }
 
   }
+
 }
 

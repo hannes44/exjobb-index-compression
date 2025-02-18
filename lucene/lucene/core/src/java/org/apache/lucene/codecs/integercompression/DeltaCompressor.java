@@ -16,7 +16,10 @@ public class DeltaCompressor implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(long[] positions, DataOutput out) throws IOException
     {
-        out.writeVInt((int)(positions[0]));
+        //Maybe we can get int overflow idk
+
+        out.writeVInt((int)positions[0]);
+
         for (int i = 1; i < positions.length; i++) {
             int delta = (int)(positions[i] - positions[i-1]);
             out.writeVInt(delta);
@@ -36,7 +39,7 @@ public class DeltaCompressor implements IntegerCompressor {
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, long[] longs) throws IOException {
         longs[0] = pdu.in.readVInt();
-        for (int i = 1; i < longs.length; i++) {
+        for (int i = 1; i < 128; i++) {
             longs[i] = pdu.in.readVInt() + longs[i-1];
         }
     }

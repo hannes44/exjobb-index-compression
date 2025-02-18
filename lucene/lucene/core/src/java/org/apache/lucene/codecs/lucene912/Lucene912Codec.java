@@ -104,6 +104,12 @@ public class Lucene912Codec extends Codec {
 
   private final StoredFieldsFormat storedFieldsFormat;
 
+  // Flag for deciding if we should use custom integer compression
+  // This is needed since lucene will create new instances of the codec
+  public static boolean useDefaultCompression = false;
+
+  public static IntegerCompressor integerCompressor;
+
   /** Instantiates a new codec. */
   public Lucene912Codec() {
     this(Mode.BEST_SPEED);
@@ -118,7 +124,21 @@ public class Lucene912Codec extends Codec {
     super("Lucene912");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
-    this.defaultPostingsFormat = new Lucene912PostingsFormat();
+    if (useDefaultCompression)
+      this.defaultPostingsFormat = new Lucene912PostingsFormat();
+    else
+      this.defaultPostingsFormat = new NoCompressionPostingsFormat();
+    this.defaultDVFormat = new Lucene90DocValuesFormat();
+    this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
+  }
+
+  public Lucene912Codec(Mode mode, IntegerCompressionType integerCompressionType) {
+    super("Lucene912");
+    this.storedFieldsFormat =
+            new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
+    Lucene912Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
+    Lucene912Codec.useDefaultCompression = false;
+    this.defaultPostingsFormat = new NoCompressionPostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
   }

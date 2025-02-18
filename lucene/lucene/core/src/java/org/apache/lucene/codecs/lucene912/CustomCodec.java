@@ -118,7 +118,7 @@ public class CustomCodec extends Codec {
         super("Custom");
         this.storedFieldsFormat =
                 new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
-        this.defaultPostingsFormat = new NoCompressionPostingsFormat(IntegerCompressionType.DELTA);
+        this.defaultPostingsFormat = new NoCompressionPostingsFormat();
         this.defaultDVFormat = new Lucene90DocValuesFormat();
         this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
     }
