@@ -31,7 +31,6 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 
 import org.apache.lucene.codecs.benchmarking.commoncrawl.CommonCrawlBenchmarker;
-import org.apache.lucene.codecs.lucene912.CustomCodec;
 import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.document.*;
@@ -41,7 +40,6 @@ import org.apache.lucene.luke.app.desktop.util.DialogOpener;
 import org.apache.lucene.luke.app.desktop.util.FontUtils;
 import org.apache.lucene.luke.app.desktop.util.MessageUtils;
 import org.apache.lucene.luke.util.LoggerFactory;
-import javax.swing.JOptionPane;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexWriter;
@@ -52,22 +50,15 @@ import org.apache.lucene.store.FSDirectory;
 
 import java.nio.file.Paths;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Random;
 
-import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.lucene.index.*;
-import org.apache.lucene.store.*;
 import org.apache.lucene.search.*;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import java.nio.file.Paths;
-import org.apache.lucene.codecs.simpletext.SimpleTextCodec;
 
 /** Entry class for desktop Luke */
 public class LukeMain {

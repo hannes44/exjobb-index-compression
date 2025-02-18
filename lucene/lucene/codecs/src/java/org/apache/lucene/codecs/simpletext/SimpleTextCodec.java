@@ -28,11 +28,6 @@ import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
-import org.apache.lucene.codecs.lucene90.Lucene90StoredFieldsFormat;
-import org.apache.lucene.codecs.lucene912.DeltaCompressionPostingsFormat;
-import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
-import org.apache.lucene.codecs.lucene912.Lucene912PostingsFormat;
-import org.apache.lucene.codecs.lucene912.NoCompressionPostingsFormat;
 
 /**
  * plain text index format.

@@ -124,10 +124,7 @@ public class Lucene912Codec extends Codec {
     super("Lucene912");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
-    if (useDefaultCompression)
-      this.defaultPostingsFormat = new Lucene912PostingsFormat();
-    else
-      this.defaultPostingsFormat = new NoCompressionPostingsFormat();
+    this.defaultPostingsFormat = new Lucene912PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
   }
@@ -138,7 +135,7 @@ public class Lucene912Codec extends Codec {
             new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
     Lucene912Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
     Lucene912Codec.useDefaultCompression = false;
-    this.defaultPostingsFormat = new NoCompressionPostingsFormat();
+    this.defaultPostingsFormat = new Lucene912PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
   }
