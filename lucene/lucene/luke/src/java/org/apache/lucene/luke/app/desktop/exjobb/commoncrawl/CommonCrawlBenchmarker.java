@@ -1,4 +1,4 @@
-package org.apache.lucene.luke.app.desktop.benchmark.commoncrawl;
+package org.apache.lucene.luke.app.desktop.exjobb.commoncrawl;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -7,6 +7,9 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.luke.app.desktop.exjobb.DatasetCompressionBenchmarker;
+import org.apache.lucene.luke.app.desktop.exjobb.IndexingBenchmarkData;
+import org.apache.lucene.luke.app.desktop.exjobb.SearchBenchmarkData;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.surround.parser.ParseException;
 import org.apache.lucene.search.IndexSearcher;
@@ -23,7 +26,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 
-public class CommonCrawlBenchmarker {
+public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     final static String folderPath = "../Datasets/CommonCrawl-2025-05";
     public static void parseWETFile(String filePath, WETHandler handler) throws IOException {
@@ -53,20 +56,26 @@ public class CommonCrawlBenchmarker {
         }
     }
 
-    public interface WETHandler {
-        void handleRecord(String url, String content);
+    @Override
+    public String GetDatasetName() {
+        return "CommonCrawl-2025-05";
     }
 
-    public static void BenchmarkIndexingCommonCrawl(IndexWriter indexWriter) {
+    @Override
+    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter) {
+        int maxFiles = 1;
+
         long startTime = System.currentTimeMillis();
 
         File folder = new File(folderPath);
         File[] wetFiles = folder.listFiles((dir, name) -> name.endsWith(".wet")); // Filter for .wet files
         int fileCount = wetFiles.length;
 
+        int filesToIndex = maxFiles > fileCount ? fileCount : maxFiles;
+
         if (wetFiles == null || wetFiles.length == 0) {
             System.out.println("No WET files found in the folder: " + folderPath);
-            return;
+            return null;
         }
 
         // Implement the WETHandler to index the content
@@ -90,9 +99,12 @@ public class CommonCrawlBenchmarker {
 
         int totalFilesProcessed = 0;
         for (File wetFile : wetFiles) {
+            if (filesToIndex <= totalFilesProcessed)
+                break;
+
             try {
                 System.out.println("Processing file: " + wetFile.getName());
-                System.out.print("File: " + (totalFilesProcessed + 1) + " Out of: " + fileCount);
+                System.out.print("File: " + (totalFilesProcessed + 1) + " Out of: " + filesToIndex);
                 parseWETFile(wetFile.getAbsolutePath(), handler);
                 totalFilesProcessed++;
             } catch (IOException e) {
@@ -114,16 +126,19 @@ public class CommonCrawlBenchmarker {
         long duration = endTime - startTime;
 
         System.out.println("Indexing completed for " + totalFilesProcessed + " files in " + duration + " milliseconds.");
+
+        IndexingBenchmarkData result = new IndexingBenchmarkData();
+        result.totalIndexingTimeInMS = duration;
+
+        return result;
     }
 
     private static final String INDEX_PATH = "index"; // Update this
     private static final int WARMUP_QUERIES = 5;
     private static final int MEASURED_QUERIES = 50;
 
-    public static void BenchmarkSearchingCommonCrawl() throws IOException, ParseException {
-
-
-
+    @Override
+    public SearchBenchmarkData BenchmarkSearching(String indexPath) {
         try (FSDirectory directory = FSDirectory.open(Paths.get(INDEX_PATH));
 
              DirectoryReader reader = DirectoryReader.open(directory)) {
@@ -157,22 +172,34 @@ public class CommonCrawlBenchmarker {
             }
 
             double avgTimeMs = (totalTime / 1_000_000.0) / MEASURED_QUERIES;
-            System.out.println("Average Query Time: " + avgTimeMs + " ms");
+           // System.out.println("Average Query Time: " + avgTimeMs + " ms");
 
-        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+            SearchBenchmarkData result = new SearchBenchmarkData();
+            result.averageQuerySearchTimeInMS = avgTimeMs;
+            return result;
+
+
+        } catch (org.apache.lucene.queryparser.classic.ParseException | IOException e) {
             e.printStackTrace();
         }
 
+
+        return null;
+    }
+
+    public interface WETHandler {
+        void handleRecord(String url, String content);
     }
 
     private static void runQuery(IndexSearcher searcher, Query query, boolean measure) throws IOException {
         long start = System.nanoTime();
         TopDocs topDocs = searcher.search(query, 10);
+
         long end = System.nanoTime();
 
         if (measure) {
-            System.out.println("Query: " + query.toString() + " | Time: " + (end - start) / 1_000_000.0 + " ms");
+            System.out.println("Query: " + query.toString() + " | Time: " + (end - start) / 1_000_000.0 + " ms" + "Total Hits: " + topDocs.totalHits);
         }
     }
 
-    }
+}
