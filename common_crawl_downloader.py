@@ -5,13 +5,26 @@ import shutil
 # URL base and range of file numbers
 url_base = "https://data.commoncrawl.org/crawl-data/CC-MAIN-2025-05/segments/1736703361941.29/wet/CC-MAIN-20250126135402-20250126165402-"
 start_index = 0
-end_index = 50  # Change this to the desired number of iterations
+end_index = 5  # Change this to the desired number of iterations
 
 # Destination directory where the files will be saved
 destination_dir = "./Datasets/CommonCrawl-2025-05/"
 
 # Ensure the destination directory exists
 os.makedirs(destination_dir, exist_ok=True)
+
+# Delete all existing files in the destination directory
+for filename in os.listdir(destination_dir):
+    file_path = os.path.join(destination_dir, filename)
+    try:
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)  # Delete the file or symbolic link
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)  # Delete the directory and its contents
+    except Exception as e:
+        print(f"Failed to delete {file_path}. Reason: {e}")
+
+print(f"Cleared all files in {destination_dir}")
 
 # Loop through numbers and download the files
 for i in range(start_index, end_index):
