@@ -106,7 +106,7 @@ public class Lucene912Codec extends Codec {
 
   // Flag for deciding if we should use custom integer compression
   // This is needed since lucene will create new instances of the codec
-  public static boolean useDefaultCompression = false;
+  public static boolean useDefaultCompression = true;
 
   public static IntegerCompressor integerCompressor;
 
