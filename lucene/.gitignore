@@ -34,3 +34,4 @@ __pycache__
 .sdkmanrc
 
 /index
+/lucene/core/bin

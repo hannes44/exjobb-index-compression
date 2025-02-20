@@ -125,12 +125,11 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
      */
     private final ByteBuffersDataOutput level1Output = ByteBuffersDataOutput.newResettableInstance();
 
-
     private IntegerCompressor integerCompressor;
 
     /** Sole constructor. */
-    public NoCompressionPostingsWriter(SegmentWriteState state, IntegerCompressor integerCompressor) throws IOException {
-        this.integerCompressor = integerCompressor;
+    public NoCompressionPostingsWriter(SegmentWriteState state) throws IOException {
+        this.integerCompressor = Lucene912Codec.integerCompressor;
 
         String metaFileName =
                 IndexFileNames.segmentFileName(
@@ -145,12 +144,15 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
         try {
             docOut = state.directory.createOutput(docFileName, state.context);
 
-            metaOut.writeString(integerCompressor.getType().name());
+
 
             CodecUtil.writeIndexHeader(
                     metaOut, META_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
             CodecUtil.writeIndexHeader(
                     docOut, DOC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+
+          //  metaOut.writeString(integerCompressor.getType().name());
+
             final ForUtil forUtil = new ForUtil();
             forDeltaUtil = new ForDeltaUtil();
             pforUtil = new PForUtil(forUtil);
@@ -417,8 +419,9 @@ public class NoCompressionPostingsWriter extends PushPostingsWriterBase {
             }
             long numSkipBytes = level0Output.size();
             forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+
             if (writeFreqs) {
-                pforUtil.encode(freqBuffer, level0Output);
+                integerCompressor.encode(freqBuffer, level0Output);
             }
 
             // docID - lastBlockDocID is at least 128, so it can never fit a single byte with a vint

@@ -386,7 +386,8 @@ public final class Lucene912PostingsFormat extends PostingsFormat {
 
   @Override
   public FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
-    PostingsWriterBase postingsWriter = new Lucene912PostingsWriter(state);
+    PostingsWriterBase postingsWriter = Lucene912Codec.useDefaultCompression ? new Lucene912PostingsWriter(state) : new NoCompressionPostingsWriter(state);
+
     boolean success = false;
     try {
       FieldsConsumer ret =
@@ -403,7 +404,7 @@ public final class Lucene912PostingsFormat extends PostingsFormat {
 
   @Override
   public FieldsProducer fieldsProducer(SegmentReadState state) throws IOException {
-    PostingsReaderBase postingsReader = new Lucene912PostingsReader(state);
+    PostingsReaderBase postingsReader = Lucene912Codec.useDefaultCompression ? new Lucene912PostingsReader(state) : new NoCompressionPostingsReader(state);
     boolean success = false;
     try {
       FieldsProducer ret = new Lucene90BlockTreeTermsReader(postingsReader, state);

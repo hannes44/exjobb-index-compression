@@ -117,3 +117,5 @@ target/
 # IPython
 profile_default/
 ipython_config.py
+
+Datasets/CommonCrawl-2025-05/*

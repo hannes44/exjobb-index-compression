@@ -19,7 +19,7 @@ IF %ERRORLEVEL% NEQ 0 (
 
 :: Run Luke via Java JAR
 echo Running Luke via Java JAR...
-call java -jar "lucene\luke\build\lucene-luke-9.12.0-SNAPSHOT/lucene-luke-9.12.0-SNAPSHOT-standalone.jar"
+call java --add-modules jdk.incubator.vector -jar "lucene\luke\build\lucene-luke-9.12.0-SNAPSHOT/lucene-luke-9.12.0-SNAPSHOT-standalone.jar"
 IF %ERRORLEVEL% NEQ 0 (
     echo ERROR: Luke failed to run via Java JAR.
     exit /b %ERRORLEVEL%

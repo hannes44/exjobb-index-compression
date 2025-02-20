@@ -93,6 +93,8 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         try {
             metaIn = state.directory.openChecksumInput(metaName, IOContext.READONCE);
 
+            integerCompressor = Lucene912Codec.integerCompressor; //IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.DELTA);
+/*
             String integerCompressionTypeString = metaIn.readString();
 
             for (IntegerCompressionType type : IntegerCompressionType.values())
@@ -100,6 +102,12 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 if (type.name().equals(integerCompressionTypeString))
                     integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(type);
             }
+
+
+ */
+
+
+
 
             version =
                     CodecUtil.checkIndexHeader(
@@ -141,6 +149,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
                 IOUtils.closeWhileHandlingException(metaIn);
             }
         }
+
 
         success = false;
         IndexInput docIn = null;
@@ -461,7 +470,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         public int freq() throws IOException {
             if (freqFP != -1) {
                 docIn.seek(freqFP);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 freqFP = -1;
             }
 
@@ -850,7 +859,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
             if (left >= BLOCK_SIZE) {
                 forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 docCountUpto += BLOCK_SIZE;
             } else if (docFreq == 1) {
                 docBuffer[0] = singletonDocID;
@@ -1322,7 +1331,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
         public int freq() throws IOException {
             if (freqFP != -1) {
                 docIn.seek(freqFP);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 freqFP = -1;
             }
             return (int) freqBuffer[docBufferUpto - 1];
@@ -1731,7 +1740,7 @@ public final class NoCompressionPostingsReader extends PostingsReaderBase {
 
             if (left >= BLOCK_SIZE) {
                 forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
-                pforUtil.decode(docInUtil, freqBuffer);
+                integerCompressor.decode(docInUtil, freqBuffer);
                 docCountUpto += BLOCK_SIZE;
             } else if (docFreq == 1) {
                 docBuffer[0] = singletonDocID;
