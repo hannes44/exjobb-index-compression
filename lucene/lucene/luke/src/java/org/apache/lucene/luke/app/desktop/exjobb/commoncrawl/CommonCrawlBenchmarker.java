@@ -7,6 +7,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkUtils;
 import org.apache.lucene.luke.app.desktop.exjobb.DatasetCompressionBenchmarker;
 import org.apache.lucene.luke.app.desktop.exjobb.IndexingBenchmarkData;
 import org.apache.lucene.luke.app.desktop.exjobb.SearchBenchmarkData;
@@ -129,11 +130,12 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
         IndexingBenchmarkData result = new IndexingBenchmarkData();
         result.totalIndexingTimeInMS = duration;
+        result.totalIndexSizeInMB = BenchmarkUtils.getIndexSizeInMB(INDEX_PATH);
 
         return result;
     }
 
-    private static final String INDEX_PATH = "index"; // Update this
+    private static final String INDEX_PATH = "index";
     private static final int WARMUP_QUERIES = 5;
     private static final int MEASURED_QUERIES = 50;
 

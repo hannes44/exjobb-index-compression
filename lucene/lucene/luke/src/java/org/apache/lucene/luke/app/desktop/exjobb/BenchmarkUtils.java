@@ -33,18 +33,14 @@ public class BenchmarkUtils {
         }
     }
 
-    public static long getIndexSizeInMB()
-    {
-        return 1;
-    }
-
     /**
      * Calculates the total size of the index directory by summing the size of all files.
      * @param indexPath Path to the index directory
      * @return The total size in bytes
      */
-    public static long getIndexSize(Path indexPath) {
-        File indexDir = indexPath.toFile();
+    public static long getIndexSizeInMB(String indexPath) {
+        Path indexPathPath = Paths.get(indexPath);
+        File indexDir = indexPathPath.toFile();
         long totalSize = 0;
 
         // Traverse the index directory and sum the sizes of all files
@@ -56,7 +52,10 @@ public class BenchmarkUtils {
                 }
             }
         }
-        return totalSize;
+
+        // Convert bytes to MB (1 MB = 1,048,576 bytes)
+        long sizeInMB = totalSize / (1024 * 1024);
+        return sizeInMB;
     }
 
     /**
