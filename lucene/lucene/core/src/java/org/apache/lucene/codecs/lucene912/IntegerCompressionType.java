@@ -12,4 +12,5 @@ public enum IntegerCompressionType {
     ELIASFANO,
     FASTPFOR,
     DEFAULT,
+    LIMITTTEST
 }
