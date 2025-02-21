@@ -19,13 +19,13 @@ public class FORCompression implements IntegerCompressor {
     public void encode(long[] positions, DataOutput out) throws IOException
     {
         // We store the reference as a VInt
-        int reference = (int) positions[0];
-        out.writeVInt(reference);
+        long reference = positions[0];
+        out.writeLong(reference);
 
         // Now store the offsets from the reference
-        for (int i = 1; i < positions.length; i++) {
-            int offset = (int) positions[i] - reference;
-            out.writeVInt(offset);
+        for (int i = 1; i < 128; i++) {
+            long offset = positions[i] - reference;
+            out.writeLong(offset);
         }
     }
 
@@ -41,9 +41,9 @@ public class FORCompression implements IntegerCompressor {
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, long[] longs) throws IOException {
-        longs[0] = pdu.in.readVInt();
-        for (int i = 1; i < longs.length; i++) {
-            longs[i] = pdu.in.readVInt() + longs[0];
+        longs[0] = pdu.in.readLong();
+        for (int i = 1; i < 128; i++) {
+            longs[i] = pdu.in.readLong() + longs[0];
         }
     }
 

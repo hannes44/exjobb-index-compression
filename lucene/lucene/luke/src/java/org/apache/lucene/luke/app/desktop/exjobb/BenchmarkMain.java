@@ -45,11 +45,11 @@ public class BenchmarkMain {
             IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
 
-            boolean useDefaultLuceneCompression = true;
+            boolean useDefaultLuceneCompression = false;
             if (useDefaultLuceneCompression)
                 config.setCodec(new Lucene912Codec());
             else
-                config.setCodec(new Lucene912Codec(Lucene912Codec.Mode.BEST_SPEED, IntegerCompressionType.DELTA));
+                config.setCodec(new Lucene912Codec(Lucene912Codec.Mode.BEST_SPEED, IntegerCompressionType.FOR));
 
             IndexWriter writer = new IndexWriter(directory, config);
 
