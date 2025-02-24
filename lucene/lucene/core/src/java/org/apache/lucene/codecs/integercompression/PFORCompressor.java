@@ -23,6 +23,7 @@ public class PFORCompressor implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(long[] positions, DataOutput out) throws IOException
     {
+
         // We store the reference as a VInt
         long minValue = IntegerCompressionUtils.getMinValue(positions);
         long maxValue = IntegerCompressionUtils.getMaxValue(positions);
@@ -53,7 +54,7 @@ public class PFORCompressor implements IntegerCompressor {
         int bestBitWidth = (int) maxBitsRequired;
         for (int i = 64; i > 0; i--) {
             if (bitsNeededCount.containsKey(i)) {
-                int bitsRequired = i * (128 - totalExceptions) + totalExceptions * 64;
+                int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 64) + 128 * (totalExceptions > 0 ? 1 : 0);
                 if (minBitsRequired > bitsRequired)
                 {
                     minBitsRequired = bitsRequired;
@@ -83,10 +84,15 @@ public class PFORCompressor implements IntegerCompressor {
         }
 
 
-
+        // The first bit in the output is a flag for if we have any exceptions. This saves 127 bits for cases where there are no exceptions
+        // Currently doing it in a byte for simplicity but it should be encoded into the minvalue for maximum gain
+        byte isThereExceptions = (maxBitsRequired != bestBitWidth) ? (byte) 1 : (byte) 0;
+        out.writeByte(isThereExceptions);
         out.writeVLong(minValue);
         out.writeVLong(bestBitWidth);
-        out.writeBytes(exceptionBitMask, 0, 16);
+
+        if (isThereExceptions == 1)
+            out.writeBytes(exceptionBitMask, 0, 16);
 
 
         List<Long> regularValues = new ArrayList<>();
@@ -102,7 +108,7 @@ public class PFORCompressor implements IntegerCompressor {
 
 
         byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
-        out.writeInt(regularBytes.length);
+        out.writeVInt(regularBytes.length);
         out.writeBytes(regularBytes, regularBytes.length);
 
         for (Long exception : exceptionValues)
@@ -123,21 +129,26 @@ public class PFORCompressor implements IntegerCompressor {
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, long[] longs) throws IOException {
+        byte isThereExceptions = pdu.in.readByte();
         long minValue = pdu.in.readVLong();
-        long maxBits = pdu.in.readVLong();
+        long regularBitWidth = pdu.in.readVLong();
         byte[] exceptionBitMask = new byte[16];
-        pdu.in.readBytes(exceptionBitMask, 0, 16);
-        int regularBytesLen = pdu.in.readInt();
+
+        // There is only an exceptionBitMask if there exists exceptions
+        if (isThereExceptions == 1)
+            pdu.in.readBytes(exceptionBitMask, 0, 16);
+
+        int regularBytesLen = pdu.in.readVInt();
 
 
         byte[] regularBytes = new byte[regularBytesLen];
         pdu.in.readBytes(regularBytes, 0, regularBytesLen);
 
-        List<Long> regularValues = LimitTestCompressor.bitUnpack(regularBytes, (int) maxBits);
+        List<Long> regularValues = LimitTestCompressor.bitUnpack(regularBytes, (int) regularBitWidth);
 
         int regularValueCount = 0;
         for (int i = 0; i < 128; i++) {
-            if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 0) {
+            if (isThereExceptions == 0 || IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 0) {
                 longs[i] = regularValues.get(regularValueCount) + minValue;
                 regularValueCount++;
             }
