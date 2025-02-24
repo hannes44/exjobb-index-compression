@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Implements FOR compression for integer sequences.
+ * Implements PFOR compression for integer sequences. Not optimized at all, should be very slow
  */
 public class PFORCompressor implements IntegerCompressor {
 
@@ -33,19 +33,13 @@ public class PFORCompressor implements IntegerCompressor {
         // Bitmask for if the position index is an exception. 1 is exception. 128 bits total
         byte[] exceptionBitMask = new byte[16];
 
-
         HashMap<Integer, List<Integer>> bitsNeededCount = new HashMap<>();
         for (int i = 0; i < 128; i++) {
             int bitsRequired = PackedInts.bitsRequired(positions[i] - minValue);
-            if (bitsNeededCount.containsKey(bitsRequired))
-            {
-                bitsNeededCount.get(bitsRequired).add(i);
-            }
-            else
-            {
+            if (!bitsNeededCount.containsKey(bitsRequired)) {
                 bitsNeededCount.put(bitsRequired, new ArrayList<>());
-                bitsNeededCount.get(bitsRequired).add(i);
             }
+            bitsNeededCount.get(bitsRequired).add(i);
 
         }
 
@@ -59,8 +53,6 @@ public class PFORCompressor implements IntegerCompressor {
                 {
                     minBitsRequired = bitsRequired;
                     bestBitWidth = i;
-
-
                 }
                 totalExceptions += bitsNeededCount.get(i).size();
             }
@@ -113,7 +105,7 @@ public class PFORCompressor implements IntegerCompressor {
 
         for (Long exception : exceptionValues)
         {
-            out.writeVLong(exception);
+            out.writeLong(exception);
         }
     }
 
@@ -153,12 +145,9 @@ public class PFORCompressor implements IntegerCompressor {
                 regularValueCount++;
             }
             else {
-                longs[i] = pdu.in.readVLong() + minValue;
+                longs[i] = pdu.in.readLong() + minValue;
             }
-
         }
-
-
     }
 
     public IntegerCompressionType getType() {
