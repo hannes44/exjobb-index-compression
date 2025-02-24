@@ -10,6 +10,7 @@ import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -31,11 +32,60 @@ public class PFORCompressor implements IntegerCompressor {
         // Bitmask for if the position index is an exception. 1 is exception. 128 bits total
         byte[] exceptionBitMask = new byte[16];
 
-        // Testing with 1 exception
-        IntegerCompressionUtils.setNthBit(exceptionBitMask, 75);
+
+        HashMap<Integer, List<Integer>> bitsNeededCount = new HashMap<>();
+        for (int i = 0; i < 128; i++) {
+            int bitsRequired = PackedInts.bitsRequired(positions[i] - minValue);
+            if (bitsNeededCount.containsKey(bitsRequired))
+            {
+                bitsNeededCount.get(bitsRequired).add(i);
+            }
+            else
+            {
+                bitsNeededCount.put(bitsRequired, new ArrayList<>());
+                bitsNeededCount.get(bitsRequired).add(i);
+            }
+
+        }
+
+        int totalExceptions = 0;
+        int minBitsRequired = 10000000;
+        int bestBitWidth = (int) maxBitsRequired;
+        for (int i = 64; i > 0; i--) {
+            if (bitsNeededCount.containsKey(i)) {
+                int bitsRequired = i * (128 - totalExceptions) + totalExceptions * 64;
+                if (minBitsRequired > bitsRequired)
+                {
+                    minBitsRequired = bitsRequired;
+                    bestBitWidth = i;
+
+
+                }
+                totalExceptions += bitsNeededCount.get(i).size();
+            }
+        }
+
+        int count = 0;
+        for (int i = 64; i > 0; i--) {
+            if (bitsNeededCount.containsKey(i))
+            {
+                if (i > bestBitWidth) {
+                    for (Integer index : bitsNeededCount.get(i))
+                    {
+                        IntegerCompressionUtils.setNthBit(exceptionBitMask, index);
+                        count++;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+        }
+
+
 
         out.writeVLong(minValue);
-        out.writeVLong(maxBitsRequired);
+        out.writeVLong(bestBitWidth);
         out.writeBytes(exceptionBitMask, 0, 16);
 
 
@@ -51,13 +101,13 @@ public class PFORCompressor implements IntegerCompressor {
         }
 
 
-        byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, (int) maxBitsRequired);
+        byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
         out.writeInt(regularBytes.length);
         out.writeBytes(regularBytes, regularBytes.length);
 
         for (Long exception : exceptionValues)
         {
-            out.writeLong(exception);
+            out.writeVLong(exception);
         }
     }
 
@@ -92,7 +142,7 @@ public class PFORCompressor implements IntegerCompressor {
                 regularValueCount++;
             }
             else {
-                longs[i] = pdu.in.readLong() + minValue;
+                longs[i] = pdu.in.readVLong() + minValue;
             }
 
         }
