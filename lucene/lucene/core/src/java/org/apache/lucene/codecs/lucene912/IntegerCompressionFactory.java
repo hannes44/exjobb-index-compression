@@ -26,6 +26,8 @@ public class IntegerCompressionFactory {
                 return new LuceneDefaultCompressor();
             case LIMITTTEST:
                 return new LimitTestCompressor();
+            case FASTPFOR:
+                return new FASTPFORCompressor();
             default:
                 System.out.println("ERROR: compression type not supported! Using Delta Compression");
                 System.out.println(compressionType);

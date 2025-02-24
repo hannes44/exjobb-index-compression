@@ -87,7 +87,11 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
 
         System.out.println("Indexing time in Milli seconds: " + elapsedTime);
 
-        return null;
+        IndexingBenchmarkData result = new IndexingBenchmarkData();
+        result.totalIndexingTimeInMS = elapsedTime;
+        result.totalIndexSizeInMB = BenchmarkUtils.getIndexSizeInMB("index");
+
+        return result;
     }
 
     @Override

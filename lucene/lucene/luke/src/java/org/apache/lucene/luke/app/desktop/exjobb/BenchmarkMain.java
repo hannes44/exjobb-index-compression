@@ -49,7 +49,7 @@ public class BenchmarkMain {
             if (useDefaultLuceneCompression)
                 config.setCodec(new Lucene912Codec());
             else
-                config.setCodec(new Lucene912Codec(Lucene912Codec.Mode.BEST_SPEED, IntegerCompressionType.LIMITTTEST));
+                config.setCodec(new Lucene912Codec(Lucene912Codec.Mode.BEST_SPEED, IntegerCompressionType.PFOR));
 
             IndexWriter writer = new IndexWriter(directory, config);
 
@@ -57,12 +57,12 @@ public class BenchmarkMain {
 
             IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer);
 
-            SearchBenchmarkData searchData = benchmarker.BenchmarkSearching("index");
+            //SearchBenchmarkData searchData = benchmarker.BenchmarkSearching("index");
 
             System.out.println("Benchmark for dataset: " + benchmarker.GetDatasetName());
             System.out.println("Indexing Time In MS: " + indexingData.totalIndexingTimeInMS);
             System.out.println("Index Size In MB: " + indexingData.totalIndexSizeInMB);
-            System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
+            //System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
 
         } catch (IOException e) {
             e.printStackTrace();
