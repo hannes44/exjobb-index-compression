@@ -13,7 +13,7 @@ import java.io.IOException;
 /**
  * Implements FOR compression for integer sequences.
  */
-public class FORCompression implements IntegerCompressor {
+public class FASTPFORCompressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */

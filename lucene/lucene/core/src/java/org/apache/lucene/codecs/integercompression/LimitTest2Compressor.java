@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Implements PFOR compression for integer sequences. Not optimized at all, should be very slow
  */
-public class PFORCompressor implements IntegerCompressor {
+public class LimitTest2Compressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
@@ -48,6 +48,7 @@ public class PFORCompressor implements IntegerCompressor {
         int bestBitWidth = (int) maxBitsRequired;
         for (int i = 64; i > 0; i--) {
             if (bitsNeededCount.containsKey(i)) {
+               // int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * i * 2) + 8 * (totalExceptions > 0 ? 1 : 0);
                 int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 64) + 128 * (totalExceptions > 0 ? 1 : 0);
                 if (minBitsRequired > bitsRequired)
                 {
@@ -79,7 +80,7 @@ public class PFORCompressor implements IntegerCompressor {
         // The first bit in the output is a flag for if we have any exceptions. This saves 127 bits for cases where there are no exceptions
         // Currently doing it in a byte for simplicity but it should be encoded into the minvalue for maximum gain
         byte isThereExceptions = (maxBitsRequired != bestBitWidth) ? (byte) 1 : (byte) 0;
-        out.writeByte(isThereExceptions);
+     //   out.writeByte(isThereExceptions);
         out.writeVLong(minValue);
         out.writeVLong(bestBitWidth);
 
@@ -91,7 +92,8 @@ public class PFORCompressor implements IntegerCompressor {
         List<Long> exceptionValues = new ArrayList<>();
         for (int i = 0; i < 128; i++) {
             if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1) {
-                exceptionValues.add(positions[i] - minValue);
+    //            exceptionValues.add(positions[i] - minValue);
+                regularValues.add(positions[i] - minValue);
             }
             else {
                 regularValues.add(positions[i] - minValue);
@@ -100,12 +102,13 @@ public class PFORCompressor implements IntegerCompressor {
 
 
         byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
-        out.writeVInt(regularBytes.length);
+
+        //out.writeVInt(regularBytes.length);
         out.writeBytes(regularBytes, regularBytes.length);
 
         for (Long exception : exceptionValues)
         {
-            out.writeLong(exception);
+        //    out.writeLong(exception);
         }
     }
 
