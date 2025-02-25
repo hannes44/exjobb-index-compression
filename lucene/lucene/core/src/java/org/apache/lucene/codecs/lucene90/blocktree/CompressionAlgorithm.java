@@ -19,6 +19,8 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 import java.io.IOException;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.LZ4;
+import org.apache.lucene.util.compress.ZSTD;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -38,15 +40,23 @@ enum CompressionAlgorithm {
     }
   },
 
-  LZ4(0x02) {
+  LZ4_COMPRESSION(0x02) {
 
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
-      org.apache.lucene.util.compress.LZ4.decompress(in, len, out, 0);
+      LZ4.decompress(in, len, out, 0);
+    }
+  },
+
+  ZSTD_COMPRESSION(0x03) {
+
+    @Override
+    void read(DataInput in, byte[] out, int len) throws IOException {
+      ZSTD.decompress(in, len, out, 0);
     }
   };
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[3];
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[4];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {
