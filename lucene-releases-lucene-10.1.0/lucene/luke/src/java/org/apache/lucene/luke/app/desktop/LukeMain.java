@@ -30,6 +30,7 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import org.apache.lucene.luke.app.desktop.components.LukeWindowProvider;
 import org.apache.lucene.luke.app.desktop.components.dialog.menubar.OpenIndexDialogFactory;
+import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkMain;
 import org.apache.lucene.luke.app.desktop.util.DialogOpener;
 import org.apache.lucene.luke.app.desktop.util.FontUtils;
 import org.apache.lucene.luke.app.desktop.util.MessageUtils;
@@ -74,7 +75,13 @@ public class LukeMain {
   }
 
   public static void main(String[] args) throws Exception {
+
+    BenchmarkMain.entryPoint();
+    if (true)
+      return;
+
     boolean sanityCheck = Arrays.asList(args).contains("--sanity-check");
+
 
     if (sanityCheck && GraphicsEnvironment.isHeadless()) {
       Logger.getGlobal().log(Level.SEVERE, "[Vader] Hello, Luke. Can't do much in headless mode.");
