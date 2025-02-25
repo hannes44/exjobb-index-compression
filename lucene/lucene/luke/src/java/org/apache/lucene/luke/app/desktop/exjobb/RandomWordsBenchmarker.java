@@ -26,10 +26,10 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer) throws IOException {
 
-        int numDocs = 1000; // Number of documents to index
+        int numDocs = 2000; // Number of documents to index
         // Fixed seed for deterministic random content generation
         long seed = 12345L; // You can change this to any constant value
-        Random random = new Random(seed);
+
 
         List<String> words = List.of(
                 "abandon", "ability", "able", "absence", "absolute", "absorb", "abuse", "academy", "accept", "access",
@@ -69,7 +69,7 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
             FieldType fieldType = new FieldType(TextField.TYPE_NOT_STORED);
             fieldType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
 
-
+            Random random = new Random(seed+1);
             String randomContent = generateRandomContent(10000, words, random); // Generate random content with real words
             doc.add(new TextField("content", randomContent, Field.Store.NO));
 

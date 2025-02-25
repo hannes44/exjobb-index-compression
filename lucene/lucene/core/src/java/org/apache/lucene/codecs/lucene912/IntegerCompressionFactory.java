@@ -28,6 +28,8 @@ public class IntegerCompressionFactory {
                 return new LimitTestCompressor();
             case FASTPFOR:
                 return new FASTPFORCompressor();
+            case LIMITTEST2:
+                return new LimitTest2Compressor();
             default:
                 System.out.println("ERROR: compression type not supported! Using Delta Compression");
                 System.out.println(compressionType);
