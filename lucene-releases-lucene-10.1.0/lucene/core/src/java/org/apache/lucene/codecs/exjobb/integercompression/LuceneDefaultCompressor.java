@@ -12,10 +12,12 @@ import java.io.IOException;
 public class LuceneDefaultCompressor implements IntegerCompressor {
 
     @Override
-    public void encode(int[] deltas, DataOutput out) throws IOException {
+    public void encode(int[] positions, DataOutput out) throws IOException {
+       // for ()
+
         final ForUtil forUtil = new ForUtil();
         PForUtil pforUtil = new PForUtil();
-        pforUtil.encode(deltas, out);
+        pforUtil.encode(positions, out);
     }
 
     @Override

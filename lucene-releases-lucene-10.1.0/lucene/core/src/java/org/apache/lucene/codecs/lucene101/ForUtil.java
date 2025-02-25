@@ -85,7 +85,7 @@ public final class ForUtil {
   private final int[] tmp = new int[BLOCK_SIZE];
 
   /** Encode 128 integers from {@code ints} into {@code out}. */
-  void encode(int[] ints, int bitsPerValue, DataOutput out) throws IOException {
+  public void encode(int[] ints, int bitsPerValue, DataOutput out) throws IOException {
     final int nextPrimitive;
     if (bitsPerValue <= 8) {
       nextPrimitive = 8;

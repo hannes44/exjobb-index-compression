@@ -32,6 +32,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.FieldInfo;
@@ -107,6 +108,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     private int maxNumImpactsAtLevel1;
     private int maxImpactNumBytesAtLevel1;
 
+    private IntegerCompressor integerCompressor;
+
     /** Scratch output that we use to be able to prepend the encoded length, e.g. impacts. */
     private final ByteBuffersDataOutput scratchOutput = ByteBuffersDataOutput.newResettableInstance();
 
@@ -126,6 +129,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
 
     /** Sole constructor. */
     public CustomLucene101PostingsWriter(SegmentWriteState state) throws IOException {
+        this.integerCompressor = Lucene101Codec.integerCompressor;
+
         String metaFileName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.META_EXTENSION);
@@ -324,7 +329,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
         posBufferUpto++;
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
-            pforUtil.encode(posDeltaBuffer, posOut);
+            //pforUtil.encode(posDeltaBuffer, posOut);
+            integerCompressor.encode(posDeltaBuffer, posOut);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -408,6 +414,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
             if (writeFreqs) {
                 pforUtil.encode(freqBuffer, level0Output);
+                //integerCompressor.encode(freqBuffer, level0Output);
             }
 
             // docID - lastBlockDocID is at least 128, so it can never fit a single byte with a vint
@@ -563,6 +570,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                         }
                     } else {
                         posOut.writeVInt(posDelta);
+                        //integerCompressor.encodeSingleInt(posDelta, posOut);
                     }
 
                     if (writeOffsets) {

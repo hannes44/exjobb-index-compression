@@ -19,6 +19,8 @@ public class FORCompression implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] positions, DataOutput out) throws IOException
     {
+        IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
+
         // We store the reference as a VInt
         int minValue = positions[0];
         int maxValue = positions[0];
@@ -33,10 +35,10 @@ public class FORCompression implements IntegerCompressor {
             }
         }
 
-        long maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
+        int maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
 
-        out.writeVLong(minValue);
-        out.writeVLong(maxBitsRequired);
+        out.writeVInt(minValue);
+        out.writeVInt(maxBitsRequired);
 
         ForUtil forUtil = new ForUtil();
 
@@ -44,7 +46,7 @@ public class FORCompression implements IntegerCompressor {
         for (int i = 0; i < 128; i++) {
             positions[i] = positions[i] - minValue;
         }
-       // forUtil.encode(positions, (int) maxBitsRequired, out);
+        forUtil.encode(positions, maxBitsRequired, out);
     }
 
     public void encodeSingleInt(int input, DataOutput out) throws IOException {
@@ -58,16 +60,18 @@ public class FORCompression implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] longs) throws IOException {
-        long minValue = pdu.in.readVLong();
-        long maxBits = pdu.in.readVLong();
+    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+        int minValue = pdu.in.readVInt();
+        int maxBits = pdu.in.readVInt();
         ForUtil forUtil = new ForUtil();
 
-        //forUtil.decode((int)maxBits, pdu, longs);
+        forUtil.decode(maxBits, pdu, ints);
 
         for (int i = 0; i < 128; i++) {
-            longs[i] += minValue;
+            ints[i] += minValue;
         }
+
+        IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
     public IntegerCompressionType getType() {

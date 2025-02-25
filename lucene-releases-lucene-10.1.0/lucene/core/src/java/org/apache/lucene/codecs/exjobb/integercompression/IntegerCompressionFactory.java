@@ -15,10 +15,10 @@ public class IntegerCompressionFactory {
         switch (compressionType) {
            // case DELTA:
            //     return new DeltaCompressor();
-           // case NONE:
-           //     return new NoCompressor();
-           // case FOR:
-           //     return new FORCompression();
+            case NONE:
+                return new NoCompressor();
+            case FOR:
+                return new FORCompression();
            // case PFOR:
            //     return new PFORCompressor();
             case DEFAULT:

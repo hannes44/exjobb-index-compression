@@ -216,7 +216,8 @@ public abstract class VectorizationProvider {
           "org.apache.lucene.codecs.hnsw.FlatVectorScorerUtil",
           "org.apache.lucene.util.VectorUtil",
           "org.apache.lucene.codecs.lucene101.Lucene101PostingsReader",
-          "org.apache.lucene.codecs.lucene101.PostingIndexInput");
+          "org.apache.lucene.codecs.lucene101.PostingIndexInput",
+              "org.apache.lucene.codecs.lucene101.CustomLucene101PostingsReader");
 
   private static void ensureCaller() {
     final boolean validCaller =

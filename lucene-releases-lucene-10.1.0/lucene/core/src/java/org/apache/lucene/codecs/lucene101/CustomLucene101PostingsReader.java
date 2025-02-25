@@ -35,6 +35,7 @@ import java.util.RandomAccess;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.Impact;
@@ -81,8 +82,12 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
     private final int maxNumImpactsAtLevel1;
     private final int maxImpactNumBytesAtLevel1;
 
+    private IntegerCompressor integerCompressor;
+
     /** Sole constructor. */
     public CustomLucene101PostingsReader(SegmentReadState state) throws IOException {
+        this.integerCompressor = Lucene101Codec.integerCompressor;
+
         String metaName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.META_EXTENSION);
@@ -565,6 +570,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             if (freqFP != -1) {
                 docIn.seek(freqFP);
                 pforUtil.decode(docInUtil, freqBuffer);
+                //integerCompressor.decode(docInUtil, freqBuffer);
                 freqFP = -1;
             }
             return freqBuffer[docBufferUpto - 1];
@@ -1000,7 +1006,8 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 refillLastPositionBlock();
                 return;
             }
-            pforUtil.decode(posInUtil, posDeltaBuffer);
+            //pforUtil.decode(posInUtil, posDeltaBuffer);
+            integerCompressor.decode(posInUtil, posDeltaBuffer);
 
             if (indexHasOffsetsOrPayloads) {
                 refillOffsetsOrPayloads();

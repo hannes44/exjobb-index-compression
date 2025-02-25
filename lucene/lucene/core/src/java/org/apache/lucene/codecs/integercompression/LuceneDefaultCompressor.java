@@ -1,6 +1,5 @@
 package org.apache.lucene.codecs.integercompression;
 
-package org.apache.lucene.codecs.integercompression;
 
 import org.apache.lucene.codecs.lucene912.*;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
