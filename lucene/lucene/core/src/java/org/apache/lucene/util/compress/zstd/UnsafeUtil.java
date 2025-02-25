@@ -39,27 +39,4 @@ final class UnsafeUtil
             throw new IncompatibleJvmException("Zstandard requires access to sun.misc.Unsafe");
         }
     }
-
-    public static byte[] getBase(MemorySegment segment)
-    {
-        if (segment.isNative()) {
-            return null;
-        }
-        if (segment.isReadOnly()) {
-            throw new IllegalArgumentException("MemorySegment is read-only");
-        }
-        Object inputBase = segment.heapBase().orElse(null);
-        if (!(inputBase instanceof byte[] byteArray)) {
-            throw new IllegalArgumentException("MemorySegment is not backed by a byte array");
-        }
-        return byteArray;
-    }
-
-    public static long getAddress(MemorySegment segment)
-    {
-        if (segment.isNative()) {
-            return segment.address();
-        }
-        return segment.address() + ARRAY_BYTE_BASE_OFFSET;
-    }
 }
