@@ -247,7 +247,7 @@ public final class ForUtil {
   static final int MASK32_16 = MASKS32[16];
 
   /** Decode 128 integers into {@code ints}. */
-  void decode(int bitsPerValue, PostingDecodingUtil pdu, int[] ints) throws IOException {
+  public void decode(int bitsPerValue, PostingDecodingUtil pdu, int[] ints) throws IOException {
     switch (bitsPerValue) {
       case 1:
         decode1(pdu, ints);

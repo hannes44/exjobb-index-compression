@@ -25,7 +25,7 @@ import org.apache.lucene.util.LongHeap;
 import org.apache.lucene.util.packed.PackedInts;
 
 /** Utility class to encode sequences of 128 small positive integers. */
-final class PForUtil {
+public final class PForUtil {
 
   private static final int MAX_EXCEPTIONS = 7;
 
@@ -45,7 +45,7 @@ final class PForUtil {
   }
 
   /** Encode 128 integers from {@code ints} into {@code out}. */
-  void encode(int[] ints, DataOutput out) throws IOException {
+  public void encode(int[] ints, DataOutput out) throws IOException {
     // Determine the top MAX_EXCEPTIONS + 1 values
     final LongHeap top = new LongHeap(MAX_EXCEPTIONS + 1);
     for (int i = 0; i <= MAX_EXCEPTIONS; ++i) {
@@ -104,7 +104,7 @@ final class PForUtil {
   }
 
   /** Decode 128 integers into {@code ints}. */
-  void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+  public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
     var in = pdu.in;
     final int token = Byte.toUnsignedInt(in.readByte());
     final int bitsPerValue = token & 0x1f;

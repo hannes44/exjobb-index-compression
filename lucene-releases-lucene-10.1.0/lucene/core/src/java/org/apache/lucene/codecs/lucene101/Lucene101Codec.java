@@ -30,6 +30,9 @@ import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionFactory;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene90.Lucene90CompoundFormat;
 import org.apache.lucene.codecs.lucene90.Lucene90DocValuesFormat;
 import org.apache.lucene.codecs.lucene90.Lucene90LiveDocsFormat;
@@ -53,6 +56,12 @@ import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
  * @lucene.experimental
  */
 public class Lucene101Codec extends Codec {
+
+  // Flag for deciding if we should use custom integer compression
+  // This is needed since lucene will create new instances of the codec
+  public static boolean useDefaultCompression = true;
+
+  public static IntegerCompressor integerCompressor;
 
   /** Configuration option for the codec. */
   public enum Mode {
@@ -118,6 +127,22 @@ public class Lucene101Codec extends Codec {
     super("Lucene101");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
+    this.defaultPostingsFormat = new Lucene101PostingsFormat();
+    this.defaultDVFormat = new Lucene90DocValuesFormat();
+    this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
+  }
+
+  /**
+   * Instantiates a new codec, specifying the stored fields compression mode to use.
+   *
+   * @param mode stored fields compression mode to use for newly flushed/merged segments.
+   */
+  public Lucene101Codec(Mode mode, IntegerCompressionType integerCompressionType) {
+    super("Lucene101");
+    this.storedFieldsFormat =
+            new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
+    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
+    Lucene101Codec.useDefaultCompression = false;
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();

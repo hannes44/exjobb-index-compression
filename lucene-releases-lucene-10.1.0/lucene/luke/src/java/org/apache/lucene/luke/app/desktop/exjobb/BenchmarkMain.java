@@ -4,6 +4,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.backward_codecs.lucene912.Lucene912Codec;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
@@ -47,11 +48,11 @@ public class BenchmarkMain {
             IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
 
-            boolean useDefaultLuceneCompression = true;
+            boolean useDefaultLuceneCompression = false;
             if (useDefaultLuceneCompression)
                 config.setCodec(new Lucene101Codec());
-       //     else
-        //        config.setCodec(new Lucene912Codec(Lucene912Codec.Mode.BEST_SPEED, IntegerCompressionType.DEFAULT));
+            else
+                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.DEFAULT));
 
             IndexWriter writer = new IndexWriter(directory, config);
 

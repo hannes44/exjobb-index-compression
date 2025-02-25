@@ -1,8 +1,8 @@
-package org.apache.lucene.codecs.integercompression;
+package org.apache.lucene.codecs.exjobb.integercompression;
 
-package org.apache.lucene.codecs.integercompression;
 
-import org.apache.lucene.codecs.lucene912.*;
+import org.apache.lucene.codecs.lucene101.ForUtil;
+import org.apache.lucene.codecs.lucene101.PForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
@@ -12,9 +12,9 @@ import java.io.IOException;
 public class LuceneDefaultCompressor implements IntegerCompressor {
 
     @Override
-    public void encode(long[] deltas, DataOutput out) throws IOException {
+    public void encode(int[] deltas, DataOutput out) throws IOException {
         final ForUtil forUtil = new ForUtil();
-        PForUtil pforUtil = new PForUtil(forUtil);
+        PForUtil pforUtil = new PForUtil();
         pforUtil.encode(deltas, out);
     }
 
@@ -29,10 +29,10 @@ public class LuceneDefaultCompressor implements IntegerCompressor {
     }
 
     @Override
-    public void decode(PostingDecodingUtil pdu, long[] longs) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
         final ForUtil forUtil = new ForUtil();
-        PForUtil pforUtil = new PForUtil(forUtil);
-        pforUtil.decode(pdu, longs);
+        PForUtil pforUtil = new PForUtil();
+        pforUtil.decode(pdu, ints);
     }
 
     @Override
