@@ -11,14 +11,13 @@ package org.apache.lucene.util.compress.zstd;
 import org.apache.lucene.util.compress.zstd.IncompatibleJvmException;
 import sun.misc.Unsafe;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 
 import static java.lang.String.format;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
-final class UnsafeUtil
+public final class UnsafeUtil
 {
     public static final Unsafe UNSAFE;
 

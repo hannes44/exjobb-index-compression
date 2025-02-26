@@ -8,7 +8,7 @@
 
 package org.apache.lucene.util.compress.zstd;
 
-final class Constants {
+public final class Constants {
     public static final int SIZE_OF_BYTE = 1;
     public static final int SIZE_OF_SHORT = 2;
     public static final int SIZE_OF_INT = 4;
