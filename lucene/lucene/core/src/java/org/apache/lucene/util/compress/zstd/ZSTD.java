@@ -187,14 +187,15 @@ public final class ZSTD {
         verifyRange(output, outputOffset, maxOutputLength);
 
         long inputAddress = ARRAY_BYTE_BASE_OFFSET + inputOffset;
-        long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
+        long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset + SIZE_OF_INT; // Reserve space for the compressed size
 
-        int test = 123456;
-        // Write the uncompressed size to the output buffer; For use in decompression
-        UNSAFE.putInt(output, outputAddress, test);
-        outputAddress += SIZE_OF_INT;
+        int compressedLength = doCompression(input, inputAddress, inputAddress + inputLength, output, outputAddress, outputAddress + maxOutputLength, CompressionParameters.DEFAULT_COMPRESSION_LEVEL);
 
-        return SIZE_OF_INT + doCompression(input, inputAddress, inputAddress + inputLength, output, outputAddress, outputAddress + maxOutputLength, CompressionParameters.DEFAULT_COMPRESSION_LEVEL);
+        // Write the final compressed size to the output buffer; For use in decompression
+        outputAddress -= SIZE_OF_INT;
+        UNSAFE.putInt(output, outputAddress, compressedLength);
+
+        return SIZE_OF_INT + compressedLength;
     }
 
     public static int doCompression(Object inputBase, long inputAddress, long inputLimit, Object outputBase, long outputAddress, long outputLimit, int compressionLevel)
@@ -509,7 +510,7 @@ public final class ZSTD {
     }
 
     /** Decompresses the input data from {@param input} and writes the decompressed data to the {@param output}. */
-    public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
+    public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, boolean lengthKnown)
             throws MalformedInputException
     {
         verifyRange(input, inputOffset, inputLength);
@@ -520,11 +521,18 @@ public final class ZSTD {
         long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
         long outputLimit = outputAddress + maxOutputLength;
 
-        // Read the uncompressed size from the input buffer
-        int uncompressedSize = UNSAFE.getInt(input, inputAddress);
-        inputAddress += SIZE_OF_INT;
+        // If the length is not known, read the compressed size from the input
+        // and update the input limit to the compressed size, else use the input length
+        // but skip the first 4 bytes which contains the compressed size
+        if (!lengthKnown) {
+            // Read the compressed size from the input by reading the first 4 bytes
+            int compressedSize = UNSAFE.getInt(input, inputAddress);
+            inputAddress += SIZE_OF_INT;
+            // Update the input limit to the compressed size
+            inputLimit = compressedSize + inputAddress;
 
-        System.out.println("Uncompressed Size: " + uncompressedSize);
+            //System.out.println("Compressed Size(-4): " + compressedSize);
+        }
 
         return doDecompression(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
     }

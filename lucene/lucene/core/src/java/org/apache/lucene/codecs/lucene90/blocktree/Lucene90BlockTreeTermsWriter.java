@@ -16,6 +16,7 @@
  */
 package org.apache.lucene.codecs.lucene90.blocktree;
 
+import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
 import static org.apache.lucene.util.fst.FSTCompiler.getOnHeapReaderWriter;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ import org.apache.lucene.util.StringHelper;
 import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.zstd.ZSTD;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
 import org.apache.lucene.util.fst.FST;
@@ -987,7 +989,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
         // it out if the
         // average suffix length is greater than 6.
-        if (suffixWriter.length() > 6L * numEntries) {
+        if (false) {
           if (compressionHashTable == null) {
             compressionHashTable = new LZ4.HighCompressionHashTable();
           }
@@ -1007,6 +1009,21 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
               suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
             compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
           }
+          data = new byte[suffixWriter.length()];
+          System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+          compressed = new byte[ZSTD.maxCompressedLength(data.length)];
+          ZSTDLength = ZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
+          if (ZSTDLength < data.length) {
+            compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+            // Test if compressed data can be decompressed correctly and matches the original data
+//            byte[] decompressed = new byte[data.length];
+//            ZSTD.decompress(compressed, 0, ZSTDLength, decompressed, 0, decompressed.length, false);
+//            if (Arrays.equals(data, decompressed)) {
+//              System.out.println("ZSTD Compression Successful");
+//            } else {
+//              System.out.println("ZSTD Compression Failed");
+//            }
+          }
         }
       }
       long token = ((long) suffixWriter.length()) << 3;
@@ -1017,8 +1034,12 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       termsOut.writeVLong(token);
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
-      } else {
+      } else if (compressionAlg == CompressionAlgorithm.ZSTD_COMPRESSION) {
+        termsOut.writeBytes(compressed, ZSTDLength);
+        //System.out.println("Saved " + (data.length - ZSTDLength) + " bytes, wrote : " + ZSTDLength);
+      } else if (compressionAlg == CompressionAlgorithm.LZ4_COMPRESSION || compressionAlg == CompressionAlgorithm.LOWERCASE_ASCII) {
         spareWriter.copyTo(termsOut);
+        //System.out.println("LZ4/ASCII Saved " + (suffixWriter.length() - spareWriter.size()) + " bytes");
       }
       suffixWriter.setLength(0);
       spareWriter.reset();
@@ -1027,6 +1048,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       final int numSuffixBytes = Math.toIntExact(suffixLengthsWriter.size());
       spareBytes = ArrayUtil.growNoCopy(spareBytes, numSuffixBytes);
       suffixLengthsWriter.copyTo(new ByteArrayDataOutput(spareBytes));
+      //System.out.println("Spare Bytes: " + Arrays.toString(spareBytes));
       suffixLengthsWriter.reset();
       if (allEqual(spareBytes, 1, numSuffixBytes, spareBytes[0])) {
         // Structured fields like IDs often have most values of the same length
@@ -1214,6 +1236,9 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private final ByteBuffersDataOutput metaWriter = ByteBuffersDataOutput.newResettableInstance();
     private final ByteBuffersDataOutput spareWriter = ByteBuffersDataOutput.newResettableInstance();
     private byte[] spareBytes = BytesRef.EMPTY_BYTES;
+    private int ZSTDLength;
+    private byte[] data;
+    private byte[] compressed;
     private LZ4.HighCompressionHashTable compressionHashTable;
   }
 
