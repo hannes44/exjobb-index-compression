@@ -13,22 +13,22 @@ public class IntegerCompressionFactory {
     public static IntegerCompressor CreateIntegerCompressor(IntegerCompressionType compressionType)
     {
         switch (compressionType) {
-           // case DELTA:
-           //     return new DeltaCompressor();
+            case DELTA:
+                return new DeltaCompressor();
             case NONE:
                 return new NoCompressor();
             case FOR:
                 return new FORCompression();
-           // case PFOR:
-           //     return new PFORCompressor();
+            case PFOR:
+                return new PFORCompressor();
             case DEFAULT:
                 return new LuceneDefaultCompressor();
-           // case LIMITTTEST:
-          //      return new LimitTestCompressor();
-          //  case FASTPFOR:
-          //      return new FASTPFORCompressor();
-           // case LIMITTEST2:
-           //     return new LimitTest2Compressor();
+            case LIMITTTEST:
+                return new LimitTestCompressor();
+            case FASTPFOR:
+                return new FASTPFORCompressor();
+            case LIMITTEST2:
+                return new LimitTest2Compressor();
             default:
                 System.out.println("ERROR: compression type not supported! Using Delta Compression");
                 System.out.println(compressionType);

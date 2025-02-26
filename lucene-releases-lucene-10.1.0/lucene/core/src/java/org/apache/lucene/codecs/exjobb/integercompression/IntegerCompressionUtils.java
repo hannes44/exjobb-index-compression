@@ -1,22 +1,22 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
 public class IntegerCompressionUtils {
-    public static long getMaxValue(long[] longs)
+    public static long getMaxValue(int[] ints)
     {
-        long maxValue = longs[0];
+        long maxValue = ints[0];
         for (int i = 0; i < 128; i++) {
-            if (maxValue < longs[i])
-                maxValue = longs[i];
+            if (maxValue < ints[i])
+                maxValue = ints[i];
         }
         return maxValue;
     }
 
-    public static long getMinValue(long[] longs)
+    public static long getMinValue(int[] ints)
     {
-        long minValue = longs[0];
+        long minValue = ints[0];
         for (int i = 0; i < 128; i++) {
-            if (minValue > longs[i])
-                minValue = longs[i];
+            if (minValue > ints[i])
+                minValue = ints[i];
         }
         return minValue;
     }
