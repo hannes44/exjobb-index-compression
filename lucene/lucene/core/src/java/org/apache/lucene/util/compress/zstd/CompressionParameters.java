@@ -13,7 +13,7 @@ import static org.apache.lucene.util.compress.zstd.Constants.MAX_WINDOW_LOG;
 import static org.apache.lucene.util.compress.zstd.Constants.MIN_WINDOW_LOG;
 import static org.apache.lucene.util.compress.zstd.Util.cycleLog;
 import static org.apache.lucene.util.compress.zstd.Util.highestBit;
-import static java.lang.Math.clamp;
+import static org.apache.lucene.util.compress.zstd.Util.clamp;
 
 class CompressionParameters
 {
