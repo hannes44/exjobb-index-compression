@@ -54,7 +54,7 @@ public class BenchmarkMain {
 
             IndexWriter writer = new IndexWriter(directory, config);
 
-            DatasetCompressionBenchmarker benchmarker = new RandomWordsBenchmarker();
+            DatasetCompressionBenchmarker benchmarker = new CommonCrawlBenchmarker();
 
             IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer);
 
