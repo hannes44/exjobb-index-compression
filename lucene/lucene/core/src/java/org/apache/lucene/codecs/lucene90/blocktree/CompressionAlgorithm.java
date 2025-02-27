@@ -71,7 +71,6 @@ enum CompressionAlgorithm {
 
       // Decompress the data
       ZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
-      System.out.println("Read Successful");
     }
   };
 
