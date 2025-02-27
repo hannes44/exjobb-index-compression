@@ -1,9 +1,9 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
 public class IntegerCompressionUtils {
-    public static long getMaxValue(int[] ints)
+    public static int getMaxValue(int[] ints)
     {
-        long maxValue = ints[0];
+        int maxValue = ints[0];
         for (int i = 0; i < 128; i++) {
             if (maxValue < ints[i])
                 maxValue = ints[i];
@@ -11,9 +11,9 @@ public class IntegerCompressionUtils {
         return maxValue;
     }
 
-    public static long getMinValue(int[] ints)
+    public static int getMinValue(int[] ints)
     {
-        long minValue = ints[0];
+        int minValue = ints[0];
         for (int i = 0; i < 128; i++) {
             if (minValue > ints[i])
                 minValue = ints[i];

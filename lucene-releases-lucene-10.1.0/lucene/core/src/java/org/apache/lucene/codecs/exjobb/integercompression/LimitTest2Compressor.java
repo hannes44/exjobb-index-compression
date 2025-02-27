@@ -98,10 +98,10 @@ public class LimitTest2Compressor implements IntegerCompressor {
         }
 
 
-        byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
+        //byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
 
         //out.writeVInt(regularBytes.length);
-        out.writeBytes(regularBytes, regularBytes.length);
+     //   out.writeBytes(regularBytes, regularBytes.length);
 
         for (Long exception : exceptionValues)
         {
@@ -135,6 +135,9 @@ public class LimitTest2Compressor implements IntegerCompressor {
 
         byte[] regularBytes = new byte[regularBytesLen];
         pdu.in.readBytes(regularBytes, 0, regularBytesLen);
+/*
+
+
 
         List<Long> regularValues = LimitTestCompressor.bitUnpack(regularBytes, (int) regularBitWidth);
 
@@ -148,6 +151,8 @@ public class LimitTest2Compressor implements IntegerCompressor {
                 ints[i] = (int) (pdu.in.readLong() + minValue);
             }
         }
+         */
+
     }
 
     public IntegerCompressionType getType() {

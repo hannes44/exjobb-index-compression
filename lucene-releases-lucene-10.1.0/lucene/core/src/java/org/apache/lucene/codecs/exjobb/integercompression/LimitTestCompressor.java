@@ -19,96 +19,7 @@ public class LimitTestCompressor implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] positions, DataOutput out) throws IOException
     {
-        // We store the reference as a VInt
-        long minValue = positions[0];
-        long maxValue = positions[0];
-        long totalBitsRequired = 0;
-        long averageBitsRequired = 0;
 
-
-
-        for (int i = 0; i < 128; i++) {
-            long bitsRequired = PackedInts.bitsRequired(positions[i]);
-            totalBitsRequired += bitsRequired;
-
-            if (positions[i] > maxValue)
-            {
-                maxValue = positions[i];
-            }
-            if (positions[i] < minValue)
-            {
-                minValue = positions[i];
-            }
-        }
-
-        averageBitsRequired = totalBitsRequired / 128;
-        long maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
-        long useAverageValueForEncodingBitmask1 = 0;
-        long useAverageValueForEncodingBitmask2 = 0;
-
-        ArrayList<Long> averageBitLongs = new ArrayList<Long>();
-        ArrayList<Long> maxBitLongs = new ArrayList<Long>();
-
-        for (int i = 0; i < 128; i++) {
-            long bitsRequired = PackedInts.bitsRequired(positions[i] - minValue);
-            if (bitsRequired < averageBitsRequired)
-            {
-                if (i <= 63)
-                    setNthBit(useAverageValueForEncodingBitmask1, i);
-                else
-                    setNthBit(useAverageValueForEncodingBitmask2, i-64);
-                averageBitLongs.add(positions[i] - minValue);
-            }
-            else {
-                maxBitLongs.add(positions[i] - minValue);
-            }
-        }
-
-        out.writeVLong(minValue);
-        // Could store the delta between max and average instead to save a couple bits
-        out.writeByte((byte) maxBitsRequired);
-        out.writeByte((byte) averageBitsRequired);
-
-        out.writeLong(useAverageValueForEncodingBitmask1);
-        out.writeLong(useAverageValueForEncodingBitmask2);
-
-
-        // Now store the offsets from the reference
-        //  for (int i = 0; i < 128; i++) {
-        //      positions[i] = positions[i] - minValue;
-        //  }
-
-        long[] avgBitsLongs = new long[averageBitLongs.size()];
-        long[] maxBitsLongs = new long[maxBitLongs.size()];
-
-        int n = 0;
-        for (Long x : averageBitLongs)
-        {
-            long xd = x;
-            avgBitsLongs[n] = xd;
-            n++;
-        }
-
-        n = 0;
-        for (Long x : maxBitLongs)
-        {
-            long xd = x;
-            maxBitsLongs[n] = xd;
-            n++;
-        }
-
-        //    forUtil.encode(avgBitsLongs, (int) averageBitsRequired, out);
-        byte[] avgBytes = bitPack(averageBitLongs,(int) averageBitsRequired);
-
-        //forUtil.encode(maxBitsLongs, (int) maxBitsRequired, out);
-        byte[] maxBytes = bitPack(maxBitLongs, (int) maxBitsRequired);
-        //ArrayList<Long> averageBitLongs2 = (ArrayList<Long>) bitUnpack(avgBytes, (int) averageBitsRequired);
-        //ArrayList<Long> maxBitLongs2 = (ArrayList<Long>) bitUnpack(maxBytes, (int) maxBitsRequired);
-
-        //   out.writeVInt(avgBytes.length);
-        //   out.writeVInt(maxBytes.length);
-        out.writeBytes(avgBytes, avgBytes.length);
-        out.writeBytes(maxBytes, maxBytes.length);
     }
 
     public void encodeSingleInt(int input, DataOutput out) throws IOException {
@@ -123,63 +34,7 @@ public class LimitTestCompressor implements IntegerCompressor {
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] longs) throws IOException {
-        long minValue = pdu.in.readVLong();
-        long maxBits = pdu.in.readVLong();
-        long averageBits = pdu.in.readVLong();
-        long useAverageValueForEncodingBitmask1 = pdu.in.readLong();
-        long useAverageValueForEncodingBitmask2 = pdu.in.readLong();
 
-        int totalAverageLongs = countOneBits(useAverageValueForEncodingBitmask1) + countOneBits(useAverageValueForEncodingBitmask2);
-
-        int bytesNeededForAvg = pdu.in.readVInt();
-        int bytesNeededForMax = pdu.in.readVInt();
-        byte[] avgBytes = new byte[bytesNeededForAvg];
-        pdu.in.readBytes(avgBytes, 0, bytesNeededForAvg);
-
-
-        byte[] maxBytes = new byte[bytesNeededForMax];
-        pdu.in.readBytes(maxBytes, 0, bytesNeededForMax);
-
-        List<Long> averageLongs = bitUnpack(avgBytes,(int) averageBits);
-        List<Long> maxLongs = bitUnpack(maxBytes,(int) maxBits);
-
-        // forUtil.decode((int)averageBits, pdu, averageLongs);
-
-        //   long[] maxLongs = new long[128-totalAverageLongs];
-        //   forUtil.decode((int)maxBits, pdu, maxLongs);
-
-        int averageCount = 0;
-        int maxCount = 0;
-        for (int i = 0; i < 128; i++) {
-            if (i <= 63)
-            {
-                boolean isAverageLong = 1 == getNthBit(useAverageValueForEncodingBitmask1, i);
-                if (isAverageLong)
-                {
-                    longs[i] = (int) (averageLongs.get(averageCount) + minValue);
-                    averageCount++;
-                }
-                else {
-                    longs[i] = (int) (maxLongs.get(maxCount) + minValue);
-                    maxCount++;
-                }
-            }
-            else {
-
-                boolean isAverageLong = 1 == getNthBit(useAverageValueForEncodingBitmask1, i-64);
-                if (isAverageLong)
-                {
-                    longs[i] = (int) (averageLongs.get(averageCount) + minValue);
-                    averageCount++;
-                }
-                else {
-                    longs[i] = (int) (maxLongs.get(maxCount) + minValue);
-                    maxCount++;
-                }
-            }
-
-
-        }
     }
 
     public IntegerCompressionType getType() {
@@ -264,7 +119,7 @@ public class LimitTestCompressor implements IntegerCompressor {
      * @return The packed byte array.
      * @throws IllegalArgumentException if bits is not in the range [1, 64].
      */
-    public static byte[] bitPack(List<Long> values, int bits) {
+    public static byte[] bitPack(List<Integer> values, int bits) {
         if (bits < 1 || bits > 64) {
             throw new IllegalArgumentException("Bits must be between 1 and 64.");
         }
@@ -316,7 +171,7 @@ public class LimitTestCompressor implements IntegerCompressor {
      * @return The list of unpacked long values.
      * @throws IllegalArgumentException if bits is not in the range [1, 64].
      */
-    public static List<Long> bitUnpack(byte[] bytes, int bits) {
+    public static List<Integer> bitUnpack(byte[] bytes, int bits) {
         if (bits == 0)
             return new ArrayList<>();
 
@@ -324,14 +179,14 @@ public class LimitTestCompressor implements IntegerCompressor {
             throw new IllegalArgumentException("Bits must be between 1 and 64.");
         }
 
-        List<Long> values = new ArrayList<>();
+        List<Integer> values = new ArrayList<>();
         int bitIndex = 0; // Tracks the current bit position in the byte array
 
         while (bitIndex + bits <= bytes.length * 8) {
-            long value = 0;
+            int value = 0;
             for (int i = 0; i < bits; i++) {
                 // Read the bit and add it to the value
-                value |= (long) readBit(bytes, bitIndex) << i;
+                value |= readBit(bytes, bitIndex) << i;
                 bitIndex++;
             }
             values.add(value);
