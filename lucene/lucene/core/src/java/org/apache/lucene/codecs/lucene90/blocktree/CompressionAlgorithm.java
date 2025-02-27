@@ -56,14 +56,10 @@ enum CompressionAlgorithm {
   },
 
   ZSTD_COMPRESSION(0x03) {
-    // TODO: The length of the compressed data is not known in advance, we need
-    // to find it from {@param in}
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
       // Read the compressed length from the input data, should be 4 bytes
       int compressedLen = in.readInt();
-      //System.out.println("Compressed Length: " + compressedLen);
-      //System.out.println("Length: " + len);
 
       // Read the compressed data
       byte[] compressed = new byte[compressedLen];
