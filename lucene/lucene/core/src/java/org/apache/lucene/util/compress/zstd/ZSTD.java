@@ -53,7 +53,9 @@ import static org.apache.lucene.util.compress.zstd.Util.verify;
 import static org.apache.lucene.util.compress.zstd.Util.fail;
 import static org.apache.lucene.util.compress.zstd.Util.mask;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
-
+/**
+ * Zstandard compression and decompression routines.
+ */
 public final class ZSTD {
 
     private ZSTD() {}
