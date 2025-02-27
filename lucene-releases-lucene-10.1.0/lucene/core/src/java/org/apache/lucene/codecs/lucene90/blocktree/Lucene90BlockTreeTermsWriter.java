@@ -994,7 +994,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
               suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, compressionHashTable);
           if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
             // LZ4 saved more than 25%, go for it
-            compressionAlg = CompressionAlgorithm.LZ4;
+            compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
           }
         }
         if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
