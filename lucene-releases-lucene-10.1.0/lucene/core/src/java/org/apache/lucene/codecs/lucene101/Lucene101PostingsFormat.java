@@ -26,6 +26,7 @@ import org.apache.lucene.codecs.PostingsReaderBase;
 import org.apache.lucene.codecs.PostingsWriterBase;
 import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsReader;
 import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter;
+import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter.TermCompressionMode;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.SegmentWriteState;
@@ -362,12 +363,22 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
 
   private final int minTermBlockSize;
   private final int maxTermBlockSize;
+  private final TermCompressionMode termCompressionMode;
 
   /** Creates {@code Lucene101PostingsFormat} with default settings. */
   public Lucene101PostingsFormat() {
     this(
         Lucene90BlockTreeTermsWriter.DEFAULT_MIN_BLOCK_SIZE,
-        Lucene90BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE);
+        Lucene90BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE,
+        TermCompressionMode.LZ4);
+  }
+
+  /** Creates {@code Lucene101PostingsFormat} with custom values for {@code termCompressionMode}. */
+  public Lucene101PostingsFormat(TermCompressionMode termCompressionMode) {
+    this(
+        Lucene90BlockTreeTermsWriter.DEFAULT_MIN_BLOCK_SIZE,
+        Lucene90BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE,
+        termCompressionMode);
   }
 
   /**
@@ -375,23 +386,24 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
    * maxBlockSize} passed to block terms dictionary.
    *
    * @see
-   *     Lucene90BlockTreeTermsWriter#Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)
+   *     Lucene90BlockTreeTermsWriter#Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)
    */
-  public Lucene101PostingsFormat(int minTermBlockSize, int maxTermBlockSize) {
+  public Lucene101PostingsFormat(int minTermBlockSize, int maxTermBlockSize, TermCompressionMode termCompressionMode) {
     super("Lucene101");
     Lucene90BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);
     this.minTermBlockSize = minTermBlockSize;
     this.maxTermBlockSize = maxTermBlockSize;
+    this.termCompressionMode = termCompressionMode;
   }
 
-  @Override
+
   public FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
     PostingsWriterBase postingsWriter = Lucene101Codec.useDefaultCompression ? new Lucene101PostingsWriter(state) : new CustomLucene101PostingsWriter(state);
     boolean success = false;
     try {
       FieldsConsumer ret =
           new Lucene90BlockTreeTermsWriter(
-              state, postingsWriter, minTermBlockSize, maxTermBlockSize);
+              state, postingsWriter, minTermBlockSize, maxTermBlockSize, this.termCompressionMode);
       success = true;
       return ret;
     } finally {
