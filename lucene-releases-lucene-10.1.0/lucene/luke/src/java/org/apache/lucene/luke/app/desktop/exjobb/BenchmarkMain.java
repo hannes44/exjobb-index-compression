@@ -1,30 +1,17 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.backward_codecs.lucene912.Lucene912Codec;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter.TermCompressionMode;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
-import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
-import org.apache.lucene.luke.app.desktop.exjobb.CommonCrawlBenchmarker;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.PhraseQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Random;
 
 public class BenchmarkMain {
     public static void entryPoint()
@@ -53,7 +40,7 @@ public class BenchmarkMain {
             if (useDefaultLuceneCompression)
                 config.setCodec(new Lucene101Codec());
             else
-                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.PFOR));
+                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.DEFAULT, TermCompressionMode.LZ4));
 
             IndexWriter writer = new IndexWriter(directory, config);
 
