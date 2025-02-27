@@ -236,7 +236,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
   /** Configuration for the compression mode of the terms */
   public enum TermCompressionMode {
     /** No compression */
-    NONE,
+    NO_COMPRESSION,
     /** Compress terms with {@link LowercaseAsciiCompression} */
     LOWERCASE_ASCII,
     /** Compress terms with {@link LZ4} */
@@ -1016,6 +1016,17 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
               compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
             }
           }
+          if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
+            // LZ4 didn't save enough space, test if LowercaseAsciiCompression can save space
+            spareWriter.reset();
+              if (spareBytes.length < suffixWriter.length()) {
+                  spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
+              }
+              if (LowercaseAsciiCompression.compress(
+                      suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
+                  compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
+              }
+          }
         } else if (termCompressionMode == TermCompressionMode.LOWERCASE_ASCII) {
           if (spareBytes.length < suffixWriter.length()) {
             spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
@@ -1037,8 +1048,10 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       termsOut.writeVLong(token);
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
+        //System.out.println("NO_COMPRESSION");
       } else {
         spareWriter.copyTo(termsOut);
+        //System.out.println(compressionAlg.name());
       }
       suffixWriter.setLength(0);
       spareWriter.reset();
