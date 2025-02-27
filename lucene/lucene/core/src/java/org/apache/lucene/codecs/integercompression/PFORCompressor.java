@@ -23,6 +23,9 @@ public class PFORCompressor implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(long[] positions, DataOutput out) throws IOException
     {
+        for (int i = 1; i < 128; i++) {
+            positions[i] = positions[i] - positions[i-1];
+        }
 
         // We store the reference as a VInt
         long minValue = IntegerCompressionUtils.getMinValue(positions);
