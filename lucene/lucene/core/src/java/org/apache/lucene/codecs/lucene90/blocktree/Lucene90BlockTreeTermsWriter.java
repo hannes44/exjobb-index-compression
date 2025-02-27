@@ -1009,11 +1009,14 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
               suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
             compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
           }
+        }
+        if (compressionAlg == CompressionAlgorithm.LZ4_COMPRESSION) {
           data = new byte[suffixWriter.length()];
           System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
           compressed = new byte[ZSTD.maxCompressedLength(data.length)];
           ZSTDLength = ZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
-          if (ZSTDLength < data.length) {
+          if (ZSTDLength < spareWriter.size()) {
+
             compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
           }
         }
