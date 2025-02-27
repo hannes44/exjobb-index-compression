@@ -218,13 +218,13 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
   /**
    * Suggested default value for the {@code minItemsInBlock} parameter to {@link
-   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)}.
+   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)}.
    */
   public static final int DEFAULT_MIN_BLOCK_SIZE = 25;
 
   /**
    * Suggested default value for the {@code maxItemsInBlock} parameter to {@link
-   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)}.
+   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)}.
    */
   public static final int DEFAULT_MAX_BLOCK_SIZE = 48;
 
@@ -232,6 +232,20 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
   // public static boolean DEBUG2 = false;
 
   // private final static boolean SAVE_DOT_FILES = false;
+
+  /** Configuration for the compression mode of the terms */
+  public enum TermCompressionMode {
+    /** No compression */
+    NONE,
+    /** Compress terms with {@link LowercaseAsciiCompression} */
+    LOWERCASE_ASCII,
+    /** Compress terms with {@link LZ4} */
+    LZ4,
+    /** Compress terms with Zstandard TODO: {@link} */
+    ZSTD
+  }
+
+  private final TermCompressionMode termCompressionMode;
 
   private final IndexOutput metaOut;
   private final IndexOutput termsOut;
@@ -255,13 +269,15 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       SegmentWriteState state,
       PostingsWriterBase postingsWriter,
       int minItemsInBlock,
-      int maxItemsInBlock)
+      int maxItemsInBlock,
+      TermCompressionMode termCompressionMode)
       throws IOException {
     this(
         state,
         postingsWriter,
         minItemsInBlock,
         maxItemsInBlock,
+        termCompressionMode,
         Lucene90BlockTreeTermsReader.VERSION_CURRENT);
   }
 
@@ -271,12 +287,14 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       PostingsWriterBase postingsWriter,
       int minItemsInBlock,
       int maxItemsInBlock,
+      TermCompressionMode termCompressionMode,
       int version)
       throws IOException {
     validateSettings(minItemsInBlock, maxItemsInBlock);
 
     this.minItemsInBlock = minItemsInBlock;
     this.maxItemsInBlock = maxItemsInBlock;
+    this.termCompressionMode = Objects.requireNonNull(termCompressionMode);
     if (version < Lucene90BlockTreeTermsReader.VERSION_START
         || version > Lucene90BlockTreeTermsReader.VERSION_CURRENT) {
       throw new IllegalArgumentException(
@@ -983,29 +1001,32 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       // prefix length is
       // 1 or 2 always all get visited when running a fuzzy query whose max number of edits is 2.
       if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
-        // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
-        // it out if the
-        // average suffix length is greater than 6.
-        if (suffixWriter.length() > 6L * numEntries) {
-          if (compressionHashTable == null) {
-            compressionHashTable = new LZ4.HighCompressionHashTable();
+        if (termCompressionMode == TermCompressionMode.LZ4) {
+          // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
+          // it out if the
+          // average suffix length is greater than 6.
+          if (suffixWriter.length() > 6L * numEntries) {
+            if (compressionHashTable == null) {
+              compressionHashTable = new LZ4.HighCompressionHashTable();
+            }
+            LZ4.compress(
+                    suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, compressionHashTable);
+            if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+              // LZ4 saved more than 25%, go for it
+              compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
+            }
           }
-          LZ4.compress(
-              suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, compressionHashTable);
-          if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-            // LZ4 saved more than 25%, go for it
-            compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
-          }
-        }
-        if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
-          spareWriter.reset();
+        } else if (termCompressionMode == TermCompressionMode.LOWERCASE_ASCII) {
           if (spareBytes.length < suffixWriter.length()) {
             spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
           }
           if (LowercaseAsciiCompression.compress(
-              suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
+                  suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
             compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
           }
+        }
+        else if (termCompressionMode == TermCompressionMode.ZSTD) {
+          throw new UnsupportedOperationException("Zstd compression is not supported yet");
         }
       }
       long token = ((long) suffixWriter.length()) << 3;
