@@ -989,7 +989,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
         // it out if the
         // average suffix length is greater than 6.
-        if (false) {
+        if (suffixWriter.length() > 6L * numEntries) {
           if (compressionHashTable == null) {
             compressionHashTable = new LZ4.HighCompressionHashTable();
           }
@@ -1015,14 +1015,6 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           ZSTDLength = ZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
           if (ZSTDLength < data.length) {
             compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
-            // Test if compressed data can be decompressed correctly and matches the original data
-//            byte[] decompressed = new byte[data.length];
-//            ZSTD.decompress(compressed, 0, ZSTDLength, decompressed, 0, decompressed.length, false);
-//            if (Arrays.equals(data, decompressed)) {
-//              System.out.println("ZSTD Compression Successful");
-//            } else {
-//              System.out.println("ZSTD Compression Failed");
-//            }
           }
         }
       }
@@ -1036,10 +1028,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
       } else if (compressionAlg == CompressionAlgorithm.ZSTD_COMPRESSION) {
         termsOut.writeBytes(compressed, ZSTDLength);
-        //System.out.println("Saved " + (data.length - ZSTDLength) + " bytes, wrote : " + ZSTDLength);
       } else if (compressionAlg == CompressionAlgorithm.LZ4_COMPRESSION || compressionAlg == CompressionAlgorithm.LOWERCASE_ASCII) {
         spareWriter.copyTo(termsOut);
-        //System.out.println("LZ4/ASCII Saved " + (suffixWriter.length() - spareWriter.size()) + " bytes");
       }
       suffixWriter.setLength(0);
       spareWriter.reset();
