@@ -19,7 +19,7 @@ public class FORCompression implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] positions, DataOutput out) throws IOException
     {
-        IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
+        //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
 
         // We store the reference as a VInt
         int minValue = positions[0];
@@ -71,7 +71,7 @@ public class FORCompression implements IntegerCompressor {
             ints[i] += minValue;
         }
 
-        IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
+        //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
     public IntegerCompressionType getType() {
