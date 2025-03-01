@@ -24,7 +24,7 @@ import static org.apache.lucene.util.compress.zstd.Constants.SEQUENCE_ENCODING_R
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
 import static org.apache.lucene.util.compress.zstd.FiniteStateEntropy.optimalTableLog;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.checkArgument;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
 
 final class SequenceEncoder
 {

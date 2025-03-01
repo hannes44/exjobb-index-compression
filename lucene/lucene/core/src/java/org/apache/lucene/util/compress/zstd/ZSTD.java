@@ -46,12 +46,12 @@ import static org.apache.lucene.util.compress.zstd.Constants.TREELESS_LITERALS_B
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL_COUNT;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.checkArgument;
-import static org.apache.lucene.util.compress.zstd.Util.put24BitLittleEndian;
-import static org.apache.lucene.util.compress.zstd.Util.get24BitLittleEndian;
-import static org.apache.lucene.util.compress.zstd.Util.verify;
-import static org.apache.lucene.util.compress.zstd.Util.fail;
-import static org.apache.lucene.util.compress.zstd.Util.mask;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.put24BitLittleEndian;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.get24BitLittleEndian;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.fail;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.mask;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 /**
  * Zstandard compression and decompression routines.

@@ -11,7 +11,7 @@ package org.apache.lucene.util.compress.zstd;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-import static org.apache.lucene.util.compress.zstd.Util.checkState;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkState;
 import static java.lang.Math.min;
 import static java.lang.Math.toIntExact;
 

@@ -10,8 +10,8 @@ package org.apache.lucene.util.compress.zstd;
 
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_LONG;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.highestBit;
-import static org.apache.lucene.util.compress.zstd.Util.verify;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.highestBit;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
 
 /**
  * Bit streams are encoded as a byte-aligned little-endian stream. Thus, bits are laid out

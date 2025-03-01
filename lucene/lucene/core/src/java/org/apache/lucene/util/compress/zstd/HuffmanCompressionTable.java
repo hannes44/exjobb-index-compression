@@ -16,8 +16,8 @@ import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL_COUNT;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_TABLE_LOG;
 import static org.apache.lucene.util.compress.zstd.Huffman.MIN_TABLE_LOG;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.checkArgument;
-import static org.apache.lucene.util.compress.zstd.Util.minTableLog;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.minTableLog;
 
 final class HuffmanCompressionTable
 {
@@ -41,7 +41,7 @@ final class HuffmanCompressionTable
 
         int result = maxNumberOfBits;
 
-        result = Math.min(result, Util.highestBit((inputSize - 1)) - 1); // we may be able to reduce accuracy if input is small
+        result = Math.min(result, ZSTDUtil.highestBit((inputSize - 1)) - 1); // we may be able to reduce accuracy if input is small
 
         // Need a minimum to safely represent all symbol values
         result = Math.max(result, minTableLog(inputSize, maxSymbol));
@@ -328,7 +328,7 @@ final class HuffmanCompressionTable
         }
 
         while (totalCost > 0) {
-            int numberOfBitsToDecrease = Util.highestBit(totalCost) + 1;
+            int numberOfBitsToDecrease = ZSTDUtil.highestBit(totalCost) + 1;
             for (; numberOfBitsToDecrease > 1; numberOfBitsToDecrease--) {
                 int highPosition = rankLast[numberOfBitsToDecrease];
                 int lowPosition = rankLast[numberOfBitsToDecrease - 1];

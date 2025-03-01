@@ -13,7 +13,7 @@ import java.io.InputStream;
 
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_LONG;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.checkPositionIndexes;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkPositionIndexes;
 import static java.lang.Long.rotateLeft;
 import static java.lang.Math.min;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;

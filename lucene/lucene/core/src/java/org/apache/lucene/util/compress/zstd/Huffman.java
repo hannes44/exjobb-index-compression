@@ -15,8 +15,8 @@ import static org.apache.lucene.util.compress.zstd.BitInputStream.peekBitsFast;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.isPowerOf2;
-import static org.apache.lucene.util.compress.zstd.Util.verify;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.isPowerOf2;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
 
 class Huffman
 {
@@ -82,14 +82,14 @@ class Huffman
         }
         verify(totalWeight != 0, input, "Input is corrupted");
 
-        tableLog = Util.highestBit(totalWeight) + 1;
+        tableLog = ZSTDUtil.highestBit(totalWeight) + 1;
         verify(tableLog <= MAX_TABLE_LOG, input, "Input is corrupted");
 
         int total = 1 << tableLog;
         int rest = total - totalWeight;
         verify(isPowerOf2(rest), input, "Input is corrupted");
 
-        int lastWeight = Util.highestBit(rest) + 1;
+        int lastWeight = ZSTDUtil.highestBit(rest) + 1;
 
         weights[outputSize] = (byte) lastWeight;
         ranks[lastWeight]++;

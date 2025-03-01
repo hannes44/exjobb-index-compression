@@ -11,8 +11,8 @@ package org.apache.lucene.util.compress.zstd;
 import static org.apache.lucene.util.compress.zstd.FiniteStateEntropy.MAX_SYMBOL;
 import static org.apache.lucene.util.compress.zstd.FiniteStateEntropy.MIN_TABLE_LOG;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.highestBit;
-import static org.apache.lucene.util.compress.zstd.Util.verify;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.highestBit;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
 
 class FseTableReader
 {

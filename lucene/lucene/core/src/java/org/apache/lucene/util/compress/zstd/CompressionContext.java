@@ -10,8 +10,8 @@ package org.apache.lucene.util.compress.zstd;
 
 
 import static org.apache.lucene.util.compress.zstd.Constants.MAX_BLOCK_SIZE;
-import static org.apache.lucene.util.compress.zstd.Util.checkArgument;
-import static org.apache.lucene.util.compress.zstd.Util.clamp;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.clamp;
 
 class CompressionContext
 {

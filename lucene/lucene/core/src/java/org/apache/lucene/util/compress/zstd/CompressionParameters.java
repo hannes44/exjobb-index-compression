@@ -11,9 +11,9 @@ package org.apache.lucene.util.compress.zstd;
 import static org.apache.lucene.util.compress.zstd.Constants.MAX_BLOCK_SIZE;
 import static org.apache.lucene.util.compress.zstd.Constants.MAX_WINDOW_LOG;
 import static org.apache.lucene.util.compress.zstd.Constants.MIN_WINDOW_LOG;
-import static org.apache.lucene.util.compress.zstd.Util.cycleLog;
-import static org.apache.lucene.util.compress.zstd.Util.highestBit;
-import static org.apache.lucene.util.compress.zstd.Util.clamp;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.cycleLog;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.highestBit;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.clamp;
 
 class CompressionParameters
 {

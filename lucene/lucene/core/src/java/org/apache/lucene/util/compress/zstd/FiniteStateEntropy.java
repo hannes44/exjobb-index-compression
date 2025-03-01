@@ -13,8 +13,8 @@ import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_LONG;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
 import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.zstd.Util.checkArgument;
-import static org.apache.lucene.util.compress.zstd.Util.verify;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
+import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 final class FiniteStateEntropy
@@ -238,10 +238,10 @@ final class FiniteStateEntropy
 
         int result = maxTableLog;
 
-        result = Math.min(result, Util.highestBit((inputSize - 1)) - 2); // we may be able to reduce accuracy if input is small
+        result = Math.min(result, ZSTDUtil.highestBit((inputSize - 1)) - 2); // we may be able to reduce accuracy if input is small
 
         // Need a minimum to safely represent all symbol values
-        result = Math.max(result, Util.minTableLog(inputSize, maxSymbol));
+        result = Math.max(result, ZSTDUtil.minTableLog(inputSize, maxSymbol));
 
         result = Math.max(result, MIN_TABLE_LOG);
         result = Math.min(result, MAX_TABLE_LOG);
@@ -253,7 +253,7 @@ final class FiniteStateEntropy
     {
         checkArgument(tableLog >= MIN_TABLE_LOG, "Unsupported FSE table size");
         checkArgument(tableLog <= MAX_TABLE_LOG, "FSE table size too large");
-        checkArgument(tableLog >= Util.minTableLog(total, maxSymbol), "FSE table size too small");
+        checkArgument(tableLog >= ZSTDUtil.minTableLog(total, maxSymbol), "FSE table size too small");
 
         long scale = 62 - tableLog;
         long step = (1L << 62) / total;
