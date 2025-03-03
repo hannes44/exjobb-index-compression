@@ -114,11 +114,11 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
                 PhraseQuery phraseQuery = builder.build();
 
                 TopDocs topDocs = searcher.search(phraseQuery, 10);
-               // System.out.println("Total hits: " + topDocs.totalHits.value);
+                System.out.println("Total hits: " + topDocs.totalHits);
 
                 for (int i = 0; i < topDocs.scoreDocs.length; i++) {
                //     Document doc = searcher.doc(topDocs.scoreDocs[i].doc);
-                //    System.out.println(doc.get("id"));
+               //     System.out.println(doc.get("id"));
                 }
             }  catch (ParseException e) {
                 e.printStackTrace();

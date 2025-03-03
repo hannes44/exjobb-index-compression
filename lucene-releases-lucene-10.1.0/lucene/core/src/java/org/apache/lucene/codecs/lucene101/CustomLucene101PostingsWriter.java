@@ -411,7 +411,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                 }
             }
             long numSkipBytes = level0Output.size();
-            forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+            //forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+            integerCompressor.encode(docDeltaBuffer, level0Output);
             if (writeFreqs) {
                 pforUtil.encode(freqBuffer, level0Output);
                 //integerCompressor.encode(freqBuffer, level0Output);
