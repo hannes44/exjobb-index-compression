@@ -6,17 +6,17 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkUtils;
 import org.apache.lucene.luke.app.desktop.exjobb.DatasetCompressionBenchmarker;
 import org.apache.lucene.luke.app.desktop.exjobb.IndexingBenchmarkData;
 import org.apache.lucene.luke.app.desktop.exjobb.SearchBenchmarkData;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.surround.parser.ParseException;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryCachingPolicy;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.BufferedReader;
@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -64,7 +65,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter) {
-        int maxFiles = 5;
+        int maxFiles = 1;
 
         long startTime = System.currentTimeMillis();
 
@@ -141,52 +142,68 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public SearchBenchmarkData BenchmarkSearching(String indexPath) {
-        try (FSDirectory directory = FSDirectory.open(Paths.get(INDEX_PATH));
+        SearchBenchmarkData benchmarkData = new SearchBenchmarkData();
+        List<Long> queryTimes = new ArrayList<>();
 
-             DirectoryReader reader = DirectoryReader.open(directory)) {
-
+        try {
+            // Open the index
+            Directory directory = FSDirectory.open(Paths.get(indexPath));
+            DirectoryReader reader = DirectoryReader.open(directory);
             IndexSearcher searcher = new IndexSearcher(reader);
-            // searcher.setQueryCachingPolicy(QueryCachingPolicy.ALWAYS_CACHE);
 
-            org.apache.lucene.queryparser.classic.QueryParser parser = new QueryParser("content", new StandardAnalyzer());
+            // Define your 8-layer deep Boolean query
+            BooleanQuery booleanQuery = createDeepBooleanQuery(8);
 
-            // Sample queries (modify as needed)
-            List<String> queries = List.of(
-                    "climate change",
-                    "machine learning",
-                    "blockchain technology",
-                    "global economy",
-                    "open source software"
-            );
+            // Warm-up: Run the query once to warm up the JVM
+            searcher.search(booleanQuery, 10);
 
-            System.out.println("Warming up...");
-            for (int i = 0; i < WARMUP_QUERIES; i++) {
-                runQuery(searcher, parser.parse(queries.get(i % queries.size())), false);
-            }
-
-            System.out.println("Benchmarking...");
+            // Benchmark: Run the query multiple times and record the time taken
+            int iterations = 10; // Number of times to run the query
             long totalTime = 0;
-            for (int i = 0; i < MEASURED_QUERIES; i++) {
+            for (int i = 0; i < iterations; i++) {
                 long startTime = System.nanoTime();
-                runQuery(searcher, parser.parse(queries.get(i % queries.size())), true);
-                long elapsedTime = System.nanoTime() - startTime;
-                totalTime += elapsedTime;
+                TopDocs results = searcher.search(booleanQuery, 10);
+                long endTime = System.nanoTime();
+                totalTime += (endTime - startTime);
             }
+            long averageTime = totalTime / iterations;
+            queryTimes.add(averageTime);
 
-            double avgTimeMs = (totalTime / 1_000_000.0) / MEASURED_QUERIES;
-            // System.out.println("Average Query Time: " + avgTimeMs + " ms");
-
-            SearchBenchmarkData result = new SearchBenchmarkData();
-            result.averageQuerySearchTimeInMS = avgTimeMs;
-            return result;
+            // Close the reader
+            reader.close();
 
 
-        } catch (org.apache.lucene.queryparser.classic.ParseException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
+        long averageTime = 0;
+        for (Long time : queryTimes)
+        {
+            averageTime += time;
+        }
+        averageTime /= queryTimes.size();
+        benchmarkData.averageQuerySearchTimeInMS = averageTime;
+        return benchmarkData;
+    }
 
-        return null;
+    private BooleanQuery createDeepBooleanQuery(int depth) {
+        if (depth <= 0) {
+            throw new IllegalArgumentException("Depth must be greater than 0");
+        }
+
+        // Base case: Create a simple TermQuery at the deepest level
+        if (depth == 1) {
+            return new BooleanQuery.Builder()
+                    .add(new TermQuery(new Term("content", "term" + depth)), BooleanClause.Occur.MUST)
+                    .build();
+        }
+
+        // Recursive case: Nest another BooleanQuery inside
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(createDeepBooleanQuery(depth - 1), BooleanClause.Occur.MUST);
+        builder.add(new TermQuery(new Term("content", "term" + depth)), BooleanClause.Occur.MUST);
+        return builder.build();
     }
 
     public interface WETHandler {
