@@ -17,8 +17,17 @@
 package org.apache.lucene.codecs.lucene90.blocktree;
 
 import java.io.IOException;
+import java.util.Arrays;
+
 import org.apache.lucene.store.DataInput;
+import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.LZ4;
+import org.apache.lucene.util.compress.zstd.ZSTD;
+
+import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
+import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -38,15 +47,30 @@ enum CompressionAlgorithm {
     }
   },
 
-  LZ4(0x02) {
+  LZ4_COMPRESSION(0x02) {
 
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
-      org.apache.lucene.util.compress.LZ4.decompress(in, len, out, 0);
+      LZ4.decompress(in, len, out, 0);
+    }
+  },
+
+  ZSTD_COMPRESSION(0x03) {
+    @Override
+    void read(DataInput in, byte[] out, int len) throws IOException {
+      // Read the compressed length from the input data, should be 4 bytes
+      int compressedLen = in.readInt();
+
+      // Read the compressed data
+      byte[] compressed = new byte[compressedLen];
+      in.readBytes(compressed, 0, compressedLen);
+
+      // Decompress the data
+      ZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
     }
   };
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[3];
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[4];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {
