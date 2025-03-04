@@ -22,18 +22,8 @@ public class FORCompression implements IntegerCompressor {
         //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
 
         // We store the reference as a VInt
-        int minValue = positions[0];
-        int maxValue = positions[0];
-        for (int i = 0; i < 128; i++) {
-            if (positions[i] > maxValue)
-            {
-                maxValue = positions[i];
-            }
-            if (positions[i] < minValue)
-            {
-                minValue = positions[i];
-            }
-        }
+        int minValue = IntegerCompressionUtils.getMinValue(positions);
+        int maxValue = IntegerCompressionUtils.getMaxValue(positions);
 
         int maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
 

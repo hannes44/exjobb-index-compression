@@ -1,5 +1,6 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
+/** Utils for integer compression */
 public class IntegerCompressionUtils {
     public static int getMaxValue(int[] ints)
     {

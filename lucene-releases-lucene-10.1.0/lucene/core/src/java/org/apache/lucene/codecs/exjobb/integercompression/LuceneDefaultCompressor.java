@@ -9,6 +9,7 @@ import org.apache.lucene.store.IndexInput;
 
 import java.io.IOException;
 
+/** Default Compressor for lucene 10.1.0 */
 public class LuceneDefaultCompressor implements IntegerCompressor {
 
     @Override

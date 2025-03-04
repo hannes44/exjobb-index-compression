@@ -7,6 +7,7 @@ import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,11 +17,10 @@ import java.util.List;
 public class PFORCompressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
-    /** FOR Encode 128 integers from {@code longs} into {@code out}. */
-    // TODO: try using normal bitpacking instead of variable integers
+    /** FOR Encode 128 integers from {@code int} into {@code out}. */
     public void encode(int[] positions, DataOutput out) throws IOException
     {
-        IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
+     //   IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
 
         // We store the reference as a VInt
         int minValue = IntegerCompressionUtils.getMinValue(positions);
@@ -30,6 +30,7 @@ public class PFORCompressor implements IntegerCompressor {
 
         // Bitmask for if the position index is an exception. 1 is exception. 128 bits total
         byte[] exceptionBitMask = new byte[16];
+        Arrays.fill(exceptionBitMask, (byte) 0); // Clear the bitmask
 
         HashMap<Integer, List<Integer>> bitsNeededCount = new HashMap<>();
         for (int i = 0; i < 128; i++) {
@@ -38,15 +39,14 @@ public class PFORCompressor implements IntegerCompressor {
                 bitsNeededCount.put(bitsRequired, new ArrayList<>());
             }
             bitsNeededCount.get(bitsRequired).add(i);
-
         }
 
         int totalExceptions = 0;
-        int minBitsRequired = 10000000;
+        int minBitsRequired = maxBitsRequired * 128;
         int bestBitWidth = maxBitsRequired;
-        for (int i = 64; i > 0; i--) {
+        for (int i = 32; i > 0; i--) {
             if (bitsNeededCount.containsKey(i)) {
-                int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 32) + 128 * (totalExceptions > 0 ? 1 : 0);
+                int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16) + 128 * (totalExceptions > 0 ? 1 : 0);
                 if (minBitsRequired > bitsRequired)
                 {
                     minBitsRequired = bitsRequired;
@@ -56,15 +56,13 @@ public class PFORCompressor implements IntegerCompressor {
             }
         }
 
-        int count = 0;
-        for (int i = 64; i > 0; i--) {
+        for (int i = 32; i > 0; i--) {
             if (bitsNeededCount.containsKey(i))
             {
                 if (i > bestBitWidth) {
                     for (Integer index : bitsNeededCount.get(i))
                     {
                         IntegerCompressionUtils.setNthBit(exceptionBitMask, index);
-                        count++;
                     }
                 }
                 else {
@@ -98,7 +96,11 @@ public class PFORCompressor implements IntegerCompressor {
 
 
         byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
-        out.writeVInt(regularBytes.length);
+
+        // Only write the regular len if there is exceptions
+        if (isThereExceptions != 0)
+            out.writeVInt(regularBytes.length);
+
         out.writeBytes(regularBytes, regularBytes.length);
 
         for (Integer exception : exceptionValues)
@@ -128,7 +130,12 @@ public class PFORCompressor implements IntegerCompressor {
         if (isThereExceptions == 1)
             pdu.in.readBytes(exceptionBitMask, 0, 16);
 
-        int regularBytesLen = pdu.in.readVInt();
+        // If there is no exceptions, we can figure out how many bytes there are
+        int regularBytesLen = (((regularBitWidth * 128) + 7) / 8 * 8) / 8;
+
+        if (isThereExceptions != 0)
+            regularBytesLen = pdu.in.readVInt();
+
 
 
         byte[] regularBytes = new byte[regularBytesLen];
@@ -147,7 +154,7 @@ public class PFORCompressor implements IntegerCompressor {
             }
         }
 
-        IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
+  //      IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
     public IntegerCompressionType getType() {

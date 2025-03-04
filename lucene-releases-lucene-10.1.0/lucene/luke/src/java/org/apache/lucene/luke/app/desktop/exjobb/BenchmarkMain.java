@@ -52,7 +52,7 @@ public class BenchmarkMain {
             if (useDefaultLuceneCompression)
                 config.setCodec(new Lucene101Codec());
             else
-                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.SIMPLE8B));
+                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.PFOR));
 
             IndexWriter writer = new IndexWriter(directory, config);
 
@@ -65,7 +65,7 @@ public class BenchmarkMain {
             System.out.println("Benchmark for dataset: " + benchmarker.GetDatasetName());
             System.out.println("Indexing Time In MS: " + indexingData.totalIndexingTimeInMS);
             System.out.println("Index Size In MB: " + indexingData.totalIndexSizeInMB);
-       //     System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
+            System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
 
         } catch (IOException e) {
             e.printStackTrace();
