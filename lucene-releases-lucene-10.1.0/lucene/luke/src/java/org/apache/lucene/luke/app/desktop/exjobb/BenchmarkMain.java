@@ -42,6 +42,7 @@ public class BenchmarkMain {
             else
                 config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.DEFAULT, TermCompressionMode.LZ4));
 
+
             IndexWriter writer = new IndexWriter(directory, config);
 
             DatasetCompressionBenchmarker benchmarker = new CommonCrawlBenchmarker();
