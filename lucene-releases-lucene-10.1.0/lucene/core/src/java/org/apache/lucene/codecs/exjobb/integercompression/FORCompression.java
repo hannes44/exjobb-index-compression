@@ -17,13 +17,21 @@ public class FORCompression implements IntegerCompressor {
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
-    public void encode(int[] positions, DataOutput out) throws IOException
+    public void encode(int[] ints, DataOutput out) throws IOException
     {
         //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
 
         // We store the reference as a VInt
-        int minValue = IntegerCompressionUtils.getMinValue(positions);
-        int maxValue = IntegerCompressionUtils.getMaxValue(positions);
+        int minValue = ints[0];
+        int maxValue = ints[0];
+        for (int i = 0; i < 128; i++) {
+            if (minValue > ints[i])
+                minValue = ints[i];
+            if (maxValue < ints[i])
+                maxValue = ints[i];
+        }
+        IntegerCompressionUtils.getMinMaxValue(ints, minValue, maxValue);
+
 
         int maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
 
@@ -34,9 +42,9 @@ public class FORCompression implements IntegerCompressor {
 
         // Now store the offsets from the reference
         for (int i = 0; i < 128; i++) {
-            positions[i] = positions[i] - minValue;
+            ints[i] = ints[i] - minValue;
         }
-        forUtil.encode(positions, maxBitsRequired, out);
+        forUtil.encode(ints, maxBitsRequired, out);
     }
 
     public void encodeSingleInt(int input, DataOutput out) throws IOException {

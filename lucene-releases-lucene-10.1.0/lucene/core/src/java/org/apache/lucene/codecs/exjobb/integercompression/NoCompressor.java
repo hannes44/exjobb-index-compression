@@ -1,5 +1,7 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
+import org.apache.lucene.codecs.lucene101.ForUtil;
+import org.apache.lucene.codecs.lucene101.PForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
@@ -11,6 +13,7 @@ import java.io.IOException;
  * Implements no compression for integer sequences.
  */
 public class NoCompressor implements IntegerCompressor {
+    ForUtil forUtil = new ForUtil();
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Encode 128 integers from {@code longs} into {@code out}. */

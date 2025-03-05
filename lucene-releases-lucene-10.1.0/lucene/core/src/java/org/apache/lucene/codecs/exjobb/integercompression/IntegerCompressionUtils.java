@@ -22,6 +22,18 @@ public class IntegerCompressionUtils {
         return minValue;
     }
 
+    public static void getMinMaxValue(int[] ints, Integer min, Integer max)
+    {
+        min = ints[0];
+        max = ints[0];
+        for (int i = 0; i < 128; i++) {
+            if (min > ints[i])
+                min = ints[i];
+            if (max < ints[i])
+                max = ints[i];
+        }
+    }
+
     public static void setNthBit(byte[] byteArray, int n) {
         // Calculate the byte index and bit position
         int byteIndex = n / 8;       // Which byte contains the nth bit
@@ -38,6 +50,20 @@ public class IntegerCompressionUtils {
 
         // Extract the nth bit using bitwise AND and right shift
         return (byteArray[byteIndex] >> bitPosition) & 1;
+    }
+
+    public static int getLeftBits(int x, int bitWidth) {
+        if (bitWidth < 0 || bitWidth > 32) {
+            throw new IllegalArgumentException("Bit width must be between 0 and 32");
+        }
+
+        // Calculate the mask
+        int mask = (1 << (32 - bitWidth)) - 1;
+
+        // Shift x right by bitWidth and apply the mask
+        int leftBits = (x >>> bitWidth) & mask;
+
+        return leftBits;
     }
 
     public static void turnDeltasIntoAbsolutes(int[] deltas)
