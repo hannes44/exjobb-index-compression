@@ -14,5 +14,6 @@ public enum IntegerCompressionType {
     DEFAULT,
     LIMITTTEST,
     LIMITTEST2,
-    SIMPLE8B
+    SIMPLE8B,
+    NEWPFOR
 }

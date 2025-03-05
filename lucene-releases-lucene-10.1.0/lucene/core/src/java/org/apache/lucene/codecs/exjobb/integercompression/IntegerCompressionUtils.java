@@ -62,4 +62,34 @@ public class IntegerCompressionUtils {
             absolutes[i] -= absolutes[i - 1]; // Convert absolute value to delta
         }
     }
+
+    /** Analysis the given ints and returns the best compression technique */
+    public static void findOptimalCompressionTechniqueForInts(int[] ints)
+    {
+
+    }
+
+    public static int optimalNumberOfBitsRequiredForFORCompression(int[] ints)
+    {
+        int maxValue = getMaxValue(ints);
+        int minValue = getMinValue(ints);
+
+        return 1;
+    }
+
+    public static int optimalNumberOfBitsRequiredForPFORCompression(int[] ints)
+    {
+        return 1;
+    }
+
+    public static int optimalNumberOfBitsRequiredForFASTPFORCompression(int[] ints)
+    {
+        return 1;
+    }
+
+    public static int optimalNumberOfBitsRequiredForSimple8BCompression(int[] ints)
+    {
+        return 1;
+    }
+
 }

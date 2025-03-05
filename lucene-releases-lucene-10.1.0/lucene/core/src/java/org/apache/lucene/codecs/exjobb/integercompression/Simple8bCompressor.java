@@ -126,4 +126,6 @@ public class Simple8bCompressor implements IntegerCompressor {
     public IntegerCompressionType getType() {
         return IntegerCompressionType.NONE;
     }
+
+
 }

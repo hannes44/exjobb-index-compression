@@ -31,6 +31,8 @@ public class IntegerCompressionFactory {
                 return new LimitTest2Compressor();
             case SIMPLE8B:
                 return new Simple8bCompressor();
+            case NEWPFOR:
+                return new NEWPFORCompressor();
             default:
                 System.out.println("ERROR: compression type not supported! Using Delta Compression");
                 System.out.println(compressionType);
