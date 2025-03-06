@@ -16,14 +16,10 @@ import java.util.*;
  */
 public class NEWPFORCompressor implements IntegerCompressor {
 
-    // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] ints, DataOutput out) throws IOException
     {
-        final int MAX_EXCEPTIONS = 32;
-        //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
-
         // We store the reference as a VInt
         int minValue = IntegerCompressionUtils.getMinValue(ints);
         int maxValue = IntegerCompressionUtils.getMaxValue(ints);
@@ -46,9 +42,6 @@ public class NEWPFORCompressor implements IntegerCompressor {
         int bestBitWidth = maxBitsRequired;
         for (int i = 32; i > 0; i--) {
             if (bitsNeededCount.containsKey(i)) {
-                 //- bitsSavedFromMinValueReference;
-
-
                 int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16);
                 if (minBitsRequired > bitsRequired)
                 {
@@ -77,11 +70,11 @@ public class NEWPFORCompressor implements IntegerCompressor {
             }
         }
 
-        int exceptionCount = exceptionIndices.size();
+        byte exceptionCount = (byte)exceptionIndices.size();
 
         out.writeVInt(minValue);
         out.writeVInt(bestBitWidth);
-        out.writeInt(exceptionCount);
+        out.writeByte(exceptionCount);
 
         ForUtil forUtil = new ForUtil();
 
@@ -119,11 +112,12 @@ public class NEWPFORCompressor implements IntegerCompressor {
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
         int minValue = pdu.in.readVInt();
-        int maxBits = pdu.in.readVInt();
-        int exceptionCount = pdu.in.readInt();
+        int regularValueBitWidth = pdu.in.readVInt();
+
+        byte exceptionCount = pdu.in.readByte();
         ForUtil forUtil = new ForUtil();
 
-        forUtil.decode(maxBits, pdu, ints);
+        forUtil.decode(regularValueBitWidth, pdu, ints);
 
         for (int i = 0; i < 128; i++) {
             ints[i] += minValue;
