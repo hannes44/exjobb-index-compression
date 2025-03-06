@@ -58,6 +58,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     IndexOutput docOut;
     IndexOutput posOut;
     IndexOutput payOut;
+    IndexOutput exceptionOut;
 
     IntBlockTermState lastState;
 
@@ -137,6 +138,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
         String docFileName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.DOC_EXTENSION);
+        String exceptionFileName =                 IndexFileNames.segmentFileName(
+                state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.EXC_EXTENSION);
         metaOut = state.directory.createOutput(metaFileName, state.context);
         IndexOutput posOut = null;
         IndexOutput payOut = null;
@@ -155,6 +158,9 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                         IndexFileNames.segmentFileName(
                                 state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.POS_EXTENSION);
                 posOut = state.directory.createOutput(posFileName, state.context);
+                exceptionOut = state.directory.createOutput(exceptionFileName, state.context);
+                CodecUtil.writeIndexHeader(
+                        exceptionOut, Lucene101PostingsFormat.EXC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
                 CodecUtil.writeIndexHeader(
                         posOut, POS_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
@@ -196,7 +202,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (!success) {
-                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
+                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
             }
         }
 
@@ -663,6 +669,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             if (payOut != null) {
                 CodecUtil.writeFooter(payOut);
             }
+            if (exceptionOut != null)
+                CodecUtil.writeFooter(exceptionOut);
             if (metaOut != null) {
                 metaOut.writeInt(maxNumImpactsAtLevel0);
                 metaOut.writeInt(maxImpactNumBytesAtLevel0);
@@ -680,11 +688,11 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (success) {
-                IOUtils.close(metaOut, docOut, posOut, payOut);
+                IOUtils.close(metaOut, docOut, posOut, payOut, exceptionOut);
             } else {
-                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
+                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
             }
-            metaOut = docOut = posOut = payOut = null;
+            metaOut = docOut = posOut = payOut = exceptionOut = null;
         }
     }
 }

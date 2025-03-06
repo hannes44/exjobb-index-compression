@@ -17,14 +17,7 @@
 package org.apache.lucene.codecs.lucene101;
 
 import static org.apache.lucene.codecs.lucene101.ForUtil.BLOCK_SIZE;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.DOC_CODEC;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.LEVEL1_NUM_DOCS;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.META_CODEC;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.PAY_CODEC;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.POS_CODEC;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.TERMS_CODEC;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.VERSION_CURRENT;
-import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.VERSION_START;
+import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.*;
 
 import java.io.IOException;
 import java.util.AbstractList;
@@ -76,6 +69,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
     private final IndexInput docIn;
     private final IndexInput posIn;
     private final IndexInput payIn;
+    private final IndexInput excIn;
 
     private final int maxNumImpactsAtLevel0;
     private final int maxImpactNumBytesAtLevel0;
@@ -142,6 +136,8 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
         IndexInput docIn = null;
         IndexInput posIn = null;
         IndexInput payIn = null;
+        IndexInput excIn = null;
+
 
         // NOTE: these data files are too costly to verify checksum against all the bytes on open,
         // but for now we at least verify proper structure of the checksum footer: which looks
@@ -158,6 +154,17 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             CodecUtil.checkIndexHeader(
                     docIn, DOC_CODEC, version, version, state.segmentInfo.getId(), state.segmentSuffix);
             CodecUtil.retrieveChecksum(docIn, expectedDocFileLength);
+
+
+            String excName =
+                    IndexFileNames.segmentFileName(
+                            state.segmentInfo.name,
+                            state.segmentSuffix,
+                            Lucene101PostingsFormat.EXC_EXTENSION);
+            // The exception input
+            excIn = state.directory.openInput(excName, state.context);
+            CodecUtil.checkIndexHeader(
+                    excIn, EXC_CODEC, version, version, state.segmentInfo.getId(), state.segmentSuffix);
 
             if (state.fieldInfos.hasProx()) {
                 String proxName =
@@ -184,6 +191,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             this.docIn = docIn;
             this.posIn = posIn;
             this.payIn = payIn;
+            this.excIn = excIn;
             success = true;
         } finally {
             if (!success) {
