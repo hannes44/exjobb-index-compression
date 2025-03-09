@@ -50,6 +50,7 @@ import org.apache.lucene.util.StringHelper;
 import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.zstd.ZSTD;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
 import org.apache.lucene.util.fst.FST;
@@ -241,7 +242,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     LOWERCASE_ASCII,
     /** Compress terms with {@link LZ4} */
     LZ4,
-    /** Compress terms with Zstandard TODO: {@link} */
+    /** Compress terms with Zstandard {@link ZSTD} */
     ZSTD
   }
 
@@ -1037,7 +1038,11 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           }
         }
         else if (termCompressionMode == TermCompressionMode.ZSTD) {
-          throw new UnsupportedOperationException("Zstd compression is not supported yet");
+          int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
+          int compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
+            if (compressedLength < suffixWriter.length()) {
+                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+            }
         }
       }
       long token = ((long) suffixWriter.length()) << 3;

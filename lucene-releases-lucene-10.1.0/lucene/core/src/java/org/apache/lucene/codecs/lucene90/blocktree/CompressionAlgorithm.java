@@ -18,7 +18,10 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 
 import java.io.IOException;
 import org.apache.lucene.store.DataInput;
+import org.apache.lucene.store.RandomAccessInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.LZ4;
+import org.apache.lucene.util.compress.zstd.ZSTD;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -42,15 +45,17 @@ enum CompressionAlgorithm {
 
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
-      org.apache.lucene.util.compress.LZ4.decompress(in, len, out, 0);
+      LZ4.decompress(in, len, out, 0);
     }
   },
 
   ZSTD_COMPRESSION(0x03) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
-        throw new UnsupportedOperationException("ZSTD compression is not supported yet");
-      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
+        // Get the compressed length from the frame header
+        int compressedLength = ZSTD.getDecompressedSize(in);
+
+        ZSTD.decompress(in, 0, compressedLength, out, 0, len);
       }
   };
 
