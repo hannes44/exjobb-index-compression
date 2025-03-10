@@ -8,6 +8,8 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Implements no compression for integer sequences.
@@ -17,7 +19,7 @@ public class NoCompressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Encode 128 integers from {@code longs} into {@code out}. */
-    public void encode(int[] ints, DataOutput out) throws IOException
+    public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
         for (int i = 0; i < 128; i++) {
             out.writeInt(ints[i]);
@@ -35,7 +37,7 @@ public class NoCompressor implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         pdu.in.readInts(ints, 0, 128);
 
     }

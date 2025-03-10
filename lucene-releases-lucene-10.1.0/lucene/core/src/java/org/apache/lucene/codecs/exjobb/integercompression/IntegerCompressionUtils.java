@@ -1,5 +1,14 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
+import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.IndexInput;
+import org.apache.lucene.util.packed.PackedInts;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 /** Utils for integer compression */
 public class IntegerCompressionUtils {
     public static int getMaxValue(int[] ints)
@@ -32,6 +41,53 @@ public class IntegerCompressionUtils {
             if (max < ints[i])
                 max = ints[i];
         }
+    }
+
+    public static void setupExceptionHashmap(HashMap<Integer, ArrayList<Integer>> exceptions)
+    {
+        for (int i = 0; i < 33; i++)
+        {
+            exceptions.put(i, new ArrayList<Integer>());
+        }
+    }
+
+    public static void encodeExceptions(HashMap<Integer, ArrayList<Integer>> exceptions, DataOutput out) throws IOException {
+        for (int i = 1; i < 33; i++) {
+            if (exceptions.get(i).size() == 0)
+            {
+           //     out.writeVInt(0);
+           //     continue;
+            }
+
+           // out.writeVInt(exceptions.get(i).size());
+            byte[] bytes = LimitTestCompressor.bitPack(exceptions.get(i), i);
+            out.writeVInt(bytes.length);
+
+            out.writeBytes(bytes, bytes.length);
+
+        }
+    }
+
+    public static HashMap<Integer, ArrayList<Integer>> decodeExceptions(IndexInput input) throws IOException {
+        HashMap<Integer, ArrayList<Integer>> exceptions = new HashMap<Integer, ArrayList<Integer>>();
+
+        for (int i = 1; i < 33; i++) {
+         //   int integerCountForBitWidth = input.readVInt();
+            int byteCount = input.readVInt();
+
+            if (byteCount == 0)
+                continue;
+
+            byte[] bytes = new byte[byteCount];
+            input.readBytes(bytes, 0, byteCount);
+            ArrayList<Integer> ints = (ArrayList<Integer>) LimitTestCompressor.bitUnpack(bytes, i);
+            exceptions.put(i, ints);
+
+         //   for (int j = 0; j < integerCountForBitWidth; j++) {
+         //       exceptions.get(i).add(input.readVInt());
+         //   }
+        }
+        return exceptions;
     }
 
     public static void setNthBit(byte[] byteArray, int n) {

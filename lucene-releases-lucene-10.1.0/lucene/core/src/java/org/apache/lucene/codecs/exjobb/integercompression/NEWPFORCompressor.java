@@ -18,7 +18,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
 
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
-    public void encode(int[] ints, DataOutput out) throws IOException
+    public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
         // We store the reference as a VInt
         int minValue = IntegerCompressionUtils.getMinValue(ints);
@@ -110,7 +110,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         int minValue = pdu.in.readVInt();
         int regularValueBitWidth = pdu.in.readVInt();
 

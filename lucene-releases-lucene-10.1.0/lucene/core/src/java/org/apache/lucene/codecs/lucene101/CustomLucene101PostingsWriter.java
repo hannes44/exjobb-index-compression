@@ -26,12 +26,15 @@ import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.TERMS_C
 import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.VERSION_CURRENT;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
@@ -109,6 +112,9 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     private int maxNumImpactsAtLevel1;
     private int maxImpactNumBytesAtLevel1;
 
+    // Exceptions for each bit width
+    private HashMap<Integer, ArrayList<Integer>> exceptions;
+
     private IntegerCompressor integerCompressor;
 
     /** Scratch output that we use to be able to prepend the encoded length, e.g. impacts. */
@@ -131,6 +137,9 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     /** Sole constructor. */
     public CustomLucene101PostingsWriter(SegmentWriteState state) throws IOException {
         this.integerCompressor = Lucene101Codec.integerCompressor;
+
+        exceptions = new HashMap<Integer, ArrayList<Integer>>();
+        IntegerCompressionUtils.setupExceptionHashmap(exceptions);
 
         String metaFileName =
                 IndexFileNames.segmentFileName(
@@ -336,7 +345,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
             //pforUtil.encode(posDeltaBuffer, posOut);
-            integerCompressor.encode(posDeltaBuffer, posOut);
+            integerCompressor.encode(posDeltaBuffer, posOut, exceptions);
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -418,7 +427,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             }
             long numSkipBytes = level0Output.size();
             //forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
-            integerCompressor.encode(docDeltaBuffer, level0Output);
+            integerCompressor.encode(docDeltaBuffer, level0Output, exceptions);
             if (writeFreqs) {
                 pforUtil.encode(freqBuffer, level0Output);
                 //integerCompressor.encode(freqBuffer, level0Output);
@@ -670,7 +679,11 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                 CodecUtil.writeFooter(payOut);
             }
             if (exceptionOut != null)
+            {
+                IntegerCompressionUtils.encodeExceptions(exceptions, exceptionOut);
                 CodecUtil.writeFooter(exceptionOut);
+            }
+
             if (metaOut != null) {
                 metaOut.writeInt(maxNumImpactsAtLevel0);
                 metaOut.writeInt(maxImpactNumBytesAtLevel0);

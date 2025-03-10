@@ -18,7 +18,7 @@ public class PFORCompressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code int} into {@code out}. */
-    public void encode(int[] positions, DataOutput out) throws IOException
+    public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
      //   IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
 
@@ -120,7 +120,7 @@ public class PFORCompressor implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         byte isThereExceptions = pdu.in.readByte();
         int minValue = pdu.in.readVInt();
         int regularBitWidth = pdu.in.readVInt();

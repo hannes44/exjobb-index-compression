@@ -7,6 +7,7 @@ import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ public class LimitTestCompressor implements IntegerCompressor {
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
-    public void encode(int[] positions, DataOutput out) throws IOException
+    public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
 
     }
@@ -33,7 +34,7 @@ public class LimitTestCompressor implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] longs) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] longs, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
 
     }
 

@@ -8,12 +8,14 @@ import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /** Default Compressor for lucene 10.1.0 */
 public class LuceneDefaultCompressor implements IntegerCompressor {
 
     @Override
-    public void encode(int[] positions, DataOutput out) throws IOException {
+    public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
        // for ()
 
         final ForUtil forUtil = new ForUtil();
@@ -32,7 +34,7 @@ public class LuceneDefaultCompressor implements IntegerCompressor {
     }
 
     @Override
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         final ForUtil forUtil = new ForUtil();
         PForUtil pforUtil = new PForUtil();
         pforUtil.decode(pdu, ints);

@@ -20,14 +20,12 @@ import static org.apache.lucene.codecs.lucene101.ForUtil.BLOCK_SIZE;
 import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.*;
 
 import java.io.IOException;
-import java.util.AbstractList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.RandomAccess;
+import java.util.*;
+
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.FieldInfo;
@@ -75,6 +73,8 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
     private final int maxImpactNumBytesAtLevel0;
     private final int maxNumImpactsAtLevel1;
     private final int maxImpactNumBytesAtLevel1;
+
+    HashMap<Integer, ArrayList<Integer>> exceptions;
 
     private IntegerCompressor integerCompressor;
 
@@ -192,6 +192,9 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             this.posIn = posIn;
             this.payIn = payIn;
             this.excIn = excIn;
+
+            exceptions = IntegerCompressionUtils.decodeExceptions(excIn);
+
             success = true;
         } finally {
             if (!success) {
@@ -587,7 +590,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
         private void refillFullBlock() throws IOException {
             //forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
 
-            integerCompressor.decode(docInUtil, docBuffer);
+            integerCompressor.decode(docInUtil, docBuffer, exceptions);
 
             int count = 0;
             for (int x : docBuffer)
@@ -1028,7 +1031,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 return;
             }
             //pforUtil.decode(posInUtil, posDeltaBuffer);
-            integerCompressor.decode(posInUtil, posDeltaBuffer);
+            integerCompressor.decode(posInUtil, posDeltaBuffer, exceptions);
 
             if (indexHasOffsetsOrPayloads) {
                 refillOffsetsOrPayloads();
