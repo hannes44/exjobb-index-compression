@@ -52,9 +52,17 @@ enum CompressionAlgorithm {
         throw new UnsupportedOperationException("ZSTD compression is not supported yet");
       //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
       }
+  },
+
+  SNAPPY_COMPRESSION(0x04) {
+      @Override
+      void read(DataInput in, byte[] out, int len) throws IOException {
+        throw new UnsupportedOperationException("SNAPPY compression is not supported yet");
+      //org.apache.lucene.util.compress.snappy.Snappy.decompress(in, out, len);
+      }
   };
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[4];
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[5];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {

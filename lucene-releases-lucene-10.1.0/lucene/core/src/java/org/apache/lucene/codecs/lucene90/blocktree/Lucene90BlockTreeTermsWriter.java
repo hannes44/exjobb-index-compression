@@ -242,7 +242,9 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     /** Compress terms with {@link LZ4} */
     LZ4,
     /** Compress terms with Zstandard TODO: {@link} */
-    ZSTD
+    ZSTD,
+    /** Compress terms with Snappy TODO: {@link} */
+    SNAPPY
   }
 
   private final TermCompressionMode termCompressionMode;
@@ -1038,6 +1040,9 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         }
         else if (termCompressionMode == TermCompressionMode.ZSTD) {
           throw new UnsupportedOperationException("Zstd compression is not supported yet");
+        }
+        else if (termCompressionMode == TermCompressionMode.SNAPPY) {
+          throw new UnsupportedOperationException("Snappy compression is not supported yet");
         }
       }
       long token = ((long) suffixWriter.length()) << 3;
