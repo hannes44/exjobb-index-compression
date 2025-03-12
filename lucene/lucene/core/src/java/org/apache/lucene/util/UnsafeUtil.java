@@ -6,9 +6,8 @@
  * compatible open source license.
  */
 
-package org.apache.lucene.util.compress.zstd;
+package org.apache.lucene.util;
 
-import org.apache.lucene.util.IncompatibleJvmException;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;

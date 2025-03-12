@@ -12,7 +12,7 @@ import static org.apache.lucene.util.compress.zstd.BitInputStream.peekBits;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_LONG;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;

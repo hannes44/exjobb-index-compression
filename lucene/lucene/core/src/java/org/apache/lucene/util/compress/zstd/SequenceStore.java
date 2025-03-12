@@ -9,7 +9,7 @@
 package org.apache.lucene.util.compress.zstd;
 
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_LONG;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 final class SequenceStore

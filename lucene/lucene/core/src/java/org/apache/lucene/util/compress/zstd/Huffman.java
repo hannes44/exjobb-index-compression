@@ -14,7 +14,7 @@ import static org.apache.lucene.util.compress.zstd.BitInputStream.isEndOfStream;
 import static org.apache.lucene.util.compress.zstd.BitInputStream.peekBitsFast;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.isPowerOf2;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.verify;
 

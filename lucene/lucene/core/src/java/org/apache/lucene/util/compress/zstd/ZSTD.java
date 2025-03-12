@@ -18,7 +18,7 @@ import static org.apache.lucene.util.compress.zstd.BitInputStream.peekBits;
 import static org.apache.lucene.util.compress.zstd.Constants.*;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL_COUNT;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.put24BitLittleEndian;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.get24BitLittleEndian;
