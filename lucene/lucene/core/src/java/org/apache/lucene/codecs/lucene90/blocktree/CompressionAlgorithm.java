@@ -17,17 +17,11 @@
 package org.apache.lucene.codecs.lucene90.blocktree;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.apache.lucene.store.DataInput;
-import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.zstd.ZSTD;
-
-import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
-import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
