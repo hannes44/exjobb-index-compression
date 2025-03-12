@@ -6,7 +6,7 @@
  * compatible open source license.
  */
 
-package org.apache.lucene.util.compress.zstd;
+package org.apache.lucene.util;
 
 public class MalformedInputException
         extends RuntimeException

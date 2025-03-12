@@ -8,6 +8,8 @@
 
 package org.apache.lucene.util.compress.zstd;
 
+import org.apache.lucene.util.MalformedInputException;
+
 import java.util.Arrays;
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
