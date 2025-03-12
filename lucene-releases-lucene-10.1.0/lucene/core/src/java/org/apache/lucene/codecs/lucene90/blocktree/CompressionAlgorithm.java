@@ -18,7 +18,9 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 
 import java.io.IOException;
 import org.apache.lucene.store.DataInput;
+import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.snappy.Snappy;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -49,7 +51,7 @@ enum CompressionAlgorithm {
   ZSTD_COMPRESSION(0x03) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
-        throw new UnsupportedOperationException("ZSTD compression is not supported yet");
+        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
       //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
       }
   },
@@ -57,8 +59,8 @@ enum CompressionAlgorithm {
   SNAPPY_COMPRESSION(0x04) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
-        throw new UnsupportedOperationException("SNAPPY compression is not supported yet");
-      //org.apache.lucene.util.compress.snappy.Snappy.decompress(in, out, len);
+        int inLen = (int) ((IndexInput) in).length(); // TODO: this is probably returning the WHOLE file length, not just the compressed bytes
+        Snappy.decompress(in, inLen, out, len);
       }
   };
 

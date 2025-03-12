@@ -193,7 +193,7 @@ final class SegmentTermsEnumFrame {
       suffixBytes = new byte[ArrayUtil.oversize(numSuffixBytes, 1)];
     }
     try {
-      compressionAlg = CompressionAlgorithm.byCode((int) codeL & 0x03);
+      compressionAlg = CompressionAlgorithm.byCode((int) codeL & 0x04);
     } catch (IllegalArgumentException e) {
       throw new CorruptIndexException(e.getMessage(), ste.in, e);
     }

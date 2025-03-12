@@ -50,6 +50,7 @@ import org.apache.lucene.util.StringHelper;
 import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
 import org.apache.lucene.util.fst.FST;
@@ -1042,7 +1043,12 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           throw new UnsupportedOperationException("Zstd compression is not supported yet");
         }
         else if (termCompressionMode == TermCompressionMode.SNAPPY) {
-          throw new UnsupportedOperationException("Snappy compression is not supported yet");
+          Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
+          if (spareWriter.size() < suffixWriter.length()) {
+            // Snappy saved more space, use for now
+            // TODO: test if it's worth it, maybe set higher threshold before using Snappy
+            compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+          }
         }
       }
       long token = ((long) suffixWriter.length()) << 3;
