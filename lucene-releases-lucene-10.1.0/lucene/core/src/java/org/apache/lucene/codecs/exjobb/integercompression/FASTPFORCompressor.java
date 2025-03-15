@@ -155,7 +155,6 @@ public class FASTPFORCompressor implements IntegerCompressor {
             exceptionIndex++;
         }
 
-        //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
     public IntegerCompressionType getType() {
