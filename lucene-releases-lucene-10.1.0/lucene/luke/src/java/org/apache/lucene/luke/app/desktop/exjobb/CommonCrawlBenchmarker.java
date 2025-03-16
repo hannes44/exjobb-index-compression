@@ -63,8 +63,8 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
     }
 
     @Override
-    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter) {
-        int maxFiles = 1;
+    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
+        int maxFiles = 500;
 
         long startTime = System.currentTimeMillis();
 
@@ -130,7 +130,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
         IndexingBenchmarkData result = new IndexingBenchmarkData();
         result.totalIndexingTimeInMS = duration;
-        result.totalIndexSizeInMB = BenchmarkUtils.getIndexSizeInMB(INDEX_PATH);
+        result.totalIndexSizeInMB = BenchmarkUtils.getIndexSizeInMB(indexPath);
 
         return result;
     }
@@ -180,12 +180,17 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
             // Close the reader
             reader.close();
+            long totalTime = 0;
+            for (Long time : queryTimes) {
+                totalTime += time;
+            }
+            long averageTime = totalTime / queryTimes.size();
+            benchmarkData.averageQuerySearchTimeInMS = averageTime;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        //averageTime /= queryTimes.size();
-       // benchmarkData.averageQuerySearchTimeInMS = averageTime;
+
         return benchmarkData;
     }
 

@@ -36,15 +36,23 @@ public class BenchmarkMain {
     public static void luceneCompressionTesting()
     {
         // For testing a specific setup, set to false. For complete testing of all compression types on all datasets, set to true
-        boolean doCompleteBenchmark = true;
+        boolean doCompleteBenchmark = false;
 
         BenchmarkDataOutput output = new TextFileBenchmarkDataOutput();
 
         if (doCompleteBenchmark)
             completeBenchmark(output);
-        else
-            benchmarkCompressionType(IntegerCompressionType.NEWPFOR, Dataset.CommonCrawl, output);
+        else {
+            ArrayList<BenchmarkPerformanceData> benchmarkPerformanceDatas = new ArrayList<>();
+            benchmarkPerformanceDatas.add(benchmarkCompressionType(IntegerCompressionType.NEWPFOR, Dataset.CommonCrawl, output));
+            benchmarkPerformanceDatas.add(benchmarkCompressionType(IntegerCompressionType.DEFAULT, Dataset.CommonCrawl, output));
+            try {
+                output.write(benchmarkPerformanceDatas, Dataset.CommonCrawl);
+            }
+            catch (IOException e) {
 
+            }
+        }
     }
 
     public static BenchmarkPerformanceData benchmarkCompressionType(IntegerCompressionType type, Dataset dataset, BenchmarkDataOutput output) {
@@ -52,7 +60,7 @@ public class BenchmarkMain {
         ArrayList<BenchmarkPerformanceData> benchmarkPerformanceDatas = new ArrayList<>();
 
         BenchmarkPerformanceData benchmarkPerformanceData = new BenchmarkPerformanceData();
-        String indexPath = "index";
+        String indexPath = "index/" + dataset.name()  + "_" + type.name();
         try {
             BenchmarkUtils.deleteExistingIndex(indexPath);
 
@@ -71,9 +79,9 @@ public class BenchmarkMain {
 
             DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
 
-            IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer);
+            IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer, indexPath);
 
-            SearchBenchmarkData searchData = benchmarker.BenchmarkSearching("index");
+            SearchBenchmarkData searchData = benchmarker.BenchmarkSearching(indexPath);
 
             benchmarkPerformanceData.type = type;
             benchmarkPerformanceData.indexingBenchmarkData = indexingData;
@@ -82,12 +90,9 @@ public class BenchmarkMain {
             System.out.println("Benchmark for dataset: " + benchmarker.GetDatasetName());
             System.out.println("Indexing Time In MS: " + indexingData.totalIndexingTimeInMS);
             System.out.println("Index Size In MB: " + indexingData.totalIndexSizeInMB);
-            System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
+    //        System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
 
             benchmarkPerformanceDatas.add(benchmarkPerformanceData);
-
-            output.write(benchmarkPerformanceDatas, dataset);
-
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -119,6 +124,8 @@ public class BenchmarkMain {
         for (Dataset dataset : Dataset.values()) {
             ArrayList<BenchmarkPerformanceData> benchmarkPerformanceDatas = new ArrayList<>();
             for (IntegerCompressionType type : IntegerCompressionType.values()) {
+                if (type == IntegerCompressionType.LIMITTEST2)
+                    continue;
                 System.out.println("Benchmarking " + dataset.name() + " using compreesion algorithm:" + type.name());
                 BenchmarkPerformanceData data = benchmarkCompressionType(type, dataset, output);
                 benchmarkPerformanceDatas.add(data);

@@ -12,7 +12,7 @@ public interface DatasetCompressionBenchmarker {
      */
     public String GetDatasetName();
 
-    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer) throws IOException;
+    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer, String indexPath) throws IOException;
 
     public SearchBenchmarkData BenchmarkSearching(String indexPath);
 }

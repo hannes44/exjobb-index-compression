@@ -24,7 +24,7 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
     }
 
     @Override
-    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer) throws IOException {
+    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer, String indexPath) throws IOException {
 
         int numDocs = 2000; // Number of documents to index
         // Fixed seed for deterministic random content generation

@@ -20,7 +20,12 @@ public class LimitTestCompressor implements IntegerCompressor {
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
+        out.writeInt(positions[0]);
 
+        for (int i = 1; i < positions.length; i++) {
+            int delta = (positions[i] - positions[i-1]);
+            out.writeInt(delta);
+        }
     }
 
     public void encodeSingleInt(int input, DataOutput out) throws IOException {
@@ -34,8 +39,11 @@ public class LimitTestCompressor implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] longs, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+        ints[0] = pdu.in.readInt();
+        for (int i = 1; i < 128; i++) {
+            ints[i] = pdu.in.readInt() + ints[i-1];
+        }
     }
 
     public IntegerCompressionType getType() {
