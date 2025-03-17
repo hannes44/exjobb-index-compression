@@ -63,6 +63,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     IndexOutput payOut;
     IndexOutput exceptionOut;
 
+    boolean useExceptionFile = false;
+
     IntBlockTermState lastState;
 
     // Holds starting file pointers for current term:
@@ -167,9 +169,13 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                         IndexFileNames.segmentFileName(
                                 state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.POS_EXTENSION);
                 posOut = state.directory.createOutput(posFileName, state.context);
-                exceptionOut = state.directory.createOutput(exceptionFileName, state.context);
-                CodecUtil.writeIndexHeader(
-                        exceptionOut, Lucene101PostingsFormat.EXC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+
+                if (useExceptionFile) {
+                    exceptionOut = state.directory.createOutput(exceptionFileName, state.context);
+                    CodecUtil.writeIndexHeader(
+                            exceptionOut, Lucene101PostingsFormat.EXC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+                }
+
                 CodecUtil.writeIndexHeader(
                         posOut, POS_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
@@ -211,7 +217,10 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (!success) {
-                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
+                if (useExceptionFile)
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
+                else
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
             }
         }
 
@@ -426,8 +435,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                 }
             }
             long numSkipBytes = level0Output.size();
-            //forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
-            integerCompressor.encode(docDeltaBuffer, level0Output, exceptions);
+            forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+            //integerCompressor.encode(docDeltaBuffer, level0Output, exceptions);
             if (writeFreqs) {
                 pforUtil.encode(freqBuffer, level0Output);
                 //integerCompressor.encode(freqBuffer, level0Output);
@@ -678,7 +687,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             if (payOut != null) {
                 CodecUtil.writeFooter(payOut);
             }
-            if (exceptionOut != null)
+            if (useExceptionFile && exceptionOut != null)
             {
                 IntegerCompressionUtils.encodeExceptions(exceptions, exceptionOut);
                 CodecUtil.writeFooter(exceptionOut);
@@ -701,9 +710,15 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (success) {
-                IOUtils.close(metaOut, docOut, posOut, payOut, exceptionOut);
+                if (useExceptionFile)
+                    IOUtils.close(metaOut, docOut, posOut, payOut, exceptionOut);
+                else
+                    IOUtils.close(metaOut, docOut, posOut, payOut);
             } else {
-                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
+                if (useExceptionFile)
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
+                else
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
             }
             metaOut = docOut = posOut = payOut = exceptionOut = null;
         }

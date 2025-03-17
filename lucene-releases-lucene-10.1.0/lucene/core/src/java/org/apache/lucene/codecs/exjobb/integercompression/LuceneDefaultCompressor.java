@@ -41,6 +41,11 @@ public class LuceneDefaultCompressor implements IntegerCompressor {
     }
 
     @Override
+    public void skip(IndexInput in) throws IOException {
+
+    }
+
+    @Override
     public IntegerCompressionType getType() {
         return null;
     }

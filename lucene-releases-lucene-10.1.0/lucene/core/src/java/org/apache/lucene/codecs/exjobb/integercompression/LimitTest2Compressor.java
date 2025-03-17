@@ -155,6 +155,11 @@ public class LimitTest2Compressor implements IntegerCompressor {
 
     }
 
+    @Override
+    public void skip(IndexInput in) throws IOException {
+
+    }
+
     public IntegerCompressionType getType() {
         return IntegerCompressionType.FOR;
     }

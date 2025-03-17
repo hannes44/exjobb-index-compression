@@ -25,6 +25,7 @@ import java.util.*;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
+import org.apache.lucene.codecs.exjobb.integercompression.DeltaCompressor;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
@@ -162,9 +163,9 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                             state.segmentSuffix,
                             Lucene101PostingsFormat.EXC_EXTENSION);
             // The exception input
-            excIn = state.directory.openInput(excName, state.context);
-            CodecUtil.checkIndexHeader(
-                    excIn, EXC_CODEC, version, version, state.segmentInfo.getId(), state.segmentSuffix);
+       //     excIn = state.directory.openInput(excName, state.context);
+       //     CodecUtil.checkIndexHeader(
+        //            excIn, EXC_CODEC, version, version, state.segmentInfo.getId(), state.segmentSuffix);
 
             if (state.fieldInfos.hasProx()) {
                 String proxName =
@@ -193,7 +194,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             this.payIn = payIn;
             this.excIn = excIn;
 
-            exceptions = IntegerCompressionUtils.decodeExceptions(excIn);
+           // exceptions = IntegerCompressionUtils.decodeExceptions(excIn);
 
             success = true;
         } finally {
@@ -588,9 +589,11 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
         }
 
         private void refillFullBlock() throws IOException {
-            //forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
+            forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
 
-            integerCompressor.decode(docInUtil, docBuffer, exceptions);
+            //integerCompressor.decode(docInUtil, docBuffer, exceptions);
+/*
+
 
             int count = 0;
             for (int x : docBuffer)
@@ -601,7 +604,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                     docBuffer[count] = x + prevDocID;
                 count++;
             }
-
+ */
             if (indexHasFreq) {
                 if (needsFreq) {
                     freqFP = docIn.getFilePointer();
@@ -923,7 +926,9 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 toSkip -= leftInBlock;
                 while (toSkip >= BLOCK_SIZE) {
                     assert posIn.getFilePointer() != lastPosBlockFP;
-                    PForUtil.skip(posIn);
+                    //PForUtil.skip(posIn);
+                   // DeltaCompressor.skip(posIn);
+                    integerCompressor.skip(posIn);
 
                     if (payIn != null) {
                         if (indexHasPayloads) {

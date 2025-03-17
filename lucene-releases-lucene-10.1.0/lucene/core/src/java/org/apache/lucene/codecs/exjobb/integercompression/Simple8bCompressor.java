@@ -125,6 +125,11 @@ public class Simple8bCompressor implements IntegerCompressor {
         }
     }
 
+    @Override
+    public void skip(IndexInput in) throws IOException {
+
+    }
+
     public IntegerCompressionType getType() {
         return IntegerCompressionType.NONE;
     }

@@ -157,6 +157,11 @@ public class PFORCompressor implements IntegerCompressor {
   //      IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
+    @Override
+    public void skip(IndexInput in) throws IOException {
+
+    }
+
     public IntegerCompressionType getType() {
         return IntegerCompressionType.PFOR;
     }

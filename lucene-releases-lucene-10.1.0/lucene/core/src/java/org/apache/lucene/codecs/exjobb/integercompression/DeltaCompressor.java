@@ -46,6 +46,14 @@ public class DeltaCompressor implements IntegerCompressor {
         }
     }
 
+    @Override
+    public void skip(IndexInput in) throws IOException {
+        in.readInt();
+        for (int i = 1; i < 128; i++) {
+            in.readInt();
+        }
+    }
+
     public IntegerCompressionType getType() {
         return IntegerCompressionType.DELTA;
     }

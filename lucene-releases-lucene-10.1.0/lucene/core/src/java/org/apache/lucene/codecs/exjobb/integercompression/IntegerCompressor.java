@@ -20,5 +20,7 @@ public interface IntegerCompressor {
 
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException;
 
+    public void skip(IndexInput in) throws IOException;
+
     public IntegerCompressionType getType();
 }

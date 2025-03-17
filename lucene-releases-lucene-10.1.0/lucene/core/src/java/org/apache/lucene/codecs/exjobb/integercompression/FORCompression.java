@@ -74,6 +74,11 @@ public class FORCompression implements IntegerCompressor {
         //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
+    @Override
+    public void skip(IndexInput in) throws IOException {
+
+    }
+
     public IntegerCompressionType getType() {
         return IntegerCompressionType.FOR;
     }
