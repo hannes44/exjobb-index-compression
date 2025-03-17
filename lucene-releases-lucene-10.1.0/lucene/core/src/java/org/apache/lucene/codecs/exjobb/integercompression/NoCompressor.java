@@ -44,7 +44,7 @@ public class NoCompressor implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
-
+        in.skipBytes(128*4);
     }
 
     public IntegerCompressionType getType() {

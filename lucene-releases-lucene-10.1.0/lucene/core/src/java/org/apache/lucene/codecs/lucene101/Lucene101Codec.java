@@ -127,7 +127,7 @@ public class Lucene101Codec extends Codec {
     super("Lucene101");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
-    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.DELTA);
+    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.NEWPFOR);
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();

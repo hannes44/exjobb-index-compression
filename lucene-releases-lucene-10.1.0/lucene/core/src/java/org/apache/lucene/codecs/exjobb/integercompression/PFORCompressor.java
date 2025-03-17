@@ -159,6 +159,37 @@ public class PFORCompressor implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
+        byte isThereExceptions = in.readByte();
+        int minValue = in.readVInt();
+        int regularBitWidth = in.readVInt();
+        byte[] exceptionBitMask = new byte[16];
+
+        // There is only an exceptionBitMask if there exists exceptions
+        if (isThereExceptions == 1)
+            in.readBytes(exceptionBitMask, 0, 16);
+
+        // If there is no exceptions, we can figure out how many bytes there are
+        int regularBytesLen = (((regularBitWidth * 128) + 7) / 8 * 8) / 8;
+
+        if (isThereExceptions != 0)
+            regularBytesLen = in.readVInt();
+
+
+
+        byte[] regularBytes = new byte[regularBytesLen];
+        in.skipBytes(regularBytesLen);
+
+        List<Integer> regularValues = LimitTestCompressor.bitUnpack(regularBytes, regularBitWidth);
+
+        int regularValueCount = 0;
+        for (int i = 0; i < 128; i++) {
+            if (isThereExceptions == 0 || IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 0) {
+
+            }
+            else {
+                in.readVInt();
+            }
+        }
 
     }
 

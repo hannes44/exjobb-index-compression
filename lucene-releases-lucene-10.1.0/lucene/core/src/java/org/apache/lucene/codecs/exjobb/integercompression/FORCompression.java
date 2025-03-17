@@ -76,6 +76,11 @@ public class FORCompression implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
+        int minValue = in.readVInt();
+        int maxBits = in.readVInt();
+        ForUtil forUtil = new ForUtil();
+
+        in.skipBytes(ForUtil.numBytes(maxBits));
 
     }
 

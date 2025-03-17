@@ -134,6 +134,18 @@ public class NEWPFORCompressor implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
+        int minValue = in.readVInt();
+        int regularValueBitWidth = in.readVInt();
+
+        byte exceptionCount = in.readByte();
+        ForUtil forUtil = new ForUtil();
+
+        in.skipBytes(ForUtil.numBytes(regularValueBitWidth));
+
+        for (int i = 0; i < exceptionCount; i++) {
+            in.readVInt();
+            in.readVInt();
+        }
 
     }
 

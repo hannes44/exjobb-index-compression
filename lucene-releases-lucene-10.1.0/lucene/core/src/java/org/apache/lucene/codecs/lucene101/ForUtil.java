@@ -159,7 +159,7 @@ public final class ForUtil {
   }
 
   /** Number of bytes required to encode 128 integers of {@code bitsPerValue} bits per value. */
-  static int numBytes(int bitsPerValue) {
+  public static int numBytes(int bitsPerValue) {
     return bitsPerValue << (BLOCK_SIZE_LOG2 - 3);
   }
 
