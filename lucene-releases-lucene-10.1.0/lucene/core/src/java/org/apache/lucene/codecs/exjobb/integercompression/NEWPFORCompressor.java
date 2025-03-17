@@ -86,7 +86,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
         // We encode all ints with the best bit width. The exceptions will still be missing some bits so we add them in two lists after.
         // One list with the index of each exception and one list with the reminding value.
         forUtil.encode(ints, bestBitWidth, out);
-
+        //LimitTestCompressor.encode(ints, bestBitWidth, out);
 
 
         int count = 0;
@@ -118,6 +118,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
         ForUtil forUtil = new ForUtil();
 
         forUtil.decode(regularValueBitWidth, pdu, ints);
+        //LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
 
         for (int i = 0; i < 128; i++) {
             ints[i] += minValue;
@@ -140,7 +141,10 @@ public class NEWPFORCompressor implements IntegerCompressor {
         byte exceptionCount = in.readByte();
         ForUtil forUtil = new ForUtil();
 
-        in.skipBytes(ForUtil.numBytes(regularValueBitWidth));
+        // Calculate the total number of bytes required
+        int totalBits = 128 * regularValueBitWidth;
+        int totalBytes = (totalBits + 7) / 8; // Round up to the nearest byte
+        in.skipBytes(totalBytes);
 
         for (int i = 0; i < exceptionCount; i++) {
             in.readVInt();

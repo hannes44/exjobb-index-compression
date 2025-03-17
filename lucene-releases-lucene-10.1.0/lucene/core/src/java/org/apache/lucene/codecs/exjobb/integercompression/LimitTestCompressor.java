@@ -51,6 +51,85 @@ public class LimitTestCompressor implements IntegerCompressor {
 
     }
 
+    /** Encode 128 integers from {@code ints} into {@code out}. */
+    public static void encode(int[] ints, int bitsPerValue, DataOutput out) throws IOException {
+        if (ints.length != 128) {
+            throw new IllegalArgumentException("Input array must have exactly 128 elements.");
+        }
+        if (bitsPerValue < 1 || bitsPerValue > 32) {
+            throw new IllegalArgumentException("bitsPerValue must be between 1 and 32.");
+        }
+
+        // Mask to extract the lower `bitsPerValue` bits
+        int mask = (1 << bitsPerValue) - 1;
+
+        // Buffer to accumulate bits into bytes
+        long buffer = 0; // Use a long to handle up to 64 bits
+        int bufferLength = 0; // Number of bits currently in the buffer
+
+        for (int value : ints) {
+            // Extract the lower `bitsPerValue` bits
+            int packedValue = value & mask;
+
+            // Add the packed value to the buffer
+            buffer = (buffer << bitsPerValue) | packedValue;
+            bufferLength += bitsPerValue;
+
+            // Write full bytes to the output
+            while (bufferLength >= 8) {
+                // Extract the top 8 bits from the buffer
+                byte byteToWrite = (byte) (buffer >>> (bufferLength - 8));
+                out.writeByte(byteToWrite);
+
+                // Remove the written bits from the buffer
+                bufferLength -= 8;
+                buffer &= (1L << bufferLength) - 1; // Clear the top bits
+            }
+        }
+
+        // Write any remaining bits (padding with zeros if necessary)
+        if (bufferLength > 0) {
+            // Shift the remaining bits to the top of the byte and write
+            byte byteToWrite = (byte) (buffer << (8 - bufferLength));
+            out.writeByte(byteToWrite);
+        }
+    }
+
+    /** Decode 128 integers from {@code in} into {@code ints}. */
+    public static void decode(int bitsPerValue, PostingDecodingUtil pdu, int[] ints) throws IOException {
+        if (ints.length != 128) {
+            throw new IllegalArgumentException("Output array must have exactly 128 elements.");
+        }
+        if (bitsPerValue < 1 || bitsPerValue > 32) {
+            throw new IllegalArgumentException("bitsPerValue must be between 1 and 32.");
+        }
+
+        // Mask to extract the lower `bitsPerValue` bits
+        int mask = (1 << bitsPerValue) - 1;
+
+        // Buffer to accumulate bits from bytes
+        long buffer = 0; // Use a long to handle up to 64 bits
+        int bufferLength = 0; // Number of bits currently in the buffer
+
+        for (int i = 0; i < 128; i++) {
+            // Refill the buffer if it has fewer than `bitsPerValue` bits
+            while (bufferLength < bitsPerValue) {
+                // Read a byte from the input and add it to the buffer
+                byte nextByte = pdu.in.readByte();
+                buffer = (buffer << 8) | (nextByte & 0xFF); // Add 8 bits to the buffer
+                bufferLength += 8;
+            }
+
+            // Extract the top `bitsPerValue` bits from the buffer
+            int packedValue = (int) (buffer >>> (bufferLength - bitsPerValue)) & mask;
+            ints[i] = packedValue;
+
+            // Remove the extracted bits from the buffer
+            bufferLength -= bitsPerValue;
+            buffer &= (1L << bufferLength) - 1; // Clear the top bits
+        }
+    }
+
     public IntegerCompressionType getType() {
         return IntegerCompressionType.FOR;
     }

@@ -356,6 +356,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             //pforUtil.encode(posDeltaBuffer, posOut);
             integerCompressor.encode(posDeltaBuffer, posOut, exceptions);
 
+
+
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
                 payOut.writeVInt(payloadByteUpto);
@@ -435,8 +437,12 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                 }
             }
             long numSkipBytes = level0Output.size();
-            forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
-            //integerCompressor.encode(docDeltaBuffer, level0Output, exceptions);
+
+            if (Lucene101Codec.customEncodeDocIds)
+                integerCompressor.encode(docDeltaBuffer, level0Output, exceptions);
+            else
+                forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+
             if (writeFreqs) {
                 pforUtil.encode(freqBuffer, level0Output);
                 //integerCompressor.encode(freqBuffer, level0Output);

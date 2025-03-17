@@ -589,27 +589,29 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
         }
 
         private void refillFullBlock() throws IOException {
-            forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
+            if (!Lucene101Codec.customEncodeDocIds)
+                forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
+            else {
+                integerCompressor.decode(docInUtil, docBuffer, exceptions);
 
-            //integerCompressor.decode(docInUtil, docBuffer, exceptions);
-/*
-
-
-            int count = 0;
-            for (int x : docBuffer)
-            {
-                if (count != 0)
-                    docBuffer[count] = x + docBuffer[count-1];
-                else
-                    docBuffer[count] = x + prevDocID;
-                count++;
+                for (int i = 0; i < 128; i++)
+                {
+                    if (i != 0)
+                        docBuffer[i] += docBuffer[i-1];
+                    else
+                        docBuffer[i] += prevDocID;
+                }
             }
- */
+
+
+
             if (indexHasFreq) {
                 if (needsFreq) {
                     freqFP = docIn.getFilePointer();
                 }
+
                 PForUtil.skip(docIn);
+
             }
             docCountLeft -= BLOCK_SIZE;
             prevDocID = docBuffer[BLOCK_SIZE - 1];

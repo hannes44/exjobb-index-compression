@@ -127,7 +127,19 @@ public class Simple8bCompressor implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
+        int i = 0;
 
+        while (i < 128) {
+            long encodedWord = in.readLong(); // Read a compressed 64-bit word
+            int selector = (int) (encodedWord >>> 60); // Extract selector (highest 4 bits)
+            int numValues = NUM_VALUES[selector]; // Number of integers encoded
+            int bitWidth = BIT_WIDTHS[selector]; // Bits per integer
+
+            // Decode each integer
+            for (int j = 0; j < numValues && i < 128; j++, i++) {
+
+            }
+        }
     }
 
     public IntegerCompressionType getType() {

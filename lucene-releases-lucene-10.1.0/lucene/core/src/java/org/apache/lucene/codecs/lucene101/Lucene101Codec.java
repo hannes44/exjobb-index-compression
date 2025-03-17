@@ -63,6 +63,8 @@ public class Lucene101Codec extends Codec {
 
   public static IntegerCompressor integerCompressor;
 
+  static boolean customEncodeDocIds = true;
+
   /** Configuration option for the codec. */
   public enum Mode {
     /** Trade compression ratio for retrieval speed. */
@@ -127,7 +129,7 @@ public class Lucene101Codec extends Codec {
     super("Lucene101");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
-    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.NEWPFOR);
+    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.NONE);
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
