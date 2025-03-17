@@ -95,18 +95,21 @@ public class IntegerCompressionUtils {
         return (byteArray[byteIndex] >> bitPosition) & 1;
     }
 
-    public static int getLeftBits(int x, int bitWidth) {
-        if (bitWidth < 0 || bitWidth > 32) {
-            throw new IllegalArgumentException("Bit width must be between 0 and 32");
+    public static int getLeftBits(int x, int leftBitCount) {
+        if (leftBitCount < 0 || leftBitCount > 32) {
+            throw new IllegalArgumentException("leftBitCount must be between 0 and 32.");
         }
 
-        // Calculate the mask
-        int mask = (1 << (32 - bitWidth)) - 1;
+        if (leftBitCount == 0) {
+            return 0; // No bits to retain
+        }
 
-        // Shift x right by bitWidth and apply the mask
-        int leftBits = (x >>> bitWidth) & mask;
+        // Shift the leftmost `leftBitCount` bits to the rightmost positions
+        int shifted = x >>> (32 - leftBitCount);
 
-        return leftBits;
+        // Mask to retain only the leftmost `leftBitCount` bits
+        int mask = (1 << leftBitCount) - 1;
+        return shifted & mask;
     }
 
     public static void turnDeltasIntoAbsolutes(int[] deltas)

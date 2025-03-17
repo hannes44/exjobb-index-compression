@@ -52,6 +52,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
             }
         }
 
+
         List<Integer> exceptionIndices = new ArrayList<>();
         List<Integer> exceptionValues = new ArrayList<>();
         for (int i = 32; i > 0; i--) {
@@ -85,8 +86,8 @@ public class NEWPFORCompressor implements IntegerCompressor {
 
         // We encode all ints with the best bit width. The exceptions will still be missing some bits so we add them in two lists after.
         // One list with the index of each exception and one list with the reminding value.
-        forUtil.encode(ints, bestBitWidth, out);
-        //LimitTestCompressor.encode(ints, bestBitWidth, out);
+        //forUtil.encode(ints, bestBitWidth, out);
+        LimitTestCompressor.encode(ints, bestBitWidth, out);
 
 
         int count = 0;
@@ -94,7 +95,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
         for (int index : exceptionIndices)
         {
             out.writeVInt(index);
-            out.writeVInt(IntegerCompressionUtils.getLeftBits(exceptionValues.get(count), bestBitWidth));
+            out.writeVInt(IntegerCompressionUtils.getLeftBits(exceptionValues.get(count), 32 - bestBitWidth));
             count++;
         }
     }
@@ -117,8 +118,8 @@ public class NEWPFORCompressor implements IntegerCompressor {
         byte exceptionCount = pdu.in.readByte();
         ForUtil forUtil = new ForUtil();
 
-        forUtil.decode(regularValueBitWidth, pdu, ints);
-        //LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
+        //forUtil.decode(regularValueBitWidth, pdu, ints);
+        LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
 
         for (int i = 0; i < 128; i++) {
             ints[i] += minValue;
@@ -127,7 +128,9 @@ public class NEWPFORCompressor implements IntegerCompressor {
         for (int i = 0; i < exceptionCount; i++) {
             int index = pdu.in.readVInt();
             int value = pdu.in.readVInt();
+            value = value << regularValueBitWidth;
             ints[index] += value;
+            //ints[index] = value + minValue;
         }
 
         //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
@@ -145,6 +148,8 @@ public class NEWPFORCompressor implements IntegerCompressor {
         int totalBits = 128 * regularValueBitWidth;
         int totalBytes = (totalBits + 7) / 8; // Round up to the nearest byte
         in.skipBytes(totalBytes);
+
+        //in.skipBytes(ForUtil.numBytes(regularValueBitWidth));
 
         for (int i = 0; i < exceptionCount; i++) {
             in.readVInt();
