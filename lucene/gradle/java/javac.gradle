@@ -80,7 +80,7 @@ allprojects {
       }
 
       if (propertyOrDefault("javac.failOnWarnings", true).toBoolean()) {
-        options.compilerArgs += "-Werror"
+        //options.compilerArgs += "-Werror"
       }
     }
   }

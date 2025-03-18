@@ -33,6 +33,7 @@ import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionFactory;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
+import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter.TermCompressionMode;
 import org.apache.lucene.codecs.lucene90.Lucene90CompoundFormat;
 import org.apache.lucene.codecs.lucene90.Lucene90DocValuesFormat;
 import org.apache.lucene.codecs.lucene90.Lucene90LiveDocsFormat;
@@ -143,13 +144,13 @@ public class Lucene101Codec extends Codec {
    *
    * @param mode stored fields compression mode to use for newly flushed/merged segments.
    */
-  public Lucene101Codec(Mode mode, IntegerCompressionType integerCompressionType) {
+  public Lucene101Codec(Mode mode, IntegerCompressionType integerCompressionType, TermCompressionMode termCompressionMode) {
     super("Lucene101");
     this.storedFieldsFormat =
             new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
     Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
     Lucene101Codec.useDefaultCompression = false;
-    this.defaultPostingsFormat = new Lucene101PostingsFormat();
+    this.defaultPostingsFormat = new Lucene101PostingsFormat(termCompressionMode);
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
   }

@@ -1,31 +1,22 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.backward_codecs.lucene912.Lucene912Codec;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter.TermCompressionMode;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
-import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
-import org.apache.lucene.luke.app.desktop.exjobb.CommonCrawlBenchmarker;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.PhraseQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
 
 public class BenchmarkMain {
     public static void entryPoint()
@@ -73,7 +64,14 @@ public class BenchmarkMain {
             // Index writer configuration
             IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
-            config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, type));
+            boolean benchmarkSearch = false;
+            boolean useDefaultLuceneCompression = false;
+            if (useDefaultLuceneCompression)
+                config.setCodec(new Lucene101Codec());
+            else
+                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, type, TermCompressionMode.LZ4));
+
+
 
             IndexWriter writer = new IndexWriter(directory, config);
 
@@ -83,6 +81,7 @@ public class BenchmarkMain {
 
             SearchBenchmarkData searchData = benchmarker.BenchmarkSearching(indexPath);
 
+
             benchmarkPerformanceData.type = type;
             benchmarkPerformanceData.indexingBenchmarkData = indexingData;
             benchmarkPerformanceData.searchBenchmarkData = searchData;
@@ -90,9 +89,11 @@ public class BenchmarkMain {
             System.out.println("Benchmark for dataset: " + benchmarker.GetDatasetName());
             System.out.println("Indexing Time In MS: " + indexingData.totalIndexingTimeInMS);
             System.out.println("Index Size In MB: " + indexingData.totalIndexSizeInMB);
-    //        System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
+
+            System.out.println("Average Search query speed in MS: " + searchData.averageQuerySearchTimeInMS);
 
             benchmarkPerformanceDatas.add(benchmarkPerformanceData);
+
 
         } catch (IOException e) {
             e.printStackTrace();
