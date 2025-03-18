@@ -1,9 +1,19 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
+import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.IndexInput;
+import org.apache.lucene.util.packed.PackedInts;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+/** Utils for integer compression */
 public class IntegerCompressionUtils {
-    public static long getMaxValue(int[] ints)
+    public static int getMaxValue(int[] ints)
     {
-        long maxValue = ints[0];
+        int maxValue = ints[0];
         for (int i = 0; i < 128; i++) {
             if (maxValue < ints[i])
                 maxValue = ints[i];
@@ -11,14 +21,60 @@ public class IntegerCompressionUtils {
         return maxValue;
     }
 
-    public static long getMinValue(int[] ints)
+    public static int getMinValue(int[] ints)
     {
-        long minValue = ints[0];
+        int minValue = ints[0];
         for (int i = 0; i < 128; i++) {
             if (minValue > ints[i])
                 minValue = ints[i];
         }
         return minValue;
+    }
+
+    public static void getMinMaxValue(int[] ints, Integer min, Integer max)
+    {
+        min = ints[0];
+        max = ints[0];
+        for (int i = 0; i < 128; i++) {
+            if (min > ints[i])
+                min = ints[i];
+            if (max < ints[i])
+                max = ints[i];
+        }
+    }
+
+    public static void setupExceptionHashmap(HashMap<Integer, ArrayList<Integer>> exceptions)
+    {
+        for (int i = 0; i < 33; i++)
+        {
+            exceptions.put(i, new ArrayList<Integer>());
+        }
+    }
+
+    public static void encodeExceptions(HashMap<Integer, ArrayList<Integer>> exceptions, DataOutput out) throws IOException {
+        for (int i = 1; i < 33; i++) {
+            byte[] bytes = LimitTestCompressor.bitPack(exceptions.get(i), i);
+            out.writeVInt(bytes.length);
+
+            out.writeBytes(bytes, bytes.length);
+        }
+    }
+
+    public static HashMap<Integer, ArrayList<Integer>> decodeExceptions(IndexInput input) throws IOException {
+        HashMap<Integer, ArrayList<Integer>> exceptions = new HashMap<Integer, ArrayList<Integer>>();
+
+        for (int i = 1; i < 33; i++) {
+            int byteCount = input.readVInt();
+
+            if (byteCount == 0)
+                continue;
+
+            byte[] bytes = new byte[byteCount];
+            input.readBytes(bytes, 0, byteCount);
+            ArrayList<Integer> ints = (ArrayList<Integer>) LimitTestCompressor.bitUnpack(bytes, i);
+            exceptions.put(i, ints);
+        }
+        return exceptions;
     }
 
     public static void setNthBit(byte[] byteArray, int n) {
@@ -37,6 +93,23 @@ public class IntegerCompressionUtils {
 
         // Extract the nth bit using bitwise AND and right shift
         return (byteArray[byteIndex] >> bitPosition) & 1;
+    }
+
+    public static int getLeftBits(int x, int leftBitCount) {
+        if (leftBitCount < 0 || leftBitCount > 32) {
+            throw new IllegalArgumentException("leftBitCount must be between 0 and 32.");
+        }
+
+        if (leftBitCount == 0) {
+            return 0; // No bits to retain
+        }
+
+        // Shift the leftmost `leftBitCount` bits to the rightmost positions
+        int shifted = x >>> (32 - leftBitCount);
+
+        // Mask to retain only the leftmost `leftBitCount` bits
+        int mask = (1 << leftBitCount) - 1;
+        return shifted & mask;
     }
 
     public static void turnDeltasIntoAbsolutes(int[] deltas)
@@ -61,4 +134,34 @@ public class IntegerCompressionUtils {
             absolutes[i] -= absolutes[i - 1]; // Convert absolute value to delta
         }
     }
+
+    /** Analysis the given ints and returns the best compression technique */
+    public static void findOptimalCompressionTechniqueForInts(int[] ints)
+    {
+
+    }
+
+    public static int optimalNumberOfBitsRequiredForFORCompression(int[] ints)
+    {
+        int maxValue = getMaxValue(ints);
+        int minValue = getMinValue(ints);
+
+        return 1;
+    }
+
+    public static int optimalNumberOfBitsRequiredForPFORCompression(int[] ints)
+    {
+        return 1;
+    }
+
+    public static int optimalNumberOfBitsRequiredForFASTPFORCompression(int[] ints)
+    {
+        return 1;
+    }
+
+    public static int optimalNumberOfBitsRequiredForSimple8BCompression(int[] ints)
+    {
+        return 1;
+    }
+
 }

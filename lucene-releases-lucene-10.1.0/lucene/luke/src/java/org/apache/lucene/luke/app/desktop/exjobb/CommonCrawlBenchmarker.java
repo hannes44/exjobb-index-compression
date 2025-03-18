@@ -1,22 +1,20 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkUtils;
 import org.apache.lucene.luke.app.desktop.exjobb.DatasetCompressionBenchmarker;
 import org.apache.lucene.luke.app.desktop.exjobb.IndexingBenchmarkData;
 import org.apache.lucene.luke.app.desktop.exjobb.SearchBenchmarkData;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.surround.parser.ParseException;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryCachingPolicy;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import java.io.BufferedReader;
@@ -24,6 +22,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -63,7 +63,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
     }
 
     @Override
-    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter) {
+    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
         int maxFiles = 1;
 
         long startTime = System.currentTimeMillis();
@@ -130,7 +130,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
         IndexingBenchmarkData result = new IndexingBenchmarkData();
         result.totalIndexingTimeInMS = duration;
-        result.totalIndexSizeInMB = BenchmarkUtils.getIndexSizeInMB(INDEX_PATH);
+        result.totalIndexSizeInMB = BenchmarkUtils.getIndexSizeInMB(indexPath);
 
         return result;
     }
@@ -141,52 +141,76 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public SearchBenchmarkData BenchmarkSearching(String indexPath) {
-        try (FSDirectory directory = FSDirectory.open(Paths.get(INDEX_PATH));
-
-             DirectoryReader reader = DirectoryReader.open(directory)) {
-
+        SearchBenchmarkData benchmarkData = new SearchBenchmarkData();
+        try {
+            // Open the index
+            Directory directory = FSDirectory.open(Paths.get(indexPath));
+            DirectoryReader reader = DirectoryReader.open(directory);
             IndexSearcher searcher = new IndexSearcher(reader);
-            // searcher.setQueryCachingPolicy(QueryCachingPolicy.ALWAYS_CACHE);
 
-            org.apache.lucene.queryparser.classic.QueryParser parser = new QueryParser("content", new StandardAnalyzer());
+            // Define a list of queries to benchmark
+            List<Query> queries = createCommonCrawlQueries();
 
-            // Sample queries (modify as needed)
-            List<String> queries = List.of(
-                    "climate change",
-                    "machine learning",
-                    "blockchain technology",
-                    "global economy",
-                    "open source software"
-            );
-
-            System.out.println("Warming up...");
-            for (int i = 0; i < WARMUP_QUERIES; i++) {
-                runQuery(searcher, parser.parse(queries.get(i % queries.size())), false);
+            // Warm-up: Run each query once to warm up the JVM
+            for (Query query : queries) {
+                searcher.search(query, 10);
             }
 
-            System.out.println("Benchmarking...");
+            // Benchmark: Run each query multiple times and record the time taken
+            int iterations = 10; // Number of times to run each query
+            List<Long> queryTimes = new ArrayList<>();
+
+            for (Query query : queries) {
+                long totalTime = 0;
+                for (int i = 0; i < iterations; i++) {
+                    long startTime = System.nanoTime();
+                    TopDocs results = searcher.search(query, 10);
+                    long endTime = System.nanoTime();
+                    totalTime += (endTime - startTime);
+                }
+                long averageTime = totalTime / iterations;
+                queryTimes.add(averageTime);
+            }
+
+            // Print results
+            System.out.println("Benchmark Results:");
+            for (int i = 0; i < queries.size(); i++) {
+                System.out.println("Query " + (i + 1) + ": " + queries.get(i) + " | Average Time: " + queryTimes.get(i) + " ns");
+            }
+
+            // Close the reader
+            reader.close();
             long totalTime = 0;
-            for (int i = 0; i < MEASURED_QUERIES; i++) {
-                long startTime = System.nanoTime();
-                runQuery(searcher, parser.parse(queries.get(i % queries.size())), true);
-                long elapsedTime = System.nanoTime() - startTime;
-                totalTime += elapsedTime;
+            for (Long time : queryTimes) {
+                totalTime += time;
             }
+            long averageTime = totalTime / queryTimes.size();
+            benchmarkData.averageQuerySearchTimeInMS = averageTime;
 
-            double avgTimeMs = (totalTime / 1_000_000.0) / MEASURED_QUERIES;
-            // System.out.println("Average Query Time: " + avgTimeMs + " ms");
-
-            SearchBenchmarkData result = new SearchBenchmarkData();
-            result.averageQuerySearchTimeInMS = avgTimeMs;
-            return result;
-
-
-        } catch (org.apache.lucene.queryparser.classic.ParseException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
+        return benchmarkData;
+    }
 
-        return null;
+    private BooleanQuery createDeepBooleanQuery(int depth) {
+        if (depth <= 0) {
+            throw new IllegalArgumentException("Depth must be greater than 0");
+        }
+
+        // Base case: Create a simple TermQuery at the deepest level
+        if (depth == 1) {
+            return new BooleanQuery.Builder()
+                    .add(new TermQuery(new Term("content", "term" + depth)), BooleanClause.Occur.MUST)
+                    .build();
+        }
+
+        // Recursive case: Nest another BooleanQuery inside
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        builder.add(createDeepBooleanQuery(depth - 1), BooleanClause.Occur.MUST);
+        builder.add(new TermQuery(new Term("content", "term" + depth)), BooleanClause.Occur.MUST);
+        return builder.build();
     }
 
     public interface WETHandler {
@@ -202,6 +226,63 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         if (measure) {
             System.out.println("Query: " + query.toString() + " | Time: " + (end - start) / 1_000_000.0 + " ms" + "Total Hits: " + topDocs.totalHits);
         }
+    }
+
+    private List<Query> createCommonCrawlQueries() throws Exception {
+        List<Query> queries = new ArrayList<>();
+        StandardAnalyzer analyzer = new StandardAnalyzer();
+
+        // 1. Simple Term Query (Search for a specific word in the content)
+        queries.add(new TermQuery(new Term("content", "artificial")));
+        queries.add(new TermQuery(new Term("content", "intelligence")));
+
+
+
+        // 2. Boolean Query (AND) (Search for pages containing both "artificial" and "intelligence")
+        queries.add(new BooleanQuery.Builder()
+                .add(new TermQuery(new Term("content", "artificial")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term("content", "intelligence")), BooleanClause.Occur.MUST)
+                .build());
+
+        // 3. Boolean Query (OR) (Search for pages containing either "covid" or "pandemic")
+        queries.add(new BooleanQuery.Builder()
+                .add(new TermQuery(new Term("content", "covid")), BooleanClause.Occur.SHOULD)
+                .add(new TermQuery(new Term("content", "pandemic")), BooleanClause.Occur.SHOULD)
+                .build());
+
+        // 4. Phrase Query (Search for the exact phrase "climate change")
+        queries.add(new PhraseQuery.Builder()
+                .add(new Term("content", "climate"))
+                .add(new Term("content", "change"))
+                .build());
+
+        // 5. Wildcard Query (Search for terms starting with "tech")
+        queries.add(new WildcardQuery(new Term("content", "tech*")));
+
+        // 6. Fuzzy Query (Search for terms similar to "machine" with a maximum edit distance of 2)
+        queries.add(new FuzzyQuery(new Term("content", "machine"), 2));
+
+        // 7. Range Query (Search for pages with a timestamp between 2020-01-01 and 2023-12-31)
+        queries.add(LongPoint.newRangeQuery("timestamp",
+                Instant.parse("2020-01-01T00:00:00Z").toEpochMilli(),
+                Instant.parse("2023-12-31T23:59:59Z").toEpochMilli()));
+
+        // 8. Prefix Query (Search for domains starting with "news")
+        queries.add(new PrefixQuery(new Term("domain", "news")));
+
+        // 9. Multi-Term Query (Search for "covid" in both the title and content fields)
+        queries.add(new MultiFieldQueryParser(new String[]{"title", "content"}, analyzer).parse("covid"));
+
+        // 10. Complex Query (Search for pages containing "covid" in the title, "vaccine" in the content, and published in 2021)
+        queries.add(new BooleanQuery.Builder()
+                .add(new TermQuery(new Term("title", "covid")), BooleanClause.Occur.MUST)
+                .add(new TermQuery(new Term("content", "vaccine")), BooleanClause.Occur.MUST)
+                .add(LongPoint.newRangeQuery("timestamp",
+                        Instant.parse("2021-01-01T00:00:00Z").toEpochMilli(),
+                        Instant.parse("2021-12-31T23:59:59Z").toEpochMilli()), BooleanClause.Occur.MUST)
+                .build());
+
+        return queries;
     }
 
 }

@@ -26,12 +26,15 @@ import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.TERMS_C
 import static org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.VERSION_CURRENT;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
 import org.apache.lucene.index.CorruptIndexException;
@@ -58,6 +61,8 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     IndexOutput docOut;
     IndexOutput posOut;
     IndexOutput payOut;
+    IndexOutput exceptionOut;
+
 
     IntBlockTermState lastState;
 
@@ -108,6 +113,9 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     private int maxNumImpactsAtLevel1;
     private int maxImpactNumBytesAtLevel1;
 
+    // Exceptions for each bit width
+    private HashMap<Integer, ArrayList<Integer>> exceptions;
+
     private IntegerCompressor integerCompressor;
 
     /** Scratch output that we use to be able to prepend the encoded length, e.g. impacts. */
@@ -131,12 +139,17 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     public CustomLucene101PostingsWriter(SegmentWriteState state) throws IOException {
         this.integerCompressor = Lucene101Codec.integerCompressor;
 
+        exceptions = new HashMap<Integer, ArrayList<Integer>>();
+        IntegerCompressionUtils.setupExceptionHashmap(exceptions);
+
         String metaFileName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.META_EXTENSION);
         String docFileName =
                 IndexFileNames.segmentFileName(
                         state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.DOC_EXTENSION);
+        String exceptionFileName =                 IndexFileNames.segmentFileName(
+                state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.EXC_EXTENSION);
         metaOut = state.directory.createOutput(metaFileName, state.context);
         IndexOutput posOut = null;
         IndexOutput payOut = null;
@@ -155,6 +168,13 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                         IndexFileNames.segmentFileName(
                                 state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.POS_EXTENSION);
                 posOut = state.directory.createOutput(posFileName, state.context);
+
+                if (Lucene101Codec.useExceptionFile) {
+                    exceptionOut = state.directory.createOutput(exceptionFileName, state.context);
+                    CodecUtil.writeIndexHeader(
+                            exceptionOut, Lucene101PostingsFormat.EXC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+                }
+
                 CodecUtil.writeIndexHeader(
                         posOut, POS_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
@@ -196,7 +216,10 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (!success) {
-                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
+                if (Lucene101Codec.useExceptionFile)
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
+                else
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
             }
         }
 
@@ -330,7 +353,9 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
             //pforUtil.encode(posDeltaBuffer, posOut);
-            integerCompressor.encode(posDeltaBuffer, posOut);
+            integerCompressor.encode(posDeltaBuffer, posOut, exceptions);
+
+
 
             if (writePayloads) {
                 pforUtil.encode(payloadLengthBuffer, payOut);
@@ -411,7 +436,12 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                 }
             }
             long numSkipBytes = level0Output.size();
-            forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+
+            if (Lucene101Codec.customEncodeDocIds)
+                integerCompressor.encode(docDeltaBuffer, level0Output, exceptions);
+            else
+                forDeltaUtil.encodeDeltas(docDeltaBuffer, level0Output);
+
             if (writeFreqs) {
                 pforUtil.encode(freqBuffer, level0Output);
                 //integerCompressor.encode(freqBuffer, level0Output);
@@ -662,7 +692,14 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             if (payOut != null) {
                 CodecUtil.writeFooter(payOut);
             }
+            if (Lucene101Codec.useExceptionFile && exceptionOut != null)
+            {
+                IntegerCompressionUtils.encodeExceptions(exceptions, exceptionOut);
+                CodecUtil.writeFooter(exceptionOut);
+            }
+
             if (metaOut != null) {
+//                IntegerCompressionUtils.encodeExceptions(exceptions, metaOut);
                 metaOut.writeInt(maxNumImpactsAtLevel0);
                 metaOut.writeInt(maxImpactNumBytesAtLevel0);
                 metaOut.writeInt(maxNumImpactsAtLevel1);
@@ -679,11 +716,17 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (success) {
-                IOUtils.close(metaOut, docOut, posOut, payOut);
+                if (Lucene101Codec.useExceptionFile)
+                    IOUtils.close(metaOut, docOut, posOut, payOut, exceptionOut);
+                else
+                    IOUtils.close(metaOut, docOut, posOut, payOut);
             } else {
-                IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
+                if (Lucene101Codec.useExceptionFile)
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
+                else
+                    IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
             }
-            metaOut = docOut = posOut = payOut = null;
+            metaOut = docOut = posOut = payOut = exceptionOut = null;
         }
     }
 }

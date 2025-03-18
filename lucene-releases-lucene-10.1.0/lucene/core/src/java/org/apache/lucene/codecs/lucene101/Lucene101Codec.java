@@ -60,9 +60,13 @@ public class Lucene101Codec extends Codec {
 
   // Flag for deciding if we should use custom integer compression
   // This is needed since lucene will create new instances of the codec
-  public static boolean useDefaultCompression = true;
+  public static boolean useDefaultCompression = false;
 
   public static IntegerCompressor integerCompressor;
+
+  static boolean customEncodeDocIds = true;
+
+  static boolean useExceptionFile = false;
 
   /** Configuration option for the codec. */
   public enum Mode {
@@ -128,9 +132,11 @@ public class Lucene101Codec extends Codec {
     super("Lucene101");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
+    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.DELTA);
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
+
   }
 
   /**

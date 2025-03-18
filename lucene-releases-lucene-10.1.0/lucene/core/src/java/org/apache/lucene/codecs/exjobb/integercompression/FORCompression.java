@@ -8,6 +8,8 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Implements FOR compression for integer sequences.
@@ -16,24 +18,21 @@ public class FORCompression implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
-    // TODO: try using normal bitpacking instead of variable integers
-    public void encode(int[] positions, DataOutput out) throws IOException
+    public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
-        IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
+        //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
 
         // We store the reference as a VInt
-        int minValue = positions[0];
-        int maxValue = positions[0];
+        int minValue = ints[0];
+        int maxValue = ints[0];
         for (int i = 0; i < 128; i++) {
-            if (positions[i] > maxValue)
-            {
-                maxValue = positions[i];
-            }
-            if (positions[i] < minValue)
-            {
-                minValue = positions[i];
-            }
+            if (minValue > ints[i])
+                minValue = ints[i];
+            if (maxValue < ints[i])
+                maxValue = ints[i];
         }
+        IntegerCompressionUtils.getMinMaxValue(ints, minValue, maxValue);
+
 
         int maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
 
@@ -44,9 +43,9 @@ public class FORCompression implements IntegerCompressor {
 
         // Now store the offsets from the reference
         for (int i = 0; i < 128; i++) {
-            positions[i] = positions[i] - minValue;
+            ints[i] = ints[i] - minValue;
         }
-        forUtil.encode(positions, maxBitsRequired, out);
+        forUtil.encode(ints, maxBitsRequired, out);
     }
 
     public void encodeSingleInt(int input, DataOutput out) throws IOException {
@@ -60,7 +59,7 @@ public class FORCompression implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         int minValue = pdu.in.readVInt();
         int maxBits = pdu.in.readVInt();
         ForUtil forUtil = new ForUtil();
@@ -70,8 +69,16 @@ public class FORCompression implements IntegerCompressor {
         for (int i = 0; i < 128; i++) {
             ints[i] += minValue;
         }
+    }
 
-        IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
+    @Override
+    public void skip(IndexInput in) throws IOException {
+        int minValue = in.readVInt();
+        int maxBits = in.readVInt();
+        ForUtil forUtil = new ForUtil();
+
+        in.skipBytes(ForUtil.numBytes(maxBits));
+
     }
 
     public IntegerCompressionType getType() {
