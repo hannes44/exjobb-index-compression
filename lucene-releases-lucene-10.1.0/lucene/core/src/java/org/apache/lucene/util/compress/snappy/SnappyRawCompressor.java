@@ -68,7 +68,7 @@ final class SnappyRawCompressor
     public static int compress(
             final byte[] inputBase,
             final long inputLimit,
-            final DataOutput outputBase,
+            final byte[] outputBase,
             final short[] table) throws IOException {
         // First write the uncompressed size to the output as a variable length int
         long output = writeUncompressedLength(outputBase, 0, (int) inputLimit); // TODO: This might not be needed, see if it can be removed to save space
@@ -207,7 +207,7 @@ final class SnappyRawCompressor
             if (nextEmitAddress < blockLimit) {
                 int literalLength = (int) (blockLimit - nextEmitAddress);
                 output = emitLiteralLength(outputBase, output, literalLength);
-                outputBase.writeBytes(inputBase, (int) nextEmitAddress, literalLength);
+                System.arraycopy(inputBase, (int) nextEmitAddress, outputBase, (int) output, literalLength);
                 output += literalLength;
             }
         }
@@ -248,43 +248,38 @@ final class SnappyRawCompressor
         return (int) (current - start);
     }
 
-    private static long emitLiteralLength(DataOutput outputBase, long output, int literalLength) throws IOException {
+    private static long emitLiteralLength(byte[] outputBase, long output, int literalLength) throws IOException {
         int n = literalLength - 1;      // Zero-length literals are disallowed
         if (n < 60) {
             // Size fits in tag byte
-            outputBase.writeByte((byte) (n << 2));
-            output++;
+            writeByte(outputBase, output++, (byte) (n << 2));
         }
         else {
             int bytes;
             if (n < (1 << 8)) {
-                outputBase.writeByte((byte) (59 + (1 << 2)));
+                writeByte(outputBase, output++, (byte) (59 + 1 << 2));
                 bytes = 1;
             } else if (n < (1 << 16)) {
-                outputBase.writeByte((byte) (59 + (2 << 2)));
+                writeByte(outputBase, output++, (byte) (59 + 2 << 2));
                 bytes = 2;
             } else if (n < (1 << 24)) {
-                outputBase.writeByte((byte) (59 + (3 << 2)));
+                writeByte(outputBase, output++, (byte) (59 + 3 << 2));
                 bytes = 3;
             } else {
-                outputBase.writeByte((byte) (59 + (4 << 2)));
+                writeByte(outputBase, output++, (byte) (59 + 4 << 2));
                 bytes = 4;
             }
-            output++;
-            // Write only `bytes` bytes of `n` (little-endian)
             // System is assumed to be little endian, so low bytes will be zero for the smaller numbers
-            for (int i = 0; i < bytes; i++) {
-                outputBase.writeByte((byte) (n >>> (i * 8)));
-                output++;
-            }
+            writeInt(outputBase, output, n);
+            output += bytes;
         }
         return output;
     }
 
-    private static long fastCopy(final byte[] inputBase, long input, final DataOutput outputBase, long output, final int literalLength) throws IOException {
+    private static long fastCopy(final byte[] inputBase, long input, final byte[] outputBase, long output, final int literalLength) throws IOException {
         final long outputLimit = output + literalLength;
         do {
-            outputBase.writeLong(readLong(inputBase, input));
+            writeLong(outputBase, output, readLong(inputBase, input));
             input += SIZE_OF_LONG;
             output += SIZE_OF_LONG;
         }
@@ -292,35 +287,34 @@ final class SnappyRawCompressor
         return outputLimit;
     }
 
-    private static long emitCopy(DataOutput outputBase, long output, long input, long matchIndex, int matchLength) throws IOException {
+    private static long emitCopy(byte[] outputBase, long output, long input, long matchIndex, int matchLength) throws IOException {
         long offset = input - matchIndex;
 
         // Emit 64-byte copies, keeping at least 4 bytes reserved
         while (matchLength >= 68) {
-            outputBase.writeByte((byte) (COPY_2_BYTE_OFFSET + ((64 - 1) << 2)));
-            outputBase.writeShort((short) offset);
-            output += 1 + SIZE_OF_SHORT; // 1 byte for the copy instruction + 2 bytes for offset
+            writeByte(outputBase, output++, (byte) (COPY_2_BYTE_OFFSET + ((64 - 1) << 2)));
+            writeShort(outputBase, output, (short) offset);
+            output += SIZE_OF_SHORT; // 1 byte for the copy instruction + 2 bytes for offset
             matchLength -= 64;
         }
 
         // Emit an extra 60-byte copy if there's too much data to fit in one copy (length < 68)
         if (matchLength > 64) {
-            outputBase.writeByte((byte) (COPY_2_BYTE_OFFSET + ((60 - 1) << 2)));
-            outputBase.writeShort((short) offset);
-            output += 1 + SIZE_OF_SHORT;
+            writeByte(outputBase, output++, (byte) (COPY_2_BYTE_OFFSET + ((60 - 1) << 2)));
+            writeShort(outputBase, output, (short) offset);
+            output += SIZE_OF_SHORT;
             matchLength -= 60;
         }
 
         // Emit remainder
         if ((matchLength < 12) && (offset < 2048)) {
             int lenMinus4 = matchLength - 4;
-            outputBase.writeByte((byte) (COPY_1_BYTE_OFFSET + ((lenMinus4) << 2) + ((offset >>> 8) << 5)));
-            outputBase.writeByte((byte) offset);
-            output += 2; // 1 byte for copy instruction + 1 byte for offset
+            writeByte(outputBase, output++, (byte) (COPY_1_BYTE_OFFSET + ((lenMinus4) << 2) + ((offset >>> 8) << 5)));
+            writeByte(outputBase, output++, (byte) offset);
         } else {
-            outputBase.writeByte((byte) (COPY_2_BYTE_OFFSET + ((matchLength - 1) << 2)));
-            outputBase.writeShort((short) offset);
-            output += 1 + SIZE_OF_SHORT;
+            writeByte(outputBase, output++, (byte) (COPY_2_BYTE_OFFSET + ((matchLength - 1) << 2)));
+            writeShort(outputBase, output, (short) offset);
+            output += SIZE_OF_SHORT;
         }
         return output;
     }
@@ -361,36 +355,31 @@ final class SnappyRawCompressor
     /**
      * Writes the uncompressed length as variable length integer.
      */
-    private static long writeUncompressedLength(DataOutput outputBase, long outputAddress, int uncompressedLength) throws IOException {
+    private static long writeUncompressedLength(byte[] outputBase, long outputAddress, int uncompressedLength) throws IOException {
         if (uncompressedLength < (1 << 7) && uncompressedLength >= 0) {
-            outputBase.writeByte((byte) uncompressedLength);
-            outputAddress++;
+            writeByte(outputBase, outputAddress++, (byte) uncompressedLength);
         }
         else if (uncompressedLength < (1 << 14) && uncompressedLength > 0) {
-            outputBase.writeByte((byte) (uncompressedLength | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) (uncompressedLength >>> 7));
-            outputAddress += 2;
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength >>> 7));
         }
         else if (uncompressedLength < (1 << 21) && uncompressedLength > 0) {
-            outputBase.writeByte((byte) (uncompressedLength | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) ((uncompressedLength >>> 7) | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) (uncompressedLength >>> 14));
-            outputAddress += 3;
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) ((uncompressedLength >>> 7) | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength >>> 14));
         }
         else if (uncompressedLength < (1 << 28) && uncompressedLength > 0) {
-            outputBase.writeByte((byte) (uncompressedLength | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) ((uncompressedLength >>> 7) | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) ((uncompressedLength >>> 14) | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) (uncompressedLength >>> 21));
-            outputAddress += 4;
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) ((uncompressedLength >>> 7) | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) ((uncompressedLength >>> 14) | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength >>> 21));
         }
         else {
-            outputBase.writeByte((byte) (uncompressedLength | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) ((uncompressedLength >>> 7) | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) ((uncompressedLength >>> 14) | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) ((uncompressedLength >>> 21) | HIGH_BIT_MASK));
-            outputBase.writeByte((byte) (uncompressedLength >>> 28));
-            outputAddress += 5;
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) ((uncompressedLength >>> 7) | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) ((uncompressedLength >>> 14) | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) ((uncompressedLength >>> 21) | HIGH_BIT_MASK));
+            writeByte(outputBase, outputAddress++, (byte) (uncompressedLength >>> 28));
         }
         return outputAddress;
     }
