@@ -8,7 +8,7 @@
 
 package org.apache.lucene.util.compress.snappy;
 
-final class SnappyConstants
+public final class SnappyConstants
 {
     static final int SIZE_OF_SHORT = 2;
     static final int SIZE_OF_INT = 4;
@@ -17,6 +17,9 @@ final class SnappyConstants
     static final int LITERAL = 0;
     static final int COPY_1_BYTE_OFFSET = 1;  // 3 bit length + 3 bits of offset in opcode
     static final int COPY_2_BYTE_OFFSET = 2;
+
+    static final int MAX_SNAPPY_HASH_TABLE_BITS = 14;
+    public static final int MAX_SNAPPY_HASH_TABLE_SIZE = 1 << MAX_SNAPPY_HASH_TABLE_BITS;
 
     private SnappyConstants() {}
 }

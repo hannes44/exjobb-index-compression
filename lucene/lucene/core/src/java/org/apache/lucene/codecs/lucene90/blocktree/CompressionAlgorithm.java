@@ -22,6 +22,7 @@ import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.zstd.ZSTD;
+import org.apache.lucene.util.compress.snappy.Snappy;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -49,7 +50,22 @@ enum CompressionAlgorithm {
     }
   },
 
-  ZSTD_COMPRESSION(0x03) {
+  SNAPPY_COMPRESSION(0x03) {
+    @Override
+    void read(DataInput in, byte[] out, int len) throws IOException {
+      // Read the compressed length from the input data, should be 4 bytes
+      int compressedLen = in.readInt();
+
+      // Read the compressed data
+      byte[] compressed = new byte[compressedLen];
+      in.readBytes(compressed, 0, compressedLen);
+
+      // Decompress the data
+      Snappy.decompress(compressed, 0, compressedLen, out, 0, len, true);
+    }
+  },
+
+  ZSTD_COMPRESSION(0x04) {
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
       // Read the compressed length from the input data, should be 4 bytes
@@ -64,7 +80,7 @@ enum CompressionAlgorithm {
     }
   };
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[4];
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[5];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {

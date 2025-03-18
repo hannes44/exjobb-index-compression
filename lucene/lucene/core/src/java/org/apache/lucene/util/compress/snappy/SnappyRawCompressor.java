@@ -12,6 +12,7 @@ import java.util.Arrays;
 
 import static org.apache.lucene.util.compress.snappy.SnappyConstants.*;
 import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.compress.snappy.SnappyInternalUtils.clamp;
 
 final class SnappyRawCompressor
 {
@@ -28,9 +29,6 @@ final class SnappyRawCompressor
     private static final int BLOCK_SIZE = 1 << BLOCK_LOG;
 
     private static final int INPUT_MARGIN_BYTES = 15;
-
-    private static final int MAX_HASH_TABLE_BITS = 14;
-    public static final int MAX_HASH_TABLE_SIZE = 1 << MAX_HASH_TABLE_BITS;
 
     private SnappyRawCompressor() {}
 
@@ -341,13 +339,13 @@ final class SnappyRawCompressor
         // fill the table, incurring O(hash table size) overhead for
         // compression, and if the input is short, we won't need that
         // many hash table entries anyway.
-        assert (MAX_HASH_TABLE_SIZE >= 256);
+        assert (MAX_SNAPPY_HASH_TABLE_SIZE >= 256);
 
         // smallest power of 2 larger than inputSize
         int target = Integer.highestOneBit(inputSize - 1) << 1;
 
         // keep it between MIN_TABLE_SIZE and MAX_TABLE_SIZE
-        return Math.clamp(target, 256, MAX_HASH_TABLE_SIZE);
+        return clamp(target, 256, MAX_SNAPPY_HASH_TABLE_SIZE);
     }
 
     // Any hash function will produce a valid compressed stream, but a good

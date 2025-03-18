@@ -10,31 +10,38 @@ package org.apache.lucene.util.compress.snappy;
 
 import org.apache.lucene.util.MalformedInputException;
 
-import static java.lang.Math.addExact;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.compress.snappy.SnappyConstants.MAX_SNAPPY_HASH_TABLE_SIZE;
+import static org.apache.lucene.util.compress.snappy.SnappyConstants.SIZE_OF_INT;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 public final class Snappy {
 
-    private final short[] table = new short[SnappyRawCompressor.MAX_HASH_TABLE_SIZE];
+    private final static short[] table = new short[MAX_SNAPPY_HASH_TABLE_SIZE];
 
-    public int maxCompressedLength(int uncompressedSize)
+    public static int maxCompressedLength(int uncompressedSize)
     {
         return SnappyRawCompressor.maxCompressedLength(uncompressedSize);
     }
 
-    public int compress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
+    public static int compress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
     {
         verifyRange(input, inputOffset, inputLength);
         verifyRange(output, outputOffset, maxOutputLength);
 
         long inputAddress = ARRAY_BYTE_BASE_OFFSET + inputOffset;
         long inputLimit = inputAddress + inputLength;
-        long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
+        long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset + Integer.BYTES;
         long outputLimit = outputAddress + maxOutputLength;
 
-        return SnappyRawCompressor.compress(input, inputAddress, inputLimit, output, outputAddress, outputLimit, table);
+        int compressedLength = SnappyRawCompressor.compress(input, inputAddress, inputLimit, output, outputAddress, outputLimit, table);
+
+        outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
+        UNSAFE.putInt(output, outputAddress, compressedLength);
+
+        return compressedLength + Integer.BYTES;
     }
 
     public int getRetainedSizeInBytes(int inputLength)
@@ -50,7 +57,7 @@ public final class Snappy {
         return SnappyRawDecompressor.getUncompressedLength(compressed, compressedAddress, compressedLimit);
     }
 
-    public int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
+    public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, boolean lengthKnown)
             throws MalformedInputException
     {
         verifyRange(input, inputOffset, inputLength);
@@ -60,6 +67,13 @@ public final class Snappy {
         long inputLimit = inputAddress + inputLength;
         long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
         long outputLimit = outputAddress + maxOutputLength;
+
+        if (!lengthKnown) {
+            int compressedSize = UNSAFE.getInt(input, inputAddress);
+            inputAddress += SIZE_OF_INT;
+            // Update the input limit to the compressed size
+            inputLimit = compressedSize + inputAddress;
+        }
 
         return SnappyRawDecompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
     }
