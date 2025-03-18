@@ -121,3 +121,5 @@ ipython_config.py
 Datasets/CommonCrawl-2025-05/*
 
 lucene-releases-lucene-10.1.0/index/*
+
+BenchmarkData/*

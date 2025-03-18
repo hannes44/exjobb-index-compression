@@ -16,6 +16,12 @@ public class TextFileBenchmarkDataOutput implements BenchmarkDataOutput {
 
     @Override
     public void write(List<BenchmarkPerformanceData> benchmarkPerformanceData, Dataset dataset) throws IOException {
+        // Specify the folder path
+        File folder = new File(dataFolderPath);
+
+        // Create the folder
+        boolean isCreated = folder.mkdir();
+
         try (FileWriter writer = new FileWriter(dataFolderPath + dataset.name() + ".csv")) {
             // Write the header
             writer.append("Compression Technique, Index Size(MB), Indexing Time(ms), Average Query Time(ns)\n");
