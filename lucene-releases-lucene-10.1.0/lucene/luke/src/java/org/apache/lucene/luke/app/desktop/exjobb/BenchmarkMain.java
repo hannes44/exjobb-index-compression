@@ -40,7 +40,7 @@ public class BenchmarkMain {
             if (useDefaultLuceneCompression)
                 config.setCodec(new Lucene101Codec());
             else
-                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.DEFAULT, TermCompressionMode.LZ4));
+                config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, IntegerCompressionType.DEFAULT, TermCompressionMode.SNAPPY));
 
 
             IndexWriter writer = new IndexWriter(directory, config);
