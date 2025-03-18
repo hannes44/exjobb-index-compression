@@ -65,6 +65,8 @@ public class Lucene101Codec extends Codec {
 
   static boolean customEncodeDocIds = true;
 
+  static boolean useExceptionFile = false;
+
   /** Configuration option for the codec. */
   public enum Mode {
     /** Trade compression ratio for retrieval speed. */

@@ -163,9 +163,12 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                             state.segmentSuffix,
                             Lucene101PostingsFormat.EXC_EXTENSION);
             // The exception input
-       //     excIn = state.directory.openInput(excName, state.context);
-       //     CodecUtil.checkIndexHeader(
-        //            excIn, EXC_CODEC, version, version, state.segmentInfo.getId(), state.segmentSuffix);
+            if (Lucene101Codec.useExceptionFile) {
+                excIn = state.directory.openInput(excName, state.context);
+                CodecUtil.checkIndexHeader(
+                        excIn, EXC_CODEC, version, version, state.segmentInfo.getId(), state.segmentSuffix);
+
+            }
 
             if (state.fieldInfos.hasProx()) {
                 String proxName =
@@ -194,7 +197,8 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             this.payIn = payIn;
             this.excIn = excIn;
 
-           // exceptions = IntegerCompressionUtils.decodeExceptions(excIn);
+            if (Lucene101Codec.useExceptionFile)
+                exceptions = IntegerCompressionUtils.decodeExceptions(excIn);
 
             success = true;
         } finally {

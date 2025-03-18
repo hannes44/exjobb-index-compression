@@ -64,7 +64,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
-        int maxFiles = 1;
+        int maxFiles = 100;
 
         long startTime = System.currentTimeMillis();
 
@@ -237,7 +237,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         queries.add(new TermQuery(new Term("content", "intelligence")));
 
 
-/*
+
         // 2. Boolean Query (AND) (Search for pages containing both "artificial" and "intelligence")
         queries.add(new BooleanQuery.Builder()
                 .add(new TermQuery(new Term("content", "artificial")), BooleanClause.Occur.MUST)
@@ -281,7 +281,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
                         Instant.parse("2021-01-01T00:00:00Z").toEpochMilli(),
                         Instant.parse("2021-12-31T23:59:59Z").toEpochMilli()), BooleanClause.Occur.MUST)
                 .build());
-        */
+
         return queries;
     }
 

@@ -63,7 +63,6 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
     IndexOutput payOut;
     IndexOutput exceptionOut;
 
-    boolean useExceptionFile = false;
 
     IntBlockTermState lastState;
 
@@ -170,7 +169,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                                 state.segmentInfo.name, state.segmentSuffix, Lucene101PostingsFormat.POS_EXTENSION);
                 posOut = state.directory.createOutput(posFileName, state.context);
 
-                if (useExceptionFile) {
+                if (Lucene101Codec.useExceptionFile) {
                     exceptionOut = state.directory.createOutput(exceptionFileName, state.context);
                     CodecUtil.writeIndexHeader(
                             exceptionOut, Lucene101PostingsFormat.EXC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
@@ -217,7 +216,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (!success) {
-                if (useExceptionFile)
+                if (Lucene101Codec.useExceptionFile)
                     IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
                 else
                     IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
@@ -693,7 +692,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             if (payOut != null) {
                 CodecUtil.writeFooter(payOut);
             }
-            if (useExceptionFile && exceptionOut != null)
+            if (Lucene101Codec.useExceptionFile && exceptionOut != null)
             {
                 IntegerCompressionUtils.encodeExceptions(exceptions, exceptionOut);
                 CodecUtil.writeFooter(exceptionOut);
@@ -716,12 +715,12 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             success = true;
         } finally {
             if (success) {
-                if (useExceptionFile)
+                if (Lucene101Codec.useExceptionFile)
                     IOUtils.close(metaOut, docOut, posOut, payOut, exceptionOut);
                 else
                     IOUtils.close(metaOut, docOut, posOut, payOut);
             } else {
-                if (useExceptionFile)
+                if (Lucene101Codec.useExceptionFile)
                     IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut, exceptionOut);
                 else
                     IOUtils.closeWhileHandlingException(metaOut, docOut, posOut, payOut);
