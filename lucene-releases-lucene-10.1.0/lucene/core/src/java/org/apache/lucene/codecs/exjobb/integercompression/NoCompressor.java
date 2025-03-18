@@ -21,6 +21,8 @@ public class NoCompressor implements IntegerCompressor {
     /** Delta Encode 128 integers from {@code longs} into {@code out}. */
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
+        // We have to turn the given deltas into absolutes. This will cause some performance hits so for a proper test absolutes should be given instead
+        IntegerCompressionUtils.turnDeltasIntoAbsolutes(ints);
         for (int i = 0; i < 128; i++) {
             out.writeInt(ints[i]);
         }

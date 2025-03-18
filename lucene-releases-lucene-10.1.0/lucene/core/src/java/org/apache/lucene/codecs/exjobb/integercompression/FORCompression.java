@@ -18,7 +18,6 @@ public class FORCompression implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
-    // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
         //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
@@ -70,8 +69,6 @@ public class FORCompression implements IntegerCompressor {
         for (int i = 0; i < 128; i++) {
             ints[i] += minValue;
         }
-
-        //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
     @Override
