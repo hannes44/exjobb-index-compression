@@ -48,23 +48,23 @@ enum CompressionAlgorithm {
     }
   },
 
-  ZSTD_COMPRESSION(0x03) {
-      @Override
-      void read(DataInput in, byte[] out, int len) throws IOException {
-        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
-      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
-      }
-  },
+//  ZSTD_COMPRESSION(0x03) {
+//      @Override
+//      void read(DataInput in, byte[] out, int len) throws IOException {
+//        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
+//      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
+//      }
+//  },
 
-  SNAPPY_COMPRESSION(0x04) {
+  SNAPPY_COMPRESSION(0x03) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
-        int inLen = (int) ((IndexInput) in).length(); // TODO: this is probably returning the WHOLE file length, not just the compressed bytes
+        //int inLen = (int) ((IndexInput) in).length(); // TODO: this is probably returning the WHOLE file length, not just the compressed bytes
         Snappy.decompress(in, inLen, out, len);
       }
   };
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[5];
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[4];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {
