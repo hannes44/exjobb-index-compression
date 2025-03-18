@@ -40,6 +40,14 @@ public final class Snappy {
         return (long) BitUtil.VH_NATIVE_LONG.get(data, (int) address);
     }
 
+    public static void writeByte(byte[] data, long address, byte value) {
+        data[(int) address] = value;
+    }
+
+    public static void writeShort(byte[] data, long address, short value) {
+        BitUtil.VH_NATIVE_SHORT.set(data, (int) address, value);
+    }
+
     public static void writeLong(byte[] data, long address, long value) {
         BitUtil.VH_NATIVE_LONG.set(data, (int) address, value);
     }
@@ -54,7 +62,14 @@ public final class Snappy {
     }
 
     public static int compress(byte[] input, int inputLength, DataOutput output) throws IOException {
-        return SnappyRawCompressor.compress(input, inputLength, output, table);
+        byte[] tempOutput = new byte[SnappyRawCompressor.maxCompressedLength(inputLength)];
+
+        int compressedDataSize = SnappyRawCompressor.compress(input, inputLength, tempOutput, table);
+
+        output.writeInt(compressedDataSize);
+        output.writeBytes(tempOutput, compressedDataSize);
+
+        return compressedDataSize + Integer.BYTES;
     }
 
     public int getRetainedSizeInBytes(int inputLength)
