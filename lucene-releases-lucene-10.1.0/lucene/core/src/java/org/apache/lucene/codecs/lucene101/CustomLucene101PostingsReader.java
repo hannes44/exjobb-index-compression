@@ -100,6 +100,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                             VERSION_CURRENT,
                             state.segmentInfo.getId(),
                             state.segmentSuffix);
+           // exceptions = IntegerCompressionUtils.decodeExceptions(metaIn);
             maxNumImpactsAtLevel0 = metaIn.readInt();
             maxImpactNumBytesAtLevel0 = metaIn.readInt();
             maxNumImpactsAtLevel1 = metaIn.readInt();

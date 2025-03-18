@@ -93,7 +93,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
         //forUtil.encode(ints, bestBitWidth, out);
         LimitTestCompressor.encode(ints, bestBitWidth, out);
 
-        boolean useBitmask = exceptionCount > 16;
+        boolean useBitmask = exceptionCount > 100;
         if (useBitmask) {
             out.writeBytes(exceptionBitMask, 0, 16);
         }
@@ -126,7 +126,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
 
         byte exceptionCount = pdu.in.readByte();
         byte[] exceptionBitMask = new byte[16];
-        boolean useBitmask = exceptionCount > 16;
+        boolean useBitmask = exceptionCount > 100;
 
         ForUtil forUtil = new ForUtil();
 
@@ -168,7 +168,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
 
         byte exceptionCount = in.readByte();
         ForUtil forUtil = new ForUtil();
-        boolean useBitmask = exceptionCount > 16;
+        boolean useBitmask = exceptionCount > 100;
         byte[] exceptionBitMask = new byte[16];
         // Calculate the total number of bytes required
         int totalBits = 128 * regularValueBitWidth;

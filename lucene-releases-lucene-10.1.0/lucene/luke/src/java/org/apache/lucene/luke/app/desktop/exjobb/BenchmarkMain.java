@@ -44,7 +44,7 @@ public class BenchmarkMain {
             completeBenchmark(output);
         else {
             ArrayList<BenchmarkPerformanceData> benchmarkPerformanceDatas = new ArrayList<>();
-            benchmarkPerformanceDatas.add(benchmarkCompressionType(IntegerCompressionType.SIMPLE8B, Dataset.CommonCrawl, output));
+            benchmarkPerformanceDatas.add(benchmarkCompressionType(IntegerCompressionType.NEWPFOR, Dataset.CommonCrawl, output));
             benchmarkPerformanceDatas.add(benchmarkCompressionType(IntegerCompressionType.DEFAULT, Dataset.CommonCrawl, output));
             try {
                 output.write(benchmarkPerformanceDatas, Dataset.CommonCrawl);

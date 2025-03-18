@@ -42,7 +42,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         int bestBitWidth = maxBitsRequired;
         for (int i = 32; i > 0; i--) {
             if (bitsNeededCount.containsKey(i)) {
-                int bitsRequired = 1000 * (i * (128 - totalExceptions) + totalExceptions * 16);
+                int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16);
                 if (minBitsRequired > bitsRequired)
                 {
                     minBitsRequired = bitsRequired;

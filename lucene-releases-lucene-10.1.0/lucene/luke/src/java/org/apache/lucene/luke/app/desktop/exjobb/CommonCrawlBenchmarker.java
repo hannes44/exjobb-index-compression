@@ -64,7 +64,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
-        int maxFiles = 100;
+        int maxFiles = 1;
 
         long startTime = System.currentTimeMillis();
 
