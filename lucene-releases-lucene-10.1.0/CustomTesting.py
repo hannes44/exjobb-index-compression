@@ -2,11 +2,11 @@ import os
 import csv
 
 class BenchmarkData:
-    integerCompressionAlgorithm = None
-    termCompressionAlgorithm = None
-    IndexSizeMB = None
-    IndexingSpeed = None
-    SearchSpeedNS = None
+    integerCompressionAlgorithm = ""
+    termCompressionAlgorithm = ""
+    IndexSizeMB = ""
+    IndexingSpeed = ""
+    SearchSpeedNS = ""
     
     def getDataRow(self):
         return [self.integerCompressionAlgorithm, self.termCompressionAlgorithm, self.IndexSizeMB, self.IndexingSpeed, self.SearchSpeedNS]
@@ -30,11 +30,12 @@ os.system("call gradlew :lucene:luke:assemble")
 for dataset in datasetsToBenchmark:
     indexDataFilePath = "../BenchmarkData/IndexingData/" + dataset + ".csv"
     searchDataFilePath = "../BenchmarkData/SearchData/" + dataset + ".csv"
+    finalCSVOutputPath = "../BenchmarkData/" + dataset + ".csv"
 
-    if os.path.exists(indexDataFilePath):
+    if "INDEXING" in benchmarkTypes and os.path.exists(indexDataFilePath):
         os.remove(indexDataFilePath)
         
-    if os.path.exists(searchDataFilePath):
+    if "SEARCH" in benchmarkTypes and os.path.exists(searchDataFilePath):
         os.remove(searchDataFilePath)
         
     for benchmarkType in benchmarkTypes:
@@ -79,7 +80,7 @@ for dataset in datasetsToBenchmark:
             benchmarkDatas[index].IndexSizeMB = row[1]
             benchmarkDatas[index].IndexingSpeed = row[2]
            
-        finalCSVOutputPath = "../BenchmarkData/" + dataset + ".csv"
+
                 # Open the file in write mode
         with open(finalCSVOutputPath, mode="w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)  # Create a CSV writer object
