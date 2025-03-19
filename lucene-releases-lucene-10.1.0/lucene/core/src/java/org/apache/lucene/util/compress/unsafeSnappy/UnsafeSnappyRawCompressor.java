@@ -14,7 +14,7 @@ import static org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappyConstants
 import static org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappyInternalUtils.clamp;
 import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 
-final class SnappyRawCompressor
+final class UnsafeSnappyRawCompressor
 {
     // The size of a compression block. Note that many parts of the compression
     // code assumes that BLOCK_SIZE <= 65536; in particular, the hash table
@@ -30,7 +30,7 @@ final class SnappyRawCompressor
 
     private static final int INPUT_MARGIN_BYTES = 15;
 
-    private SnappyRawCompressor() {}
+    private UnsafeSnappyRawCompressor() {}
 
     public static int maxCompressedLength(int sourceLength)
     {

@@ -13,8 +13,8 @@ import org.apache.lucene.util.MalformedInputException;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.snappy.SnappyConstants.MAX_SNAPPY_HASH_TABLE_SIZE;
-import static org.apache.lucene.util.compress.snappy.SnappyConstants.SIZE_OF_INT;
+import static org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappyConstants.MAX_SNAPPY_HASH_TABLE_SIZE;
+import static org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappyConstants.SIZE_OF_INT;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 public final class UnsafeSnappy {
@@ -23,7 +23,7 @@ public final class UnsafeSnappy {
 
     public static int maxCompressedLength(int uncompressedSize)
     {
-        return SnappyRawCompressor.maxCompressedLength(uncompressedSize);
+        return UnsafeSnappyRawCompressor.maxCompressedLength(uncompressedSize);
     }
 
     public static int compress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
@@ -36,7 +36,7 @@ public final class UnsafeSnappy {
         long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset + Integer.BYTES;
         long outputLimit = outputAddress + maxOutputLength;
 
-        int compressedLength = SnappyRawCompressor.compress(input, inputAddress, inputLimit, output, outputAddress, outputLimit, table);
+        int compressedLength = UnsafeSnappyRawCompressor.compress(input, inputAddress, inputLimit, output, outputAddress, outputLimit, table);
 
         outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
         UNSAFE.putInt(output, outputAddress, compressedLength);
@@ -46,7 +46,7 @@ public final class UnsafeSnappy {
 
     public int getRetainedSizeInBytes(int inputLength)
     {
-        return SnappyRawCompressor.getHashTableSize(inputLength);
+        return UnsafeSnappyRawCompressor.getHashTableSize(inputLength);
     }
 
     public int getUncompressedLength(byte[] compressed, int compressedOffset)
@@ -54,7 +54,7 @@ public final class UnsafeSnappy {
         long compressedAddress = ARRAY_BYTE_BASE_OFFSET + compressedOffset;
         long compressedLimit = ARRAY_BYTE_BASE_OFFSET + compressed.length;
 
-        return SnappyRawDecompressor.getUncompressedLength(compressed, compressedAddress, compressedLimit);
+        return UnsafeSnappyRawDecompressor.getUncompressedLength(compressed, compressedAddress, compressedLimit);
     }
 
     public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, boolean lengthKnown)
@@ -75,7 +75,7 @@ public final class UnsafeSnappy {
             inputLimit = compressedSize + inputAddress;
         }
 
-        return SnappyRawDecompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
+        return UnsafeSnappyRawDecompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
     }
 
     private static void verifyRange(byte[] data, int offset, int length)

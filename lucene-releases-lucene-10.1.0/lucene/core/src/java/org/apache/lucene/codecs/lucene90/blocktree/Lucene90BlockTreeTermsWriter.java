@@ -48,6 +48,7 @@ import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.snappy.Snappy;
+import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
 import org.apache.lucene.util.fst.FST;
@@ -1031,11 +1032,22 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             throw new UnsupportedOperationException("Zstd compression is not supported yet");
             //break; // TODO: Uncomment when Zstd is supported
           case SNAPPY:
-            int snappyLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
-            if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-              // Snappy saved more than 25%, go for it
-              compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+            if (safe) {
+              snappyLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
+              if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+                // Snappy saved more than 25%, go for it
+                compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+              }
+            } else {
+              data = new byte[suffixWriter.length()];
+              System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+              compressed2 = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
+              snappyLength = UnsafeSnappy.compress(data, 0, data.length, compressed2, 0, compressed2.length);
+              if (snappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+                compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+              }
             }
+
 //            // Check if decompressed data matches original data
 //            byte[] decompressed = new byte[suffixWriter.length()];
 //            byte[] original = new byte[suffixWriter.length()];
@@ -1075,7 +1087,11 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
         //System.out.println("NO_COMPRESSION");
       } else {
+        if (safe) {
         spareWriter.copyTo(termsOut);
+        } else {
+          termsOut.writeBytes(compressed2, snappyLength);
+        }
         //System.out.println(compressionAlg.name());
       }
       suffixWriter.setLength(0);
@@ -1272,6 +1288,10 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private final ByteBuffersDataOutput metaWriter = ByteBuffersDataOutput.newResettableInstance();
     private final ByteBuffersDataOutput spareWriter = ByteBuffersDataOutput.newResettableInstance();
     private byte[] spareBytes = BytesRef.EMPTY_BYTES;
+    private byte[] data;
+    private byte[] compressed2;
+    private boolean safe = false;
+    private int snappyLength;
     private LZ4.HighCompressionHashTable compressionHashTable;
   }
 
