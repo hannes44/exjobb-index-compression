@@ -24,23 +24,26 @@ final class SnappyRawDecompressor
     private SnappyRawDecompressor() {}
 
     public static int decompress(
-            final DataInput inputBase,
+            final byte[] inputBase,
             final long inputAddress,
             final long inputLimit,
             final byte[] outputBase,
             final long outputAddress,
-            final long outputLimit) throws IOException {
+            final long outputLimit)
+    {
         // Read the uncompressed length from the front of the input
-        int[] varInt = readUncompressedLength(inputBase);
+        long input = inputAddress;
+        int[] varInt = readUncompressedLength(inputBase, input, inputLimit);
         int expectedLength = varInt[0];
+        input += varInt[1];
 
-        checkArgument(expectedLength <= (outputLimit - outputAddress),
+        SnappyInternalUtils.checkArgument(expectedLength <= (outputLimit - outputAddress),
                 "Uncompressed length %s must be less than %s", expectedLength, (outputLimit - outputAddress));
 
         // Process the entire input
         int uncompressedSize = uncompressAll(
                 inputBase,
-                (inputAddress + varInt[1]), // skip the varInt bytes
+                input,
                 inputLimit,
                 outputBase,
                 outputAddress,
@@ -57,43 +60,40 @@ final class SnappyRawDecompressor
 
     @SuppressWarnings("fallthrough")
     private static int uncompressAll(
-            final DataInput inputBase,
+            final byte[] inputBase,
             final long inputAddress,
             final long inputLimit,
             final byte[] outputBase,
             final long outputAddress,
-            final long outputLimit) throws IOException {
+            final long outputLimit)
+    {
         final long fastOutputLimit = outputLimit - SIZE_OF_LONG; // maximum offset in output buffer to which it's safe to write long-at-a-time
 
         long output = outputAddress;
         long input = inputAddress;
 
-        System.out.println("Input Limit: " + inputLimit);
-
         while (input < inputLimit) {
-            int opCode = inputBase.readByte() & 0xFF;
-            input++;
+            int opCode = inputBase[(int) input++] & 0xFF;
             int entry = opLookupTable[opCode] & 0xFFFF;
 
             int trailerBytes = entry >>> 11;
             int trailer = 0;
             if (input + SIZE_OF_INT < inputLimit) {
-                trailer = inputBase.clone().readInt() & wordmask[trailerBytes];
-                inputBase.skipBytes(trailerBytes);
+                trailer = readInt(inputBase, input) & wordmask[trailerBytes];
             }
             else {
                 if (input + trailerBytes > inputLimit) {
                     throw new MalformedInputException(input - inputAddress);
                 }
                 switch (trailerBytes) {
-                    case 1:
-                        trailer |= (inputBase.readByte() & 0xff);
-                    case 2:
-                        trailer |= ((inputBase.readByte() & 0xff) << 8);
-                    case 3:
-                        trailer |= ((inputBase.readByte() & 0xff) << 16);
                     case 4:
-                        trailer |= ((inputBase.readByte() & 0xff) << 24);
+                        trailer = (inputBase[(int) input + 3] & 0xff) << 24;
+                    case 3:
+                        trailer |= (inputBase[(int) input + 2] & 0xff) << 16;
+                    case 2:
+                        trailer |= (inputBase[(int) input + 1] & 0xff) << 8;
+                    case 1:
+                        trailer |= (inputBase[(int) input] & 0xff);
                 }
             }
             if (trailer < 0) {
@@ -115,20 +115,19 @@ final class SnappyRawDecompressor
                 // copy literal
                 long literalOutputLimit = output + literalLength;
                 if (literalOutputLimit > fastOutputLimit || input + literalLength > inputLimit - SIZE_OF_LONG) {
-//                    if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
-//                        throw new MalformedInputException(input - inputAddress);
-//                    }
+                    if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
+                        throw new MalformedInputException(input - inputAddress);
+                    }
 
                     // slow, precise copy
-                    inputBase.readBytes(outputBase,(int) output, literalLength);
+                    System.arraycopy(inputBase, (int) input, outputBase, (int) output, literalLength);
                     input += literalLength;
                     output += literalLength;
                 }
                 else {
                     // fast copy. We may over-copy but there's enough room in input and output to not overrun them
-                    DataInput tempInput = inputBase.clone();
                     do {
-                        writeLong(outputBase, output, tempInput.readLong());
+                        writeLong(outputBase, output, readLong(inputBase, input));
                         input += SIZE_OF_LONG;
                         output += SIZE_OF_LONG;
                     }
@@ -267,31 +266,32 @@ final class SnappyRawDecompressor
      * Reads the variable length integer encoded a the specified offset, and
      * returns this length with the number of bytes read.
      */
-    static int[] readUncompressedLength(DataInput compressed) throws IOException {
+    static int[] readUncompressedLength(byte[] compressed, long compressedAddress, long compressedLimit)
+    {
         int result;
         int bytesRead = 0;
         {
-            int b = getUnsignedByteSafe(compressed);
+            int b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
             bytesRead++;
             result = b & 0x7f;
             if ((b & 0x80) != 0) {
-                b = getUnsignedByteSafe(compressed);
+                b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
                 bytesRead++;
                 result |= (b & 0x7f) << 7;
                 if ((b & 0x80) != 0) {
-                    b = getUnsignedByteSafe(compressed);
+                    b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
                     bytesRead++;
                     result |= (b & 0x7f) << 14;
                     if ((b & 0x80) != 0) {
-                        b = getUnsignedByteSafe(compressed);
+                        b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
                         bytesRead++;
                         result |= (b & 0x7f) << 21;
                         if ((b & 0x80) != 0) {
-                            b = getUnsignedByteSafe(compressed);
+                            b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
                             bytesRead++;
                             result |= (b & 0x7f) << 28;
                             if ((b & 0x80) != 0) {
-                                throw new MalformedInputException(bytesRead, "last byte of compressed length int has high bit set");
+                                throw new MalformedInputException(compressedAddress + bytesRead, "last byte of compressed length int has high bit set");
                             }
                         }
                     }
@@ -299,19 +299,16 @@ final class SnappyRawDecompressor
             }
         }
         if (result < 0) {
-            throw new MalformedInputException(result, "invalid compressed length");
+            throw new MalformedInputException(compressedAddress, "invalid compressed length");
         }
         return new int[] {result, bytesRead};
     }
 
-    private static int getUnsignedByteSafe(DataInput input) throws IOException {
-        return (input.readByte() & 0xFF);
-    }
-
-    static void checkArgument(boolean expression, String errorMessageTemplate, Object... errorMessageArgs)
+    private static int getUnsignedByteSafe(byte[] base, long address, long limit)
     {
-        if (!expression) {
-            throw new IllegalArgumentException(String.format(errorMessageTemplate, errorMessageArgs));
+        if (address >= limit) {
+            throw new MalformedInputException(limit - address, "Input is truncated");
         }
+        return base[(int) address] & 0xFF;
     }
 }
