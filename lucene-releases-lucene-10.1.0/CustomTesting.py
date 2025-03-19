@@ -1,16 +1,14 @@
 import os
 
+#integerCompressionAlgorithmsToBenchmark = ["PFOR", "NEWPFOR", "DELTA", "DEFAULT"]
 integerCompressionAlgorithmsToBenchmark = ["PFOR", "NEWPFOR", "DELTA", "DEFAULT"]
+#datasetsToBenchmark = ["COMMONCRAWL"]
 datasetsToBenchmark = ["COMMONCRAWL"]
-benchmarkTypes = ["INDEXING", "SEARCH"]
-
-
-
+#benchmarkTypes = ["INDEXING", "SEARCH"]
+benchmarkTypes = ["SEARCH"]
 
 os.system("call gradlew :lucene:core:assemble")
 os.system("call gradlew :lucene:luke:assemble")
-
-
 
 
 for dataset in datasetsToBenchmark:

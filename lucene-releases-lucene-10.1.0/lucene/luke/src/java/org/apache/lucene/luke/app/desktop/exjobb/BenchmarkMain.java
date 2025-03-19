@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 public class BenchmarkMain {
     private static Dataset defaultDataset = Dataset.COMMONCRAWL;
-    private static IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DELTA;
+    private static IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.PFOR;
     private static TermCompressionMode defaultTermCompressionMode = TermCompressionMode.LZ4;
     private static BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
@@ -31,10 +31,10 @@ public class BenchmarkMain {
     // args[0]: BenchmarkingType, args[1]: Dataset: args[2]: IntegerCompressionType, args[3] TermCompressionMode
     public static void entryPoint(String[] args)
     {
-        BenchmarkingType benchmarkingType = null;
-        Dataset dataset = null;
-        IntegerCompressionType integerCompressionType = null;
-        TermCompressionMode termCompressionMode = null;
+        BenchmarkingType benchmarkingType = defaultBenchmarkingType;
+        Dataset dataset = defaultDataset;
+        IntegerCompressionType integerCompressionType = defaultIntegerCompressionType;
+        TermCompressionMode termCompressionMode = defaultTermCompressionMode;
 
         for (int i = 0; i < args.length; i++) {
             if (i == 0)
