@@ -1051,6 +1051,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 //              System.out.println("Decompressed data: " + Arrays.toString(decompressed));
 //            }
             break;
+          default:
+            throw new AssertionError("Unknown term compression mode: " + termCompressionMode);
         }
         if (termCompressionMode != TermCompressionMode.NO_COMPRESSION && compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
           // Primary compression didn't save enough space, test if LowercaseAsciiCompression can save space
