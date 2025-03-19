@@ -62,7 +62,7 @@ public final class Snappy {
     }
 
     public static int compress(byte[] input, int inputLength, DataOutput output) throws IOException {
-        byte[] tempOutput = new byte[SnappyRawCompressor.maxCompressedLength(inputLength)+1];
+        byte[] tempOutput = new byte[SnappyRawCompressor.maxCompressedLength(inputLength)];
 
         int compressedDataSize = SnappyRawCompressor.compress(input, inputLength, tempOutput, table);
 
