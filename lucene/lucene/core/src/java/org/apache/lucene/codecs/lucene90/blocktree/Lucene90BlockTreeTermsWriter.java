@@ -993,16 +993,6 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
           }
         }
-        if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
-          spareWriter.reset();
-          if (spareBytes.length < suffixWriter.length()) {
-            spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
-          }
-          if (LowercaseAsciiCompression.compress(
-              suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
-            compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
-          }
-        }
 //        // ZSTD
 //        data = new byte[suffixWriter.length()];
 //        System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
@@ -1016,15 +1006,29 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
         compressed2 = new byte[Snappy.maxCompressedLength(data.length)];
         SnappyLength = Snappy.compress(data, 0, data.length, compressed2, 0, compressed2.length);
-        if (SnappyLength < spareWriter.size()) {
+        if (SnappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
             compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
         }
+        // TODO: Remove commented code when no longer needed
 //        // Check that decoded snappy bytes are the same as the original bytes
 //        byte[] decoded = new byte[suffixWriter.length()];
 //        SnappyLength = Snappy.decompress(compressed2, 0, SnappyLength, decoded, 0, decoded.length, false);
 //        if (!Arrays.equals(data, decoded)) {
 //          System.out.println("Data does not match");
+//          System.out.println("Original Data: " + Arrays.toString(suffixWriter.bytes()));
+//          System.out.println("Compressed Data: " + Arrays.toString(compressed2));
+//          System.out.println("Decompressed Data: " + Arrays.toString(decoded));
 //        }
+        if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
+          spareWriter.reset();
+          if (spareBytes.length < suffixWriter.length()) {
+            spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
+          }
+          if (LowercaseAsciiCompression.compress(
+              suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
+            compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
+          }
+        }
       }
       long token = ((long) suffixWriter.length()) << 3;
       if (isLeafBlock) {
