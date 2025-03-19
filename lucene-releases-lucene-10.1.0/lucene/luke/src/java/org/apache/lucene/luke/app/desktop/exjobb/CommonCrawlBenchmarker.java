@@ -1,6 +1,8 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;

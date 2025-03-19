@@ -64,6 +64,8 @@ public class Lucene101Codec extends Codec {
 
   public static IntegerCompressor integerCompressor;
 
+  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.DELTA;
+
   static boolean customEncodeDocIds = true;
 
   static boolean useExceptionFile = false;
@@ -132,7 +134,7 @@ public class Lucene101Codec extends Codec {
     super("Lucene101");
     this.storedFieldsFormat =
         new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
-    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(IntegerCompressionType.DELTA);
+    Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();
