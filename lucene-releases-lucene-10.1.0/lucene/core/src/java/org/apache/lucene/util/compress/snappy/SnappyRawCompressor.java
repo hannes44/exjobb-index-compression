@@ -71,7 +71,7 @@ final class SnappyRawCompressor
             final byte[] outputBase,
             final short[] table) throws IOException {
         // First write the uncompressed size to the output as a variable length int
-        long output = writeUncompressedLength(outputBase, 0, (int) inputLimit); // TODO: This might not be needed, see if it can be removed to save space
+        long output = writeUncompressedLength(outputBase, 0, (int) inputLimit);
 
         for (long blockAddress = 0; blockAddress < inputLimit; blockAddress += BLOCK_SIZE) {
             final long blockLimit = Math.min(inputLimit, blockAddress + BLOCK_SIZE);

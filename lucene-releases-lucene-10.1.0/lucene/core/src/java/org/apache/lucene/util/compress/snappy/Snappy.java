@@ -62,11 +62,11 @@ public final class Snappy {
     }
 
     public static int compress(byte[] input, int inputLength, DataOutput output) throws IOException {
-        byte[] tempOutput = new byte[SnappyRawCompressor.maxCompressedLength(inputLength)];
+        byte[] tempOutput = new byte[SnappyRawCompressor.maxCompressedLength(inputLength)+1];
 
         int compressedDataSize = SnappyRawCompressor.compress(input, inputLength, tempOutput, table);
 
-        output.writeInt(compressedDataSize);
+        output.writeInt(compressedDataSize); // VInt?
         output.writeBytes(tempOutput, compressedDataSize);
 
         return compressedDataSize + Integer.BYTES;
@@ -77,9 +77,13 @@ public final class Snappy {
         return SnappyRawCompressor.getHashTableSize(inputLength);
     }
 
-    public static int decompress(DataInput input, int inputLength, byte[] output, int maxOutputLength)
+    public static int decompress(DataInput input, byte[] output, int maxOutputLength)
             throws MalformedInputException, IOException {
-        return SnappyRawDecompressor.decompress(input, 0, inputLength, output, 0, maxOutputLength);
+        // Read the compressed data size
+        int compressedDataSize = input.readInt(); // VInt?
+        byte[] tempInput = new byte[compressedDataSize];
+        input.readBytes(tempInput, 0, compressedDataSize);
+        return SnappyRawDecompressor.decompress(tempInput, 0, compressedDataSize, output, 0, maxOutputLength);
     }
 
     private static void verifyRange(byte[] data, int offset, int length)

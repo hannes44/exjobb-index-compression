@@ -1031,6 +1031,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             throw new UnsupportedOperationException("Zstd compression is not supported yet");
             //break;
           case SNAPPY:
+            Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
             if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
               // Snappy saved more than 25%, go for it
               compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;

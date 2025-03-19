@@ -59,10 +59,7 @@ enum CompressionAlgorithm {
   SNAPPY_COMPRESSION(0x03) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
-        // Get the compressed length
-        int compressedLength = in.readInt();
-
-        Snappy.decompress(in, compressedLength, out, len);
+        Snappy.decompress(in, out, len);
       }
   };
 
