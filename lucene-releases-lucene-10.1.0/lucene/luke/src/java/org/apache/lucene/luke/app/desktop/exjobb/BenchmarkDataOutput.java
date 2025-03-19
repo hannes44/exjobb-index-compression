@@ -7,5 +7,7 @@ public interface BenchmarkDataOutput {
     // Prints where the output is printed, saved
     public void printStatus();
 
-    public void write(List<BenchmarkPerformanceData> benchmarkPerformanceData, Dataset dataset) throws IOException;
+    public void write(IndexingBenchmarkData data, Dataset dataset) throws IOException;
+
+    public void write(SearchBenchmarkData data, Dataset dataset) throws IOException;
 }
