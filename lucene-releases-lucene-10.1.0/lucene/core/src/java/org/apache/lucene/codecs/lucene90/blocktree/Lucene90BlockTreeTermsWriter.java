@@ -1029,25 +1029,38 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             break;
           case ZSTD:
             throw new UnsupportedOperationException("Zstd compression is not supported yet");
-            //break;
+            //break; // TODO: Uncomment when Zstd is supported
           case SNAPPY:
-            Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
+            int snappyLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
             if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
               // Snappy saved more than 25%, go for it
               compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
             }
+//            // Check if decompressed data matches original data
+//            byte[] decompressed = new byte[suffixWriter.length()];
+//            byte[] original = new byte[suffixWriter.length()];
+//            System.arraycopy(suffixWriter.bytes(), 0, original, 0, suffixWriter.length());
+//            DataInput tempInput = new ByteArrayDataInput(spareWriter.toArrayCopy(), 0, snappyLength);
+//            Snappy.decompress(tempInput, decompressed, decompressed.length);
+//            if (Arrays.equals(decompressed, original)) {
+//              // System.out.println("Snappy compression matches original data");
+//            } else {
+//              System.out.println("Snappy compression does not match original data");
+//              System.out.println("Original data: " + Arrays.toString(original));
+//              System.out.println("Compressed data: " + Arrays.toString(spareWriter.toArrayCopy()));
+//              System.out.println("Decompressed data: " + Arrays.toString(decompressed));
+//            }
             break;
+        }
+        if (termCompressionMode != TermCompressionMode.NO_COMPRESSION && compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
+          // Primary compression didn't save enough space, test if LowercaseAsciiCompression can save space
+          spareWriter.reset();
+          if (spareBytes.length < suffixWriter.length()) {
+            spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
           }
-          if (termCompressionMode != TermCompressionMode.NO_COMPRESSION && compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
-            // Primary compression didn't save enough space, test if LowercaseAsciiCompression can save space
-            spareWriter.reset();
-            if (spareBytes.length < suffixWriter.length()) {
-              spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
-            }
-            if (LowercaseAsciiCompression.compress(
-                    suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
-              compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
-            }
+          if (LowercaseAsciiCompression.compress(suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
+            compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
+          }
         }
       }
       long token = ((long) suffixWriter.length()) << 3;
