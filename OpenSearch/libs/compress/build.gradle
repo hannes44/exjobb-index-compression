@@ -20,8 +20,8 @@ dependencies {
   api project(':libs:opensearch-common')
   api project(':libs:opensearch-core')
 
-  //unsafeZstd
-  api "com.github.luben:unsafeZstd-jni:${versions.zstd}"
+  //zstd
+  api "com.github.luben:zstd-jni:${versions.zstd}"
 
   testImplementation(project(":test:framework")) {
     // tests use the locally compiled version of server

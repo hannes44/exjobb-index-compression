@@ -22,7 +22,7 @@ public class ZstdNotEnabledIT extends OpenSearchIntegTestCase {
         internalCluster().startNode();
         final String index = "test-index";
 
-        // creating index with unsafeZstd and zstd_no_dict should fail if custom-codecs plugin is not installed
+        // creating index with zstd and zstd_no_dict should fail if custom-codecs plugin is not installed
         for (String codec : List.of("zstd", "zstd_no_dict")) {
             assertThrows(
                 IllegalArgumentException.class,
