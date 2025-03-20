@@ -50,6 +50,7 @@ import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
+import org.apache.lucene.util.compress.zstd.ZSTD;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
 import org.apache.lucene.util.fst.FST;
@@ -1032,8 +1033,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           break;
           case ZSTD:
             if (safe) {
-              //int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
-              //compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
+              int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
+              compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
               if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
                 compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
               }
