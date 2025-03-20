@@ -1170,6 +1170,7 @@ public final class UnsafeZSTD {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private static int decodeCompressedLiterals(Object inputBase, final long inputAddress, int blockSize, int literalsBlockType)
     {
         long input = inputAddress;
