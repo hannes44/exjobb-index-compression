@@ -6,16 +6,14 @@
  * compatible open source license.
  */
 
-package org.apache.lucene.util.compress.zstd;
+package org.apache.lucene.util;
 
-import org.apache.lucene.util.compress.zstd.IncompatibleJvmException;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
 import java.nio.ByteOrder;
 
 import static java.lang.String.format;
-import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 public final class UnsafeUtil
 {

@@ -15,7 +15,7 @@ import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL_COUNT;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_TABLE_LOG;
 import static org.apache.lucene.util.compress.zstd.Huffman.MIN_TABLE_LOG;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.minTableLog;
 

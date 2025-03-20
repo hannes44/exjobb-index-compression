@@ -8,6 +8,8 @@
 
 package org.apache.lucene.util.compress.zstd;
 
+import org.apache.lucene.util.MalformedInputException;
+
 import java.util.Arrays;
 import static java.util.Objects.requireNonNull;
 import static java.lang.String.format;
@@ -16,7 +18,7 @@ import static org.apache.lucene.util.compress.zstd.BitInputStream.peekBits;
 import static org.apache.lucene.util.compress.zstd.Constants.*;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL;
 import static org.apache.lucene.util.compress.zstd.Huffman.MAX_SYMBOL_COUNT;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.put24BitLittleEndian;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.get24BitLittleEndian;

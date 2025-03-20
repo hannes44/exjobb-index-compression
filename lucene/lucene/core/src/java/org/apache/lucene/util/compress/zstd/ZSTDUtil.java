@@ -8,8 +8,10 @@
 
 package org.apache.lucene.util.compress.zstd;
 
+import org.apache.lucene.util.MalformedInputException;
+
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 
 final class ZSTDUtil
 {
