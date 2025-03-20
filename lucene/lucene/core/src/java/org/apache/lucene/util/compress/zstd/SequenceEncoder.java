@@ -23,7 +23,7 @@ import static org.apache.lucene.util.compress.zstd.Constants.SEQUENCE_ENCODING_C
 import static org.apache.lucene.util.compress.zstd.Constants.SEQUENCE_ENCODING_RLE;
 import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_SHORT;
 import static org.apache.lucene.util.compress.zstd.FiniteStateEntropy.optimalTableLog;
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.zstd.ZSTDUtil.checkArgument;
 
 final class SequenceEncoder

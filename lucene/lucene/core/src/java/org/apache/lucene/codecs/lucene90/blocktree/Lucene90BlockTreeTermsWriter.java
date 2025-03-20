@@ -16,7 +16,6 @@
  */
 package org.apache.lucene.codecs.lucene90.blocktree;
 
-import static org.apache.lucene.util.compress.zstd.Constants.SIZE_OF_INT;
 import static org.apache.lucene.util.fst.FSTCompiler.getOnHeapReaderWriter;
 
 import java.io.IOException;
@@ -41,16 +40,10 @@ import org.apache.lucene.store.ByteArrayDataOutput;
 import org.apache.lucene.store.ByteBuffersDataOutput;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexOutput;
-import org.apache.lucene.util.ArrayUtil;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.BytesRefBuilder;
-import org.apache.lucene.util.FixedBitSet;
-import org.apache.lucene.util.IOUtils;
-import org.apache.lucene.util.IntsRefBuilder;
-import org.apache.lucene.util.StringHelper;
-import org.apache.lucene.util.ToStringUtils;
+import org.apache.lucene.util.*;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.zstd.ZSTD;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
@@ -1000,6 +993,32 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
           }
         }
+//        // ZSTD
+//        data = new byte[suffixWriter.length()];
+//        System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+//        compressed1 = new byte[ZSTD.maxCompressedLength(data.length)];
+//        ZSTDLength = ZSTD.compress(data, 0, data.length, compressed1, 0, compressed1.length);
+//        if (ZSTDLength < spareWriter.size()) {
+//          compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+//        }
+        // Snappy
+        data = new byte[suffixWriter.length()];
+        System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+        compressed2 = new byte[Snappy.maxCompressedLength(data.length)];
+        SnappyLength = Snappy.compress(data, 0, data.length, compressed2, 0, compressed2.length);
+        if (SnappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+            compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+        }
+        // TODO: Remove commented code when no longer needed
+//        // Check that decoded snappy bytes are the same as the original bytes
+//        byte[] decoded = new byte[suffixWriter.length()];
+//        SnappyLength = Snappy.decompress(compressed2, 0, SnappyLength, decoded, 0, decoded.length, false);
+//        if (!Arrays.equals(data, decoded)) {
+//          System.out.println("Data does not match");
+//          System.out.println("Original Data: " + Arrays.toString(suffixWriter.bytes()));
+//          System.out.println("Compressed Data: " + Arrays.toString(compressed2));
+//          System.out.println("Decompressed Data: " + Arrays.toString(decoded));
+//        }
         if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
           spareWriter.reset();
           if (spareBytes.length < suffixWriter.length()) {
@@ -1010,29 +1029,21 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
           }
         }
-        if (compressionAlg == CompressionAlgorithm.LZ4_COMPRESSION) {
-          data = new byte[suffixWriter.length()];
-          System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-          compressed = new byte[ZSTD.maxCompressedLength(data.length)];
-          ZSTDLength = ZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
-          if (ZSTDLength < spareWriter.size()) {
-
-            compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
-          }
-        }
       }
       long token = ((long) suffixWriter.length()) << 3;
       if (isLeafBlock) {
         token |= 0x04;
       }
-      token |= compressionAlg.code;
+      token |= compressionAlg.code; // Can be max value of 3, (2 bits reserved)
       termsOut.writeVLong(token);
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
       } else if (compressionAlg == CompressionAlgorithm.ZSTD_COMPRESSION) {
-        termsOut.writeBytes(compressed, ZSTDLength);
+        termsOut.writeBytes(compressed1, ZSTDLength);
       } else if (compressionAlg == CompressionAlgorithm.LZ4_COMPRESSION || compressionAlg == CompressionAlgorithm.LOWERCASE_ASCII) {
         spareWriter.copyTo(termsOut);
+      } else if (compressionAlg == CompressionAlgorithm.SNAPPY_COMPRESSION) {
+        termsOut.writeBytes(compressed2, SnappyLength);
       }
       suffixWriter.setLength(0);
       spareWriter.reset();
@@ -1230,9 +1241,11 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private final ByteBuffersDataOutput spareWriter = ByteBuffersDataOutput.newResettableInstance();
     private byte[] spareBytes = BytesRef.EMPTY_BYTES;
     private int ZSTDLength;
+    private int SnappyLength;
     private byte[] data;
-    private byte[] compressed;
     private LZ4.HighCompressionHashTable compressionHashTable;
+    private byte[] compressed1;
+    private byte[] compressed2;
   }
 
   private boolean closed;

@@ -10,7 +10,7 @@ package org.apache.lucene.util.compress.zstd;
 
 import java.util.Arrays;
 
-import static org.apache.lucene.util.compress.zstd.UnsafeUtil.UNSAFE;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 final class Histogram
