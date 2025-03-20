@@ -1,6 +1,7 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -24,7 +25,7 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
     }
 
     @Override
-    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer) throws IOException {
+    public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer, String indexPath) throws IOException {
 
         int numDocs = 2000; // Number of documents to index
         // Fixed seed for deterministic random content generation
@@ -114,11 +115,11 @@ public class RandomWordsBenchmarker implements DatasetCompressionBenchmarker {
                 PhraseQuery phraseQuery = builder.build();
 
                 TopDocs topDocs = searcher.search(phraseQuery, 10);
-               // System.out.println("Total hits: " + topDocs.totalHits.value);
+                System.out.println("Total hits: " + topDocs.totalHits);
 
                 for (int i = 0; i < topDocs.scoreDocs.length; i++) {
                //     Document doc = searcher.doc(topDocs.scoreDocs[i].doc);
-                //    System.out.println(doc.get("id"));
+               //     System.out.println(doc.get("id"));
                 }
             }  catch (ParseException e) {
                 e.printStackTrace();

@@ -76,7 +76,7 @@ public class LukeMain {
 
   public static void main(String[] args) throws Exception {
 
-    BenchmarkMain.entryPoint();
+    BenchmarkMain.entryPoint(args);
     if (true)
       return;
 

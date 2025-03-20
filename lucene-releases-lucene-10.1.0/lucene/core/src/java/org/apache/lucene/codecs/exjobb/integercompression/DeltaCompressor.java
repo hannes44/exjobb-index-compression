@@ -6,6 +6,8 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Implements delta compression for integer sequences.
@@ -13,34 +15,40 @@ import java.io.IOException;
 public class DeltaCompressor implements IntegerCompressor {
 
     // https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Encode 128 integers from {@code longs} into {@code out}. */
-    // TODO: try using normal bitpacking instead of variable integers
-    public void encode(int[] positions, DataOutput out) throws IOException
+    /** Delta Encode 128 integers from {@code longs} into {@code out}.
+     *  Uses variable encoding on the deltas
+     * */
+    public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
-        out.writeInt(positions[0]);
-
-        for (int i = 1; i < positions.length; i++) {
-            int delta = (positions[i] - positions[i-1]);
-            out.writeInt(delta);
+        // Since we are given the positions as deltas, we can simply write them to the output
+        for (int i = 0; i < 128; i++) {
+            out.writeVInt(ints[i]);
         }
     }
 
     public void encodeSingleInt(int input, DataOutput out) throws IOException {
-        out.writeInt(input);
+        out.writeVInt(input);
     }
 
     public int decodeSingleInt(IndexInput input) throws IOException
     {
-        return input.readInt();
+        return input.readVInt();
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
 
-        ints[0] = pdu.in.readInt();
-        for (int i = 1; i < 128; i++) {
-            ints[i] = pdu.in.readInt() + ints[i-1];
+        // Since we are returning the ints as deltas we can simply read them
+        for (int i = 0; i < 128; i++) {
+            ints[i] = pdu.in.readVInt();
+        }
+    }
+
+    @Override
+    public void skip(IndexInput in) throws IOException {
+        for (int i = 0; i < 128; i++) {
+            in.readVInt();
         }
     }
 

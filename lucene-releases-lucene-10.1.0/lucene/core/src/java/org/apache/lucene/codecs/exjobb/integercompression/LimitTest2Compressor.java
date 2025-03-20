@@ -18,7 +18,7 @@ public class LimitTest2Compressor implements IntegerCompressor {
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
-    public void encode(int[] positions, DataOutput out) throws IOException
+    public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
 
         // We store the reference as a VInt
@@ -98,10 +98,10 @@ public class LimitTest2Compressor implements IntegerCompressor {
         }
 
 
-        byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
+        //byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
 
         //out.writeVInt(regularBytes.length);
-        out.writeBytes(regularBytes, regularBytes.length);
+     //   out.writeBytes(regularBytes, regularBytes.length);
 
         for (Long exception : exceptionValues)
         {
@@ -120,7 +120,7 @@ public class LimitTest2Compressor implements IntegerCompressor {
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints) throws IOException {
+    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         byte isThereExceptions = pdu.in.readByte();
         long minValue = pdu.in.readVLong();
         long regularBitWidth = pdu.in.readVLong();
@@ -135,6 +135,9 @@ public class LimitTest2Compressor implements IntegerCompressor {
 
         byte[] regularBytes = new byte[regularBytesLen];
         pdu.in.readBytes(regularBytes, 0, regularBytesLen);
+/*
+
+
 
         List<Long> regularValues = LimitTestCompressor.bitUnpack(regularBytes, (int) regularBitWidth);
 
@@ -148,6 +151,13 @@ public class LimitTest2Compressor implements IntegerCompressor {
                 ints[i] = (int) (pdu.in.readLong() + minValue);
             }
         }
+         */
+
+    }
+
+    @Override
+    public void skip(IndexInput in) throws IOException {
+
     }
 
     public IntegerCompressionType getType() {
