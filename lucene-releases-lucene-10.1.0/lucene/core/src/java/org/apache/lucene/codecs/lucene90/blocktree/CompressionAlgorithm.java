@@ -20,9 +20,9 @@ import java.io.IOException;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
-//import org.apache.lucene.util.compress.unsafeZstd.ZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -50,7 +50,23 @@ enum CompressionAlgorithm {
     }
   },
 
-  SNAPPY_COMPRESSION(0x03) {
+  ZSTD_COMPRESSION(0x03) { // TODO: 0x04 and any higher value will overflow (cannot be used)
+
+    @Override
+    void read(DataInput in, byte[] out, int len) throws IOException {
+      // Read the compressed length from the input data, should be 4 bytes
+      int compressedLen = in.readInt();
+
+      // Read the compressed data
+      byte[] compressed = new byte[compressedLen];
+      in.readBytes(compressed, 0, compressedLen);
+
+      // Decompress the data
+      UnsafeZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
+    }
+  },
+
+  SNAPPY_COMPRESSION(0x04) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
         // Read the compressed length from the input data, should be 4 bytes
@@ -65,6 +81,7 @@ enum CompressionAlgorithm {
         //Snappy.decompress(in, out, len);
       }
   };
+
 
 
   private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[5];

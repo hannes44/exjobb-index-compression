@@ -1032,14 +1032,24 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           break;
           case ZSTD:
             if (safe) {
-
+              //int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
+              //compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
+              if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+              }
             } else {
-
+              data = new byte[suffixWriter.length()];
+              System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+              compressed = new byte[UnsafeZSTD.maxCompressedLength(data.length)];
+              compressedLength = UnsafeZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
+              if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+              }
             }
           break;
           case SNAPPY:
             if (safe) {
-              snappyLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
+              compressedLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
               if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
                 // Snappy saved more than 25%, go for it
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
@@ -1048,8 +1058,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
               data = new byte[suffixWriter.length()];
               System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
               compressed = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
-              snappyLength = UnsafeSnappy.compress(data, 0, data.length, compressed, 0, compressed.length);
-              if (snappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+              compressedLength = UnsafeSnappy.compress(data, 0, data.length, compressed, 0, compressed.length);
+              if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
               }
             }
@@ -1093,11 +1103,11 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
         //System.out.println("NO_COMPRESSION");
-      } else if (compressionAlg == CompressionAlgorithm.SNAPPY_COMPRESSION) {
+      } else if (compressionAlg == CompressionAlgorithm.SNAPPY_COMPRESSION || compressionAlg == CompressionAlgorithm.ZSTD_COMPRESSION) {
         if (safe) {
         spareWriter.copyTo(termsOut);
         } else {
-          termsOut.writeBytes(compressed, snappyLength);
+          termsOut.writeBytes(compressed, compressedLength);
         }
         //System.out.println(compressionAlg.name());
       } else {
@@ -1299,7 +1309,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private byte[] spareBytes = BytesRef.EMPTY_BYTES;
     private byte[] data;
     private byte[] compressed;
-    private int snappyLength;
+    private int compressedLength;
     private int zstdLength;
     private LZ4.HighCompressionHashTable compressionHashTable;
   }
