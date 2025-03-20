@@ -47,7 +47,7 @@ import org.apache.lucene.util.StringHelper;
 import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
-import org.apache.lucene.util.compress.zstd.ZSTD;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
@@ -241,7 +241,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     LOWERCASE_ASCII,
     /** Compress terms with {@link LZ4} */
     LZ4,
-    /** Compress terms with Zstandard {@link ZSTD} */
+    /** Compress terms with Zstandard {@link UnsafeZSTD} */
     ZSTD,
     /** Compress terms with Snappy {@link Snappy} */
     SNAPPY
@@ -1031,10 +1031,10 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
               }
           break;
           case ZSTD:
-            int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
-            int compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
-            if (compressedLength < suffixWriter.length()) {
-                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+            if (safe) {
+
+            } else {
+
             }
           break;
           case SNAPPY:

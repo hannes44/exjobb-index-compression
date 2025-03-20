@@ -20,7 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
-import org.apache.lucene.util.compress.zstd.ZSTD;
+//import org.apache.lucene.util.compress.unsafeZstd.ZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 
@@ -63,14 +63,6 @@ enum CompressionAlgorithm {
         // Decompress the data
         UnsafeSnappy.decompress(compressed, 0, compressedLen, out, 0, len, true);
         //Snappy.decompress(in, out, len);
-      }
-  },
-
-  ZSTD_COMPRESSION(0x04) {
-      @Override
-      void read(DataInput in, byte[] out, int len) throws IOException {
-        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
-      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
       }
   };
 
