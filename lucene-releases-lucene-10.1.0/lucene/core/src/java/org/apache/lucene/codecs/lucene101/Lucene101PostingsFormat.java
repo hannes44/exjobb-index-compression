@@ -333,6 +333,8 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
   /** Filename extension for positions. See chapter: <a href="#Positions">Positions</a> */
   public static final String POS_EXTENSION = "pos";
 
+  public static final String EXC_EXTENSION = "exc";
+
   /**
    * Filename extension for payloads and offsets. See chapter: <a href="#Payloads">Payloads and
    * Offsets</a>
@@ -357,6 +359,7 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
   static final String DOC_CODEC = "Lucene101PostingsWriterDoc";
   static final String POS_CODEC = "Lucene101PostingsWriterPos";
   static final String PAY_CODEC = "Lucene101PostingsWriterPay";
+  static final String EXC_CODEC = "CustomCodecExc";
 
   static final int VERSION_START = 0;
   static final int VERSION_CURRENT = VERSION_START;
