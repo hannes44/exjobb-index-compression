@@ -80,7 +80,7 @@ allprojects { project ->
             "-proc:none"
         ]
 
-        if (propertyOrDefault("javac.failOnWarnings", true).toBoolean()) {
+        if (propertyOrDefault("javac.failOnWarnings", false).toBoolean()) { // TODO: Switch from false to true when usage of UNSAFE is removed
           options.compilerArgs += "-Werror"
         }
       }
