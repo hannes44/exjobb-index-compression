@@ -269,6 +269,21 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
    * min.
    */
   public Lucene90BlockTreeTermsWriter(
+          SegmentWriteState state,
+          PostingsWriterBase postingsWriter,
+          int minItemsInBlock,
+          int maxItemsInBlock)
+          throws IOException {
+    this(
+            state,
+            postingsWriter,
+            minItemsInBlock,
+            maxItemsInBlock,
+            TermCompressionMode.LZ4,
+            Lucene90BlockTreeTermsReader.VERSION_CURRENT);
+  }
+
+  public Lucene90BlockTreeTermsWriter(
       SegmentWriteState state,
       PostingsWriterBase postingsWriter,
       int minItemsInBlock,

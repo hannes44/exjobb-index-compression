@@ -60,6 +60,7 @@ final class UnsafeSnappyRawDecompressor
         return expectedLength;
     }
 
+    @SuppressWarnings("fallthrough")
     private static int uncompressAll(
             final Object inputBase,
             final long inputAddress,

@@ -76,6 +76,7 @@ final class UnsafeHuffmanCompressor
         return (int) (output - outputAddress);
     }
 
+    @SuppressWarnings("fallthrough")
     public static int compressSingleStream(Object outputBase, long outputAddress, int outputSize, Object inputBase, long inputAddress, int inputSize, UnsafeHuffmanCompressionTable table)
     {
         if (outputSize < SIZE_OF_LONG) {

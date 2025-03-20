@@ -716,6 +716,7 @@ public final class UnsafeZSTD {
         return size;
     }
 
+    @SuppressWarnings("fallthrough")
     static int decodeCompressedBlock(
             Object inputBase,
             final long inputAddress,

@@ -31,6 +31,7 @@ final class UnsafeBitInputStream
         return startAddress == currentAddress && bitsConsumed == Long.SIZE;
     }
 
+    @SuppressWarnings("fallthrough")
     private static long readTail(Object inputBase, long inputAddress, int inputSize)
     {
         long bits = UNSAFE.getByte(inputBase, inputAddress) & 0xFF;
