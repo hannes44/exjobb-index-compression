@@ -1041,8 +1041,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             } else {
               data = new byte[suffixWriter.length()];
               System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-              compressed2 = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
-              snappyLength = UnsafeSnappy.compress(data, 0, data.length, compressed2, 0, compressed2.length);
+              compressed = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
+              snappyLength = UnsafeSnappy.compress(data, 0, data.length, compressed, 0, compressed.length);
               if (snappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
               }
@@ -1077,7 +1077,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
           }
         }
       }
-      long token = ((long) suffixWriter.length()) << 3;
+      long token = ((long) suffixWriter.length()) << 3; // This leaves 1 bit for "isLeafBlock" and 2 bits for compressionAlg TODO: reserve more bits for compressionAlg
       if (isLeafBlock) {
         token |= 0x04;
       }
@@ -1086,13 +1086,15 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
         //System.out.println("NO_COMPRESSION");
-      } else {
+      } else if (compressionAlg == CompressionAlgorithm.SNAPPY_COMPRESSION) {
         if (safe) {
         spareWriter.copyTo(termsOut);
         } else {
-          termsOut.writeBytes(compressed2, snappyLength);
+          termsOut.writeBytes(compressed, snappyLength);
         }
         //System.out.println(compressionAlg.name());
+      } else {
+        spareWriter.copyTo(termsOut);
       }
       suffixWriter.setLength(0);
       spareWriter.reset();
@@ -1289,7 +1291,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private final ByteBuffersDataOutput spareWriter = ByteBuffersDataOutput.newResettableInstance();
     private byte[] spareBytes = BytesRef.EMPTY_BYTES;
     private byte[] data;
-    private byte[] compressed2;
+    private byte[] compressed;
     private boolean safe = false;
     private int snappyLength;
     private LZ4.HighCompressionHashTable compressionHashTable;
