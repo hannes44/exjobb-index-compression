@@ -18,8 +18,8 @@ import java.util.ArrayList;
 
 public class BenchmarkMain {
     private static final Dataset defaultDataset = Dataset.COMMONCRAWL;
-    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DEFAULT;
-    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.ZSTD;
+    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.PFOR;
+    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
     // Can only benchmark either searching or indexing during a run since we don't want caching to interfere

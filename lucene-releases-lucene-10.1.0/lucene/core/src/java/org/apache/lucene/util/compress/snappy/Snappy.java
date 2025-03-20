@@ -33,6 +33,14 @@ public final class Snappy {
     }
 
     public static int readInt(byte[] data, long address) {
+        if (address + Integer.BYTES >= data.length) {
+            try {
+                Thread.sleep(1);        // TODO: WTF IS THIS?????? (Does not work without :despair:)
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return 0;
+        }
         return (int) BitUtil.VH_NATIVE_INT.get(data, (int) address);
     }
 
@@ -56,7 +64,7 @@ public final class Snappy {
         BitUtil.VH_NATIVE_INT.set(data, (int) address, value);
     }
 
-    public int maxCompressedLength(int uncompressedSize)
+    public static int maxCompressedLength(int uncompressedSize)
     {
         return SnappyRawCompressor.maxCompressedLength(uncompressedSize);
     }

@@ -19,6 +19,7 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 import static org.apache.lucene.util.fst.FSTCompiler.getOnHeapReaderWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1018,7 +1019,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       // We also only start compressing when the prefix length is greater than 2 since blocks whose
       // prefix length is
       // 1 or 2 always all get visited when running a fuzzy query whose max number of edits is 2.
-        boolean safe = false;
+        boolean safe = true;
         if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
         switch (termCompressionMode) {
           case LZ4:
@@ -1050,35 +1051,40 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             if (safe) {
               int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
               compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
-              if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
-              }
             } else {
               data = new byte[suffixWriter.length()];
               System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
               compressed = new byte[UnsafeZSTD.maxCompressedLength(data.length)];
               compressedLength = UnsafeZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
+            }
               if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
                 compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
               }
-            }
           break;
           case SNAPPY:
+            data = new byte[suffixWriter.length()];
+            System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
             if (safe) {
-              compressedLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
-              if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-                // Snappy saved more than 25%, go for it
-                compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
-              }
+                compressedLength = Snappy.compress(data, data.length, spareWriter);
+            if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+              // Snappy saved more than 25%, go for it
+              compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+            }
             } else {
-              data = new byte[suffixWriter.length()];
-              System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
               compressed = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
               compressedLength = UnsafeSnappy.compress(data, 0, data.length, compressed, 0, compressed.length);
               if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
               }
             }
+//            if (Arrays.equals(spareWriter.toArrayCopy(),Arrays.copyOf(compressed, compressedLength))) {
+//            } else {
+//              System.out.println("Data did not match");
+//              System.out.println("SpareWriter length : " + spareWriter.size());
+//              System.out.println("Compressed length : " + compressed.length);
+//              System.out.println("Safe data : " + Arrays.toString(spareWriter.toArrayCopy()));
+//              System.out.println("Unsafe data : " + Arrays.toString(Arrays.copyOf(compressed, compressedLength)));
+//            }
 //            // Check if decompressed data matches original data
 //            byte[] decompressed = new byte[suffixWriter.length()];
 //            byte[] original = new byte[suffixWriter.length()];
@@ -1125,10 +1131,10 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         } else {
           termsOut.writeBytes(compressed, compressedLength);
         }
-        //System.out.println(compressionAlg.name());
       } else {
         spareWriter.copyTo(termsOut);
       }
+
       suffixWriter.setLength(0);
       spareWriter.reset();
 
