@@ -18,10 +18,11 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 
 import java.io.IOException;
 import org.apache.lucene.store.DataInput;
-import org.apache.lucene.store.RandomAccessInput;
-import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.LZ4;
+import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.zstd.ZSTD;
+import org.apache.lucene.util.compress.snappy.Snappy;
+import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -49,13 +50,27 @@ enum CompressionAlgorithm {
     }
   },
 
-  ZSTD_COMPRESSION(0x03) {
+//  ZSTD_COMPRESSION(0x03) {
+//      @Override
+//      void read(DataInput in, byte[] out, int len) throws IOException {
+//        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
+//      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
+//      }
+//  },
+
+  SNAPPY_COMPRESSION(0x03) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
-        // Get the compressed length from the frame header
-        int compressedLength = ZSTD.getDecompressedSize(in);
+        // Read the compressed length from the input data, should be 4 bytes
+        int compressedLen = in.readInt();
 
-        ZSTD.decompress(in, 0, compressedLength, out, 0, len);
+        // Read the compressed data
+        byte[] compressed = new byte[compressedLen];
+        in.readBytes(compressed, 0, compressedLen);
+
+        // Decompress the data
+        UnsafeSnappy.decompress(compressed, 0, compressedLen, out, 0, len, true);
+        //Snappy.decompress(in, out, len);
       }
   };
 
