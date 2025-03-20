@@ -21,7 +21,7 @@ import java.io.IOException;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.LZ4;
-import org.apache.lucene.util.compress.zstd.ZSTD;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 
 /** Compression algorithm used for suffixes of a block of terms. */
@@ -76,7 +76,7 @@ enum CompressionAlgorithm {
       in.readBytes(compressed, 0, compressedLen);
 
       // Decompress the data
-      ZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
+      UnsafeZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
     }
   };
 

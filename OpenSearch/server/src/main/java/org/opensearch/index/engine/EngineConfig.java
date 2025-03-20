@@ -160,7 +160,7 @@ public final class EngineConfig {
     }, Property.IndexScope, Property.NodeScope);
 
     /**
-     * Index setting to change the compression level of zstd and zstd_no_dict lucene codecs.
+     * Index setting to change the compression level of unsafeZstd and zstd_no_dict lucene codecs.
      * Compression Level gives a trade-off between compression ratio and speed. The higher compression level results in higher compression ratio but slower compression and decompression speeds.
      * This setting is <b>not</b> realtime updateable.
      */

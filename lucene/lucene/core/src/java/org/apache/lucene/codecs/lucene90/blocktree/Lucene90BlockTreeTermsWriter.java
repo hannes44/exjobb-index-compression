@@ -44,6 +44,7 @@ import org.apache.lucene.util.*;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.snappy.Snappy;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 import org.apache.lucene.util.fst.ByteSequenceOutputs;
 import org.apache.lucene.util.fst.BytesRefFSTEnum;
 import org.apache.lucene.util.fst.FST;
@@ -992,22 +993,22 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
           }
         }
-//        // ZSTD
-//        data = new byte[suffixWriter.length()];
-//        System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-//        compressed1 = new byte[ZSTD.maxCompressedLength(data.length)];
-//        ZSTDLength = ZSTD.compress(data, 0, data.length, compressed1, 0, compressed1.length);
-//        if (ZSTDLength < spareWriter.size()) {
-//          compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
-//        }
-        // Snappy
+        // ZSTD
         data = new byte[suffixWriter.length()];
         System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-        compressed2 = new byte[Snappy.maxCompressedLength(data.length)];
-        SnappyLength = Snappy.compress(data, 0, data.length, compressed2, 0, compressed2.length);
-        if (SnappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-            compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+        compressed1 = new byte[UnsafeZSTD.maxCompressedLength(data.length)];
+        ZSTDLength = UnsafeZSTD.compress(data, 0, data.length, compressed1, 0, compressed1.length);
+        if (ZSTDLength < spareWriter.size()) {
+          compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
         }
+//        // Snappy
+//        data = new byte[suffixWriter.length()];
+//        System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+//        compressed2 = new byte[Snappy.maxCompressedLength(data.length)];
+//        SnappyLength = Snappy.compress(data, 0, data.length, compressed2, 0, compressed2.length);
+//        if (SnappyLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+//            compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
+//        }
         // TODO: Remove commented code when no longer needed
 //        // Check that decoded snappy bytes are the same as the original bytes
 //        byte[] decoded = new byte[suffixWriter.length()];
