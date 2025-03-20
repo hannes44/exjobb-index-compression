@@ -243,7 +243,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     LZ4,
     /** Compress terms with Zstandard {@link ZSTD} */
     ZSTD,
-    /** Compress terms with Snappy {@link SNAPPY} */
+    /** Compress terms with Snappy {@link Snappy} */
     SNAPPY
   }
 
@@ -1002,7 +1002,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       // We also only start compressing when the prefix length is greater than 2 since blocks whose
       // prefix length is
       // 1 or 2 always all get visited when running a fuzzy query whose max number of edits is 2.
-      if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
+        boolean safe = false;
+        if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
         switch (termCompressionMode) {
           case LZ4:
             // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
@@ -1019,23 +1020,23 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
                   compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
                 }
               }
-              break;
-              case LOWERCASE_ASCII:
-              if (spareBytes.length < suffixWriter.length()) {
-                spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
+          break;
+          case LOWERCASE_ASCII:
+            if (spareBytes.length < suffixWriter.length()) {
+              spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
+            }
+            if (LowercaseAsciiCompression.compress(
+              suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
+                compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
               }
-              if (LowercaseAsciiCompression.compress(
-                suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
-                  compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
-                }
-                break;
-              case ZSTD:
-                int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
-                int compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
-                if (compressedLength < suffixWriter.length()) {
-                    compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
-                }
-                break;
+          break;
+          case ZSTD:
+            int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
+            int compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
+            if (compressedLength < suffixWriter.length()) {
+                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
+            }
+          break;
           case SNAPPY:
             if (safe) {
               snappyLength = Snappy.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
@@ -1052,7 +1053,6 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
               }
             }
-
 //            // Check if decompressed data matches original data
 //            byte[] decompressed = new byte[suffixWriter.length()];
 //            byte[] original = new byte[suffixWriter.length()];
@@ -1299,8 +1299,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private byte[] spareBytes = BytesRef.EMPTY_BYTES;
     private byte[] data;
     private byte[] compressed;
-    private boolean safe = false;
     private int snappyLength;
+    private int zstdLength;
     private LZ4.HighCompressionHashTable compressionHashTable;
   }
 

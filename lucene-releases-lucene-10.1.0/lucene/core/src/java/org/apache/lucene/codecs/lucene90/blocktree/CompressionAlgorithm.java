@@ -50,14 +50,6 @@ enum CompressionAlgorithm {
     }
   },
 
-//  ZSTD_COMPRESSION(0x03) {
-//      @Override
-//      void read(DataInput in, byte[] out, int len) throws IOException {
-//        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
-//      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
-//      }
-//  },
-
   SNAPPY_COMPRESSION(0x03) {
       @Override
       void read(DataInput in, byte[] out, int len) throws IOException {
@@ -72,9 +64,18 @@ enum CompressionAlgorithm {
         UnsafeSnappy.decompress(compressed, 0, compressedLen, out, 0, len, true);
         //Snappy.decompress(in, out, len);
       }
+  },
+
+  ZSTD_COMPRESSION(0x04) {
+      @Override
+      void read(DataInput in, byte[] out, int len) throws IOException {
+        throw new UnsupportedOperationException("ZSTD decompression is not supported yet");
+      //org.apache.lucene.util.compress.zstd.ZSTD.decompress(in, out, len);
+      }
   };
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[4];
+
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[5];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {
