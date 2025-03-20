@@ -12,6 +12,9 @@ import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkUtils;
 import org.apache.lucene.luke.app.desktop.exjobb.DatasetCompressionBenchmarker;
 import org.apache.lucene.luke.app.desktop.exjobb.IndexingBenchmarkData;
 import org.apache.lucene.luke.app.desktop.exjobb.SearchBenchmarkData;
+import org.apache.lucene.queries.spans.SpanNearQuery;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.surround.parser.ParseException;
@@ -27,6 +30,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
@@ -159,7 +163,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
             }
 
             // Benchmark: Run each query multiple times and record the time taken
-            int iterations = 10; // Number of times to run each query
+            int iterations = 1; // Number of times to run each query
             List<Long> queryTimes = new ArrayList<>();
 
             for (Query query : queries) {
@@ -196,25 +200,6 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         return benchmarkData;
     }
 
-    private BooleanQuery createDeepBooleanQuery(int depth) {
-        if (depth <= 0) {
-            throw new IllegalArgumentException("Depth must be greater than 0");
-        }
-
-        // Base case: Create a simple TermQuery at the deepest level
-        if (depth == 1) {
-            return new BooleanQuery.Builder()
-                    .add(new TermQuery(new Term("content", "term" + depth)), BooleanClause.Occur.MUST)
-                    .build();
-        }
-
-        // Recursive case: Nest another BooleanQuery inside
-        BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        builder.add(createDeepBooleanQuery(depth - 1), BooleanClause.Occur.MUST);
-        builder.add(new TermQuery(new Term("content", "term" + depth)), BooleanClause.Occur.MUST);
-        return builder.build();
-    }
-
     public interface WETHandler {
         void handleRecord(String url, String content);
     }
@@ -234,10 +219,45 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         List<Query> queries = new ArrayList<>();
         StandardAnalyzer analyzer = new StandardAnalyzer();
 
-        // 1. Simple Term Query (Search for a specific word in the content)
-        queries.add(new TermQuery(new Term("content", "artificial")));
-        queries.add(new TermQuery(new Term("content", "intelligence")));
+        String filePath = "../Datasets/10000Words.txt";
 
+        // List to store words temporarily
+        List<String> wordList = new ArrayList<>();
+
+        long seed = 12345L; // Fixed seed value
+        Random random = new Random(seed);
+
+
+
+        // Read the file
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                wordList.add(line); // Add each word to the list
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Get a random index
+        int randomIndex = random.nextInt(wordList.size());
+
+        for (String word : wordList) {
+            // 1. Simple Term Query (Search for a specific word in the content)
+          //  queries.add(new TermQuery(new Term("content", word)));
+
+            // Create a SpanNearQuery for proximity search
+            SpanTermQuery term1 = new SpanTermQuery(new Term("content", word));
+            SpanTermQuery term2 = new SpanTermQuery(new Term("content", wordList.get(randomIndex)));
+            int slop = 3; // Maximum allowed distance between terms
+            boolean inOrder = true; // Terms must appear in the specified order
+            SpanNearQuery proximityQuery = new SpanNearQuery(new SpanQuery[]{term1, term2}, slop, inOrder);
+            queries.add(proximityQuery);
+        }
+
+
+
+        /*
 
 
         // 2. Boolean Query (AND) (Search for pages containing both "artificial" and "intelligence")
@@ -261,28 +281,9 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         // 5. Wildcard Query (Search for terms starting with "tech")
         queries.add(new WildcardQuery(new Term("content", "tech*")));
 
-        // 6. Fuzzy Query (Search for terms similar to "machine" with a maximum edit distance of 2)
-        queries.add(new FuzzyQuery(new Term("content", "machine"), 2));
-
-        // 7. Range Query (Search for pages with a timestamp between 2020-01-01 and 2023-12-31)
-        queries.add(LongPoint.newRangeQuery("timestamp",
-                Instant.parse("2020-01-01T00:00:00Z").toEpochMilli(),
-                Instant.parse("2023-12-31T23:59:59Z").toEpochMilli()));
-
         // 8. Prefix Query (Search for domains starting with "news")
         queries.add(new PrefixQuery(new Term("domain", "news")));
-
-        // 9. Multi-Term Query (Search for "covid" in both the title and content fields)
-        queries.add(new MultiFieldQueryParser(new String[]{"title", "content"}, analyzer).parse("covid"));
-
-        // 10. Complex Query (Search for pages containing "covid" in the title, "vaccine" in the content, and published in 2021)
-        queries.add(new BooleanQuery.Builder()
-                .add(new TermQuery(new Term("title", "covid")), BooleanClause.Occur.MUST)
-                .add(new TermQuery(new Term("content", "vaccine")), BooleanClause.Occur.MUST)
-                .add(LongPoint.newRangeQuery("timestamp",
-                        Instant.parse("2021-01-01T00:00:00Z").toEpochMilli(),
-                        Instant.parse("2021-12-31T23:59:59Z").toEpochMilli()), BooleanClause.Occur.MUST)
-                .build());
+         */
 
         return queries;
     }
