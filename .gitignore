@@ -118,8 +118,11 @@ target/
 profile_default/
 ipython_config.py
 
+# Datasets for testing
 Datasets/CommonCrawl-2025-05/*
 
+# Lucene Index
+lucene/lucene/luke/index/*
 lucene-releases-lucene-10.1.0/index/*
 
 BenchmarkData/*

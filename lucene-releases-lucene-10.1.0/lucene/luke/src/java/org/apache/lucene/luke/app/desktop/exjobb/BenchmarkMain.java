@@ -17,10 +17,10 @@ import java.util.ArrayList;
 
 
 public class BenchmarkMain {
-    private static Dataset defaultDataset = Dataset.COMMONCRAWL;
-    private static IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.PFOR;
-    private static TermCompressionMode defaultTermCompressionMode = TermCompressionMode.LZ4;
-    private static BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
+    private static final Dataset defaultDataset = Dataset.COMMONCRAWL;
+    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.PFOR;
+    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
+    private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
     // Can only benchmark either searching or indexing during a run since we don't want caching to interfere
     public enum BenchmarkingType {

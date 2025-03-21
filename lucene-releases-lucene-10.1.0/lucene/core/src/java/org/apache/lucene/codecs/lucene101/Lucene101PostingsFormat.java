@@ -391,6 +391,14 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
    * @see
    *     Lucene90BlockTreeTermsWriter#Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)
    */
+  public Lucene101PostingsFormat(int minTermBlockSize, int maxTermBlockSize) {
+    super("Lucene101");
+    Lucene90BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);
+    this.minTermBlockSize = minTermBlockSize;
+    this.maxTermBlockSize = maxTermBlockSize;
+    this.termCompressionMode = TermCompressionMode.LZ4;
+  }
+
   public Lucene101PostingsFormat(int minTermBlockSize, int maxTermBlockSize, TermCompressionMode termCompressionMode) {
     super("Lucene101");
     Lucene90BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);

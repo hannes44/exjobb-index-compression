@@ -1,11 +1,8 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
-import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkUtils;
@@ -16,8 +13,6 @@ import org.apache.lucene.queries.spans.SpanNearQuery;
 import org.apache.lucene.queries.spans.SpanQuery;
 import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.queryparser.surround.parser.ParseException;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -165,23 +160,28 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
             // Benchmark: Run each query multiple times and record the time taken
             int iterations = 1; // Number of times to run each query
             List<Long> queryTimes = new ArrayList<>();
+            List<Long> queryHits = new ArrayList<>();
 
             for (Query query : queries) {
                 long totalTime = 0;
+                long hits = 0;
                 for (int i = 0; i < iterations; i++) {
                     long startTime = System.nanoTime();
                     TopDocs results = searcher.search(query, 10);
                     long endTime = System.nanoTime();
                     totalTime += (endTime - startTime);
+                    hits += results.totalHits.value();
                 }
                 long averageTime = totalTime / iterations;
                 queryTimes.add(averageTime);
+                long averageHits = hits / iterations;
+                queryHits.add(averageHits);
             }
 
             // Print results
             System.out.println("Benchmark Results:");
             for (int i = 0; i < queries.size(); i++) {
-                System.out.println("Query " + (i + 1) + ": " + queries.get(i) + " | Average Time: " + queryTimes.get(i) + " ns");
+                System.out.println("Query " + (i + 1) + ": " + queries.get(i) + " | Average Hits: " + queryHits.get(i) + " | Average Time: " + queryTimes.get(i) + " ns");
             }
 
             // Close the reader
