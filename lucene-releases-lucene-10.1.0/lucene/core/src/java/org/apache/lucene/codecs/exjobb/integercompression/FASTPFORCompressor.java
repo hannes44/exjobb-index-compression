@@ -42,7 +42,9 @@ public class FASTPFORCompressor implements IntegerCompressor {
         int bestBitWidth = maxBitsRequired;
         for (int i = 32; i > 0; i--) {
             if (bitsNeededCount.containsKey(i)) {
-                int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16);
+               // int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16);
+                int bitsRequired = 8 + (128 * i) + totalExceptions *(8+maxBitsRequired-i);
+
                 if (minBitsRequired > bitsRequired)
                 {
                     minBitsRequired = bitsRequired;
@@ -80,7 +82,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         int exceptionBitCount = PackedInts.bitsRequired(maxException) - bestBitWidth;
 
         out.writeVInt(minValue);
-        out.writeVInt(bestBitWidth);
+        out.writeByte((byte)bestBitWidth);
         out.writeByte(exceptionCount);
 
         ForUtil forUtil = new ForUtil();
@@ -128,7 +130,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         int minValue = pdu.in.readVInt();
-        int regularValueBitWidth = pdu.in.readVInt();
+        byte regularValueBitWidth = pdu.in.readByte();
 
         byte exceptionCount = pdu.in.readByte();
         ForUtil forUtil = new ForUtil();
@@ -160,7 +162,31 @@ public class FASTPFORCompressor implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
+        int minValue = in.readVInt();
+        int regularValueBitWidth = in.readByte();
 
+        byte exceptionCount = in.readByte();
+        ForUtil forUtil = new ForUtil();
+
+        int totalBits = 128 * regularValueBitWidth;
+        int totalBytes = (totalBits + 7) / 8; // Round up to the nearest byte
+        in.skipBytes(totalBytes);
+
+        if (exceptionCount == 0)
+            return;
+
+        int exceptionBitCount = in.readVInt();
+
+        int exceptionIndexStart = in.readVInt();
+
+        int exceptionIndex = exceptionIndexStart;
+
+        for (int i = 0; i < exceptionCount; i++) {
+            in.readVInt();
+
+           // ints[index] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
+           // exceptionIndex++;
+        }
     }
 
     public IntegerCompressionType getType() {
