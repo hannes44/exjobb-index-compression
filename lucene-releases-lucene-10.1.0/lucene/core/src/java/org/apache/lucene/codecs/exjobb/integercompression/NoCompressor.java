@@ -41,6 +41,7 @@ public class NoCompressor implements IntegerCompressor {
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         pdu.in.readInts(ints, 0, 128);
+        IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
 
     }
 
