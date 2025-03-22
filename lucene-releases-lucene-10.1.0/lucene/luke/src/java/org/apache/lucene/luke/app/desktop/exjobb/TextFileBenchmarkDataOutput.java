@@ -1,13 +1,10 @@
 package org.apache.lucene.luke.app.desktop.exjobb;
 
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
-import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TextFileBenchmarkDataOutput implements BenchmarkDataOutput {
     final static String dataFolderPath = "../BenchmarkData/";
@@ -40,7 +37,7 @@ public class TextFileBenchmarkDataOutput implements BenchmarkDataOutput {
 
         try (FileWriter writer = new FileWriter(searchDataFolderPath + dataset.name() + ".csv", true)) {
 
-            writer.append(data.integerCompressionType.name() + "," + data.averageQuerySearchTimeInMS  +  "\n");
+            writer.append(data.integerCompressionType.name() + "," + data.averageQuerySearchTimeInNS +  "\n");
         }
     }
 

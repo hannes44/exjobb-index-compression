@@ -5,14 +5,9 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.luke.app.desktop.exjobb.BenchmarkUtils;
-import org.apache.lucene.luke.app.desktop.exjobb.DatasetCompressionBenchmarker;
-import org.apache.lucene.luke.app.desktop.exjobb.IndexingBenchmarkData;
-import org.apache.lucene.luke.app.desktop.exjobb.SearchBenchmarkData;
 import org.apache.lucene.queries.spans.SpanNearQuery;
 import org.apache.lucene.queries.spans.SpanQuery;
 import org.apache.lucene.queries.spans.SpanTermQuery;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -22,7 +17,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -65,7 +59,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
-        int maxFiles = 1;
+        int maxFiles = 100;
 
         long startTime = System.currentTimeMillis();
 
@@ -191,7 +185,8 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
                 totalTime += time;
             }
             long averageTime = totalTime / queryTimes.size();
-            benchmarkData.averageQuerySearchTimeInMS = averageTime;
+            benchmarkData.averageQuerySearchTimeInNS = averageTime;
+            System.out.println("Average query time in ns:" + averageTime);
 
         } catch (Exception e) {
             e.printStackTrace();

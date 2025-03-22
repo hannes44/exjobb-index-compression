@@ -6,5 +6,5 @@ import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter;
 public class SearchBenchmarkData {
     public IntegerCompressionType integerCompressionType;
     public Lucene90BlockTreeTermsWriter.TermCompressionMode termCompressionMode;
-    public double averageQuerySearchTimeInMS;
+    public double averageQuerySearchTimeInNS;
 }
