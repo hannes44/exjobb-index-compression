@@ -31,6 +31,14 @@ public class IntegerCompressionUtils {
         return minValue;
     }
 
+    public static boolean isBitMaskZero(byte[] bitMask) {
+        for (int i = 0; i < bitMask.length; i++) {
+            if (bitMask[i] != 0)
+                return false;
+        }
+        return true;
+    }
+
     public static void getMinMaxValue(int[] ints, Integer min, Integer max)
     {
         min = ints[0];

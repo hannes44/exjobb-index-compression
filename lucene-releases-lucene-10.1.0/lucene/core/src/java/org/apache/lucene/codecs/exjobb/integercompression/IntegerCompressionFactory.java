@@ -33,6 +33,8 @@ public class IntegerCompressionFactory {
                 return new Simple8bCompressor();
             case NEWPFOR:
                 return new NEWPFORCompressor();
+            case OPTIMALFASTPFOR:
+                return new OptimalFastPFORCompressor();
             default:
                 System.out.println("ERROR: compression type not supported! Using Delta Compression");
                 System.out.println(compressionType);
