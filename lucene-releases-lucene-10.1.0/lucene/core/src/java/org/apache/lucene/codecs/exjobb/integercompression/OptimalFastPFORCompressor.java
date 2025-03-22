@@ -31,22 +31,10 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
         // int bitsSavedFromMinValueReference = PackedInts.bitsRequired(minValue);
         int maxBitsRequired = PackedInts.bitsRequired(maxValue);
 
-        int totalExceptions = 0;
-        int minBitsRequired = maxBitsRequired * 128;
-        int bestBitWidth = maxBitsRequired;
-        for (int i = 32; i > 0; i--) {
-            if (bitCountToIndex.containsKey(i)) {
-                // int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16);
-                int bitsRequired = 128 + (totalExceptions * (maxBitsRequired - i)) + i * 128;
 
-                if (minBitsRequired > bitsRequired)
-                {
-                    minBitsRequired = bitsRequired;
-                    bestBitWidth = i;
-                }
-                totalExceptions += bitCountToIndex.get(i).size();
-            }
-        }
+        int minBitsRequired = maxBitsRequired * 128;
+        IntegerCompressionUtils.CostFunction costFunction = (bitWidth, totalExceptions, maxBitWidth) -> 128 + (totalExceptions * (maxBitWidth - bitWidth)) + bitWidth * 128;
+        int bestBitWidth = IntegerCompressionUtils.getBestBitWidth(costFunction, maxBitsRequired, bitCountToIndex);
 
         int maxException = 0;
         List<Integer> exceptionValues = new ArrayList<>();

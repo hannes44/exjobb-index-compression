@@ -55,13 +55,31 @@ public class IntegerCompressionUtils {
 
     @FunctionalInterface
     interface CostFunction {
-        int execute(int bitWidth, int totalExceptions, int c);
+        int execute(int bitWidth, int totalExceptions, int maxBitsRequired);
     }
 
     // Find the optimal bit width for the regular values
-//    public static int getBestBitWidth(CostFunction costFunction) {
-     //   costFunction.execute()
-  //  }
+    public static int getBestBitWidth(CostFunction costFunction, int maxBitsRequired, HashMap<Integer, List<Integer>> bitCountToIndex) {
+
+
+        int totalExceptions = 0;
+        int minBitsRequired = maxBitsRequired * 128;
+        int bestBitWidth = maxBitsRequired;
+        for (int i = 32; i > 0; i--) {
+            if (bitCountToIndex.containsKey(i)) {
+                int bitsRequired = costFunction.execute(i, totalExceptions, maxBitsRequired);
+
+                if (minBitsRequired > bitsRequired)
+                {
+                    minBitsRequired = bitsRequired;
+                    bestBitWidth = i;
+                }
+                totalExceptions += bitCountToIndex.get(i).size();
+            }
+        }
+
+        return bestBitWidth;
+    }
 
     public static void getMinMaxValue(int[] ints, Integer min, Integer max)
     {
