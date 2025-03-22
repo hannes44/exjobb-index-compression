@@ -26,15 +26,7 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
         // Bitmask for if the position index is an exception. 1 is exception. 128 bits total
         byte[] exceptionBitMask = new byte[16];
 
-        // TODO: Stores the bits needed for each int. This does not consider that we will remove the bits required from the minValue
-        HashMap<Integer, List<Integer>> bitsNeededCount = new HashMap<>();
-        for (int i = 0; i < 128; i++) {
-            int bitsRequired = PackedInts.bitsRequired(ints[i]);
-            if (!bitsNeededCount.containsKey(bitsRequired)) {
-                bitsNeededCount.put(bitsRequired, new ArrayList<>());
-            }
-            bitsNeededCount.get(bitsRequired).add(i);
-        }
+        HashMap<Integer, List<Integer>> bitCountToIndex = IntegerCompressionUtils.getBitCountToIndexMap(ints);
 
         // int bitsSavedFromMinValueReference = PackedInts.bitsRequired(minValue);
         int maxBitsRequired = PackedInts.bitsRequired(maxValue);
@@ -43,26 +35,26 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
         int minBitsRequired = maxBitsRequired * 128;
         int bestBitWidth = maxBitsRequired;
         for (int i = 32; i > 0; i--) {
-            if (bitsNeededCount.containsKey(i)) {
+            if (bitCountToIndex.containsKey(i)) {
                 // int bitsRequired = (i * (128 - totalExceptions) + totalExceptions * 16);
-                int bitsRequired = 8 + (128 * i) + totalExceptions *(8+maxBitsRequired-i);
+                int bitsRequired = 128 + (totalExceptions * (maxBitsRequired - i)) + i * 128;
 
                 if (minBitsRequired > bitsRequired)
                 {
                     minBitsRequired = bitsRequired;
                     bestBitWidth = i;
                 }
-                totalExceptions += bitsNeededCount.get(i).size();
+                totalExceptions += bitCountToIndex.get(i).size();
             }
         }
 
         int maxException = 0;
         List<Integer> exceptionValues = new ArrayList<>();
         for (int i = 32; i > 0; i--) {
-            if (bitsNeededCount.containsKey(i))
+            if (bitCountToIndex.containsKey(i))
             {
                 if (i > bestBitWidth) {
-                    for (Integer index : bitsNeededCount.get(i))
+                    for (Integer index : bitCountToIndex.get(i))
                     {
                         IntegerCompressionUtils.setNthBit(exceptionBitMask, index);
 

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 
 /** Utils for integer compression */
 public class IntegerCompressionUtils {
@@ -38,6 +39,29 @@ public class IntegerCompressionUtils {
         }
         return true;
     }
+
+    // Will map bit count to the ints that require x bits
+    public static HashMap<Integer, List<Integer>> getBitCountToIndexMap(int[] ints) {
+        HashMap<Integer, List<Integer>> bitsNeededCount = new HashMap<>();
+        for (int i = 0; i < 128; i++) {
+            int bitsRequired = PackedInts.bitsRequired(ints[i]);
+            if (!bitsNeededCount.containsKey(bitsRequired)) {
+                bitsNeededCount.put(bitsRequired, new ArrayList<>());
+            }
+            bitsNeededCount.get(bitsRequired).add(i);
+        }
+        return bitsNeededCount;
+    }
+
+    @FunctionalInterface
+    interface CostFunction {
+        int execute(int bitWidth, int totalExceptions, int c);
+    }
+
+    // Find the optimal bit width for the regular values
+//    public static int getBestBitWidth(CostFunction costFunction) {
+     //   costFunction.execute()
+  //  }
 
     public static void getMinMaxValue(int[] ints, Integer min, Integer max)
     {
