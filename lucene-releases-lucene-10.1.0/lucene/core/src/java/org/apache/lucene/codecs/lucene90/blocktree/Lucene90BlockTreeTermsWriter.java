@@ -1022,6 +1022,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
         boolean safe = true;
         if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
         switch (termCompressionMode) {
+          case NO_COMPRESSION:
+          break;
           case LZ4:
             // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
             // it out if the
