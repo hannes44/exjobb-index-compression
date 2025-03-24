@@ -22,7 +22,7 @@ public class NoCompressor implements IntegerCompressor {
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
         // We have to turn the given deltas into absolutes. This will cause some performance hits so for a proper test absolutes should be given instead
-        IntegerCompressionUtils.turnDeltasIntoAbsolutes(ints);
+       // IntegerCompressionUtils.turnDeltasIntoAbsolutes(ints);
         for (int i = 0; i < 128; i++) {
             out.writeInt(ints[i]);
         }
@@ -41,7 +41,7 @@ public class NoCompressor implements IntegerCompressor {
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
         pdu.in.readInts(ints, 0, 128);
-        IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
+        //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
 
     }
 

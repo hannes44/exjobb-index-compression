@@ -111,14 +111,9 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
 
         byte regularValueBitWidth = pdu.in.readByte();
 
-        ForUtil forUtil = new ForUtil();
-
-        //forUtil.decode(regularValueBitWidth, pdu, ints);
         LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
 
-
         int exceptionBitCount = pdu.in.readByte();
-
 
         if (exceptionBitCount == 0)
             return;
@@ -131,13 +126,7 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
 
 
         for (int i = 0; i < 128; i++) {
-            if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1)
-            {
-
-               // if (index )
-               // {
-             //       System.out.println(index + " :---: "+ i);
-                //}
+            if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1) {
                 ints[i] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
                 exceptionIndex++;
             }
