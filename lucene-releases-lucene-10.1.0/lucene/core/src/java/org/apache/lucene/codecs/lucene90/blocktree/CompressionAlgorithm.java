@@ -27,7 +27,6 @@ import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
   NO_COMPRESSION(0x00) {
-
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
       in.readBytes(out, 0, len);
@@ -35,18 +34,25 @@ enum CompressionAlgorithm {
   },
 
   LOWERCASE_ASCII(0x01) {
-
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
       LowercaseAsciiCompression.decompress(in, out, len);
     }
   },
 
-  LZ4_COMPRESSION(0x02) {
+  ZSTD_COMPRESSION(0x02) {
 
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
-      LZ4.decompress(in, len, out, 0);
+      // Read the compressed length from the input data, should be 4 bytes
+      int compressedLen = in.readInt();
+
+      // Read the compressed data
+      byte[] compressed = new byte[compressedLen];
+      in.readBytes(compressed, 0, compressedLen);
+
+      // Decompress the data
+      UnsafeZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
     }
   },
 
@@ -66,22 +72,12 @@ enum CompressionAlgorithm {
     }
   },
 
-  ZSTD_COMPRESSION(0x04) { // TODO: 0x04 and any higher value will overflow (cannot be used)
+  LZ4_COMPRESSION(0x04) {
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
-      // Read the compressed length from the input data, should be 4 bytes
-      int compressedLen = in.readInt();
-
-      // Read the compressed data
-      byte[] compressed = new byte[compressedLen];
-      in.readBytes(compressed, 0, compressedLen);
-
-      // Decompress the data
-      UnsafeZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
+      LZ4.decompress(in, len, out, 0);
     }
   };
-
-
 
 
 
