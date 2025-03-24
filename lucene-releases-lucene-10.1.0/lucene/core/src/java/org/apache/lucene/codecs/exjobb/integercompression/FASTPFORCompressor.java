@@ -86,11 +86,14 @@ public class FASTPFORCompressor implements IntegerCompressor {
 
         ForUtil forUtil = new ForUtil();
 
+        final long maxUnpatchedValue = (1L << bestBitWidth) - 1;
+        for (int i = 0; i < 128; i++) {
+            ints[i] &= maxUnpatchedValue;
+        }
 
         // We encode all ints with the best bit width. The exceptions will still be missing some bits so we add them in two lists after.
         // One list with the index of each exception and one list with the reminding value.
-        //forUtil.encode(ints, bestBitWidth, out);
-        LimitTestCompressor.encode(ints, bestBitWidth, out);
+        forUtil.encode(ints, bestBitWidth, out);
 
         if (exceptionIndices.size() == 0)
             return;
@@ -104,7 +107,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         // Now the exceptions Lists
         for (int index : exceptionIndices)
         {
-            out.writeVInt(index);
+            out.writeByte((byte)index);
             int leftExceptionBits = IntegerCompressionUtils.getLeftBits(exceptionValues.get(count), 32 - bestBitWidth);
             exceptions.get(exceptionBitCount).add(leftExceptionBits);
             //out.writeVInt(leftExceptionBits);
@@ -129,8 +132,8 @@ public class FASTPFORCompressor implements IntegerCompressor {
         byte exceptionCount = pdu.in.readByte();
         ForUtil forUtil = new ForUtil();
 
-        //forUtil.decode(regularValueBitWidth, pdu, ints);
-        LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
+        forUtil.decode(regularValueBitWidth, pdu, ints);
+        //LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
 
         if (exceptionCount == 0)
             return;
@@ -142,7 +145,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         int exceptionIndex = exceptionIndexStart;
 
         for (int i = 0; i < exceptionCount; i++) {
-            int index = pdu.in.readVInt();
+            byte index = pdu.in.readByte();
 
             ints[index] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
             exceptionIndex++;
@@ -155,11 +158,8 @@ public class FASTPFORCompressor implements IntegerCompressor {
         int regularValueBitWidth = in.readByte();
 
         byte exceptionCount = in.readByte();
-        ForUtil forUtil = new ForUtil();
 
-        int totalBits = 128 * regularValueBitWidth;
-        int totalBytes = (totalBits + 7) / 8; // Round up to the nearest byte
-        in.skipBytes(totalBytes);
+        in.skipBytes(ForUtil.numBytes(regularValueBitWidth));
 
         if (exceptionCount == 0)
             return;
@@ -170,8 +170,10 @@ public class FASTPFORCompressor implements IntegerCompressor {
 
         int exceptionIndex = exceptionIndexStart;
 
+        //in.skipBytes(exceptionBitCount);
         for (int i = 0; i < exceptionCount; i++) {
-            in.readVInt();
+            in.readByte();
+
 
            // ints[index] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
            // exceptionIndex++;

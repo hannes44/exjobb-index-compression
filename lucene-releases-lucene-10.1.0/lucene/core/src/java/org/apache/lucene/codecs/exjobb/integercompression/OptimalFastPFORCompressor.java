@@ -65,13 +65,15 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
 
         int exceptionBitCount = PackedInts.bitsRequired(maxException) - bestBitWidth;
 
+        final long maxUnpatchedValue = (1L << bestBitWidth) - 1;
+        for (int i = 0; i < 128; i++) {
+            ints[i] &= maxUnpatchedValue;
+        }
 
+        ForUtil forUtil = new ForUtil();
         out.writeByte((byte)bestBitWidth);
 
-        // We encode all ints with the best bit width. The exceptions will still be missing some bits so we add them in two lists after.
-        // One list with the index of each exception and one list with the reminding value.
-        //forUtil.encode(ints, bestBitWidth, out);
-        LimitTestCompressor.encode(ints, bestBitWidth, out);
+        forUtil.encode(ints, bestBitWidth, out);
 
         if (exceptionValues.size() == 0)
             exceptionBitCount = 0;
@@ -111,7 +113,8 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
 
         byte regularValueBitWidth = pdu.in.readByte();
 
-        LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
+        ForUtil forUtil = new ForUtil();
+        forUtil.decode(regularValueBitWidth, pdu, ints);
 
         int exceptionBitCount = pdu.in.readByte();
 
@@ -139,11 +142,8 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
         byte[] exceptionBitMask = new byte[16];
 
         int regularValueBitWidth = in.readByte();
-        int totalBits = 128 * regularValueBitWidth;
-        int totalBytes = (totalBits + 7) / 8; // Round up to the nearest byte
-        in.skipBytes(totalBytes);
 
-
+        in.skipBytes(ForUtil.numBytes(regularValueBitWidth));
 
         // There is only an exceptionBitMask if there exists exceptions
 
@@ -151,12 +151,10 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
         int exceptionBitCount = in.readByte();
         if (exceptionBitCount == 0)
             return;
-        in.readBytes(exceptionBitMask, 0, 16);
+        in.skipBytes(16);
 
 
         int exceptionIndexStart = in.readVInt();
-
-        int exceptionIndex = exceptionIndexStart;
 
     }
 
