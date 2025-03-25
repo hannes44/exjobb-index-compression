@@ -1019,9 +1019,11 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       // We also only start compressing when the prefix length is greater than 2 since blocks whose
       // prefix length is
       // 1 or 2 always all get visited when running a fuzzy query whose max number of edits is 2.
-        boolean safe = true;
+        boolean safe = false;
         if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
         switch (termCompressionMode) {
+          case NO_COMPRESSION:
+          break;
           case LZ4:
             // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
             // it out if the
@@ -1113,18 +1115,15 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
           }
         }
-        else if (termCompressionMode == TermCompressionMode.ZSTD) {
-        }
       }
-      long token = ((long) suffixWriter.length()) << 3; // This leaves 1 bit for "isLeafBlock" and 2 bits for compressionAlg TODO: reserve more bits for compressionAlg
+      long token = ((long) suffixWriter.length()) << 4; // This leaves 1 bit for "isLeafBlock" and 3 bits for compressionAlg (0-7)
       if (isLeafBlock) {
-        token |= 0x04;
+        token |= 0x08;
       }
       token |= compressionAlg.code;
       termsOut.writeVLong(token);
       if (compressionAlg == CompressionAlgorithm.NO_COMPRESSION) {
         termsOut.writeBytes(suffixWriter.bytes(), suffixWriter.length());
-        //System.out.println("NO_COMPRESSION");
       } else if (compressionAlg == CompressionAlgorithm.SNAPPY_COMPRESSION || compressionAlg == CompressionAlgorithm.ZSTD_COMPRESSION) {
         if (safe) {
         spareWriter.copyTo(termsOut);
