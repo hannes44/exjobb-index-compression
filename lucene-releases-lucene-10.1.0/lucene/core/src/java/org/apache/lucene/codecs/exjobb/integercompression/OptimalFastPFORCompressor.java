@@ -14,25 +14,29 @@ import java.util.*;
 /**
  * Implements FOR compression for integer sequences.
  */
-public class NEWPFORCompressor implements IntegerCompressor {
+public class OptimalFastPFORCompressor implements IntegerCompressor {
 
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
         // We store the reference as a VInt
+        //  int minValue = IntegerCompressionUtils.getMinValue(ints);
         int maxValue = IntegerCompressionUtils.getMaxValue(ints);
+        // Bitmask for if the position index is an exception. 1 is exception. 128 bits total
+        byte[] exceptionBitMask = new byte[16];
 
         HashMap<Integer, List<Integer>> bitCountToIndex = IntegerCompressionUtils.getBitCountToIndexMap(ints);
 
-       // int bitsSavedFromMinValueReference = PackedInts.bitsRequired(minValue);
+        // int bitsSavedFromMinValueReference = PackedInts.bitsRequired(minValue);
         int maxBitsRequired = PackedInts.bitsRequired(maxValue);
 
+
         int minBitsRequired = maxBitsRequired * 128;
-        IntegerCompressionUtils.CostFunction costFunction = (bitWidth, totalExceptions, maxBitWidth) -> (bitWidth * (128 - totalExceptions) + totalExceptions * 16);
+        IntegerCompressionUtils.CostFunction costFunction = (bitWidth, totalExceptions, maxBitWidth) -> 128 + (totalExceptions * (maxBitWidth - bitWidth)) + bitWidth * 128;
         int bestBitWidth = IntegerCompressionUtils.getBestBitWidth(costFunction, maxBitsRequired, bitCountToIndex);
 
-        List<Integer> exceptionIndices = new ArrayList<>();
+        int maxException = 0;
         List<Integer> exceptionValues = new ArrayList<>();
         for (int i = 32; i > 0; i--) {
             if (bitCountToIndex.containsKey(i))
@@ -40,8 +44,11 @@ public class NEWPFORCompressor implements IntegerCompressor {
                 if (i > bestBitWidth) {
                     for (Integer index : bitCountToIndex.get(i))
                     {
-                        exceptionIndices.add(index);
-                        exceptionValues.add(ints[index]);
+                        IntegerCompressionUtils.setNthBit(exceptionBitMask, index);
+
+                        if (maxException < ints[index]) {
+                            maxException = ints[index];
+                        }
                     }
                 }
                 else {
@@ -50,26 +57,42 @@ public class NEWPFORCompressor implements IntegerCompressor {
             }
         }
 
-        byte exceptionCount = (byte)exceptionIndices.size();
+        for (int i = 0; i < 128; i++) {
+            if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1) {
+                exceptionValues.add(ints[i]);
+            }
+        }
 
-        out.writeByte((byte)bestBitWidth);
-        out.writeByte(exceptionCount);
+        int exceptionBitCount = PackedInts.bitsRequired(maxException) - bestBitWidth;
 
-        ForUtil forUtil = new ForUtil();
         final long maxUnpatchedValue = (1L << bestBitWidth) - 1;
         for (int i = 0; i < 128; i++) {
             ints[i] &= maxUnpatchedValue;
         }
 
+        ForUtil forUtil = new ForUtil();
+        out.writeByte((byte)bestBitWidth);
+
         forUtil.encode(ints, bestBitWidth, out);
+
+        if (exceptionValues.size() == 0)
+            exceptionBitCount = 0;
+
+        out.writeByte((byte)exceptionBitCount);
+        if (exceptionBitCount == 0)
+            return;
+
+        out.writeBytes(exceptionBitMask, 0, 16);
+
+        // The position in the exception list
+        out.writeVInt(exceptions.get(exceptionBitCount).size());
 
         int count = 0;
         // Now the exceptions Lists
-        for (int index : exceptionIndices)
+        for (int value : exceptionValues)
         {
-
-            out.writeByte((byte)index);
-            out.writeVInt(IntegerCompressionUtils.getLeftBits(exceptionValues.get(count), 32 - bestBitWidth));
+            int leftExceptionBits = IntegerCompressionUtils.getLeftBits(value, 32 - bestBitWidth);
+            exceptions.get(exceptionBitCount).add(leftExceptionBits);
             count++;
         }
     }
@@ -86,46 +109,56 @@ public class NEWPFORCompressor implements IntegerCompressor {
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-        int regularValueBitWidth = Byte.toUnsignedInt(pdu.in.readByte());
-
-        byte exceptionCount = pdu.in.readByte();
         byte[] exceptionBitMask = new byte[16];
 
-        ForUtil forUtil = new ForUtil();
+        byte regularValueBitWidth = pdu.in.readByte();
 
+        ForUtil forUtil = new ForUtil();
         forUtil.decode(regularValueBitWidth, pdu, ints);
 
-        for (int i = 0; i < exceptionCount; i++) {
-            byte index = pdu.in.readByte();
-            int value = pdu.in.readVInt();
-            value = value << regularValueBitWidth;
-            ints[index] += value;
-            //ints[index] = value + minValue;
+        int exceptionBitCount = pdu.in.readByte();
+
+        if (exceptionBitCount == 0)
+            return;
+
+        pdu.in.readBytes(exceptionBitMask, 0, 16);
+
+        int exceptionIndexStart = pdu.in.readVInt();
+
+        int exceptionIndex = exceptionIndexStart;
+
+
+        for (int i = 0; i < 128; i++) {
+            if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1) {
+                ints[i] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
+                exceptionIndex++;
+            }
         }
 
-        //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
     }
 
     @Override
     public void skip(IndexInput in) throws IOException {
-        int regularValueBitWidth = Byte.toUnsignedInt(in.readByte());
-
-        byte exceptionCount = in.readByte();
-        ForUtil forUtil = new ForUtil();
         byte[] exceptionBitMask = new byte[16];
+
+        int regularValueBitWidth = in.readByte();
 
         in.skipBytes(ForUtil.numBytes(regularValueBitWidth));
 
-        for (int i = 0; i < exceptionCount; i++) {
-            in.readByte();
-            in.readVInt();
-            //ints[index] = value + minValue;
-        }
+        // There is only an exceptionBitMask if there exists exceptions
 
+
+        int exceptionBitCount = in.readByte();
+        if (exceptionBitCount == 0)
+            return;
+        in.skipBytes(16);
+
+
+        int exceptionIndexStart = in.readVInt();
 
     }
 
     public IntegerCompressionType getType() {
-        return IntegerCompressionType.NEWPFOR;
+        return IntegerCompressionType.FOR;
     }
 }
