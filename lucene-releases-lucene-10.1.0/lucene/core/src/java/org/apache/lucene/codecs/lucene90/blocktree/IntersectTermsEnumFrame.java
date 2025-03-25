@@ -186,14 +186,14 @@ final class IntersectTermsEnumFrame {
 
     // term suffixes:
     final long codeL = ite.in.readVLong();
-    isLeafBlock = (codeL & 0x04) != 0;
-    final int numSuffixBytes = (int) (codeL >>> 3);
+    isLeafBlock = (codeL & 0x08) != 0;
+    final int numSuffixBytes = (int) (codeL >>> 4);
     if (suffixBytes.length < numSuffixBytes) {
       suffixBytes = new byte[ArrayUtil.oversize(numSuffixBytes, 1)];
     }
     final CompressionAlgorithm compressionAlg;
     try {
-      compressionAlg = CompressionAlgorithm.byCode((int) codeL & 0x03);
+      compressionAlg = CompressionAlgorithm.byCode((int) codeL & 0x07);
     } catch (IllegalArgumentException e) {
       throw new CorruptIndexException(e.getMessage(), ite.in, e);
     }
