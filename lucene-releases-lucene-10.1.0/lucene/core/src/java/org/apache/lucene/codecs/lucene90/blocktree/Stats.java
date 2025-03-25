@@ -77,7 +77,7 @@ public class Stats {
    * Number of times each compression method has been used. 0 = uncompressed 1 = lowercase_ascii 2 =
    * LZ4
    */
-  public final long[] compressionAlgorithms = new long[3];
+  public final long[] compressionAlgorithms = new long[5];
 
   /** Total number of suffix bytes before compression. */
   public long totalUncompressedBlockSuffixBytes;
