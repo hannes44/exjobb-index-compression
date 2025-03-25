@@ -4,7 +4,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
-import org.apache.lucene.codecs.lucene90.blocktree.Lucene90BlockTreeTermsWriter.TermCompressionMode;
+import org.apache.lucene.util.compress.TermCompressionMode;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.Directory;
@@ -18,8 +18,8 @@ import java.util.ArrayList;
 
 public class BenchmarkMain {
     private static final Dataset defaultDataset = Dataset.COMMONCRAWL;
-    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.PFOR;
-    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
+    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DEFAULT;
+    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.LZ4;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
     // Can only benchmark either searching or indexing during a run since we don't want caching to interfere
@@ -121,6 +121,8 @@ public class BenchmarkMain {
         DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
 
         Lucene101Codec.integerCompressionType = type;
+
+        Lucene101Codec.termCompressionMode = termCompressionMode;
 
         SearchBenchmarkData searchBenchmarkData = benchmarker.BenchmarkSearching(indexPath);
 

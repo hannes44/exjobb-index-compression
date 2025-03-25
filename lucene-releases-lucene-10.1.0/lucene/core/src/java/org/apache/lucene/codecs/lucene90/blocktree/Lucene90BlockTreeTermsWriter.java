@@ -19,7 +19,6 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 import static org.apache.lucene.util.fst.FSTCompiler.getOnHeapReaderWriter;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +28,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.NormsProducer;
 import org.apache.lucene.codecs.PostingsWriterBase;
+import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
@@ -48,6 +48,7 @@ import org.apache.lucene.util.StringHelper;
 import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
+import org.apache.lucene.util.compress.TermCompressionMode;
 import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
@@ -220,13 +221,13 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
   /**
    * Suggested default value for the {@code minItemsInBlock} parameter to {@link
-   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)}.
+   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)}.
    */
   public static final int DEFAULT_MIN_BLOCK_SIZE = 25;
 
   /**
    * Suggested default value for the {@code maxItemsInBlock} parameter to {@link
-   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)}.
+   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)}.
    */
   public static final int DEFAULT_MAX_BLOCK_SIZE = 48;
 
@@ -234,20 +235,6 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
   // public static boolean DEBUG2 = false;
 
   // private final static boolean SAVE_DOT_FILES = false;
-
-  /** Configuration for the compression mode of the terms */
-  public enum TermCompressionMode {
-    /** No compression */
-    NO_COMPRESSION,
-    /** Compress terms with {@link LowercaseAsciiCompression} */
-    LOWERCASE_ASCII,
-    /** Compress terms with {@link LZ4} */
-    LZ4,
-    /** Compress terms with Zstandard {@link UnsafeZSTD} */
-    ZSTD,
-    /** Compress terms with Snappy {@link Snappy} */
-    SNAPPY
-  }
 
   private final TermCompressionMode termCompressionMode;
 
@@ -280,24 +267,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             postingsWriter,
             minItemsInBlock,
             maxItemsInBlock,
-            TermCompressionMode.LZ4,
             Lucene90BlockTreeTermsReader.VERSION_CURRENT);
-  }
-
-  public Lucene90BlockTreeTermsWriter(
-      SegmentWriteState state,
-      PostingsWriterBase postingsWriter,
-      int minItemsInBlock,
-      int maxItemsInBlock,
-      TermCompressionMode termCompressionMode)
-      throws IOException {
-    this(
-        state,
-        postingsWriter,
-        minItemsInBlock,
-        maxItemsInBlock,
-        termCompressionMode,
-        Lucene90BlockTreeTermsReader.VERSION_CURRENT);
   }
 
   /** Expert constructor that allows configuring the version, used for bw tests. */
@@ -306,14 +276,13 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       PostingsWriterBase postingsWriter,
       int minItemsInBlock,
       int maxItemsInBlock,
-      TermCompressionMode termCompressionMode,
       int version)
       throws IOException {
     validateSettings(minItemsInBlock, maxItemsInBlock);
 
     this.minItemsInBlock = minItemsInBlock;
     this.maxItemsInBlock = maxItemsInBlock;
-    this.termCompressionMode = Objects.requireNonNull(termCompressionMode);
+    this.termCompressionMode = Lucene101Codec.termCompressionMode;
     if (version < Lucene90BlockTreeTermsReader.VERSION_START
         || version > Lucene90BlockTreeTermsReader.VERSION_CURRENT) {
       throw new IllegalArgumentException(
