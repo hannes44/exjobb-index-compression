@@ -121,3 +121,17 @@ grant codeBase "file:${junit.jar}" {
 grant codeBase "file:${lucene.test.framework}${/}-" {
   permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
 };
+
+// Grant permissions for UNSAFE testing and JNI
+grant {
+    // Required for Unsafe access
+    permission java.lang.RuntimePermission "accessClassInPackage.sun.misc";
+    permission java.lang.RuntimePermission "accessClassInPackage.jdk.internal.misc";
+
+    // Required for reflection
+    permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+
+    // Required for native libraries
+    permission java.lang.RuntimePermission "loadLibrary.*";
+    permission java.lang.RuntimePermission "accessDeclaredMembers";
+};
