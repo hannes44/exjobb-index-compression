@@ -1048,28 +1048,6 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
               }
             }
-//            if (Arrays.equals(spareWriter.toArrayCopy(),Arrays.copyOf(compressed, compressedLength))) {
-//            } else {
-//              System.out.println("Data did not match");
-//              System.out.println("SpareWriter length : " + spareWriter.size());
-//              System.out.println("Compressed length : " + compressed.length);
-//              System.out.println("Safe data : " + Arrays.toString(spareWriter.toArrayCopy()));
-//              System.out.println("Unsafe data : " + Arrays.toString(Arrays.copyOf(compressed, compressedLength)));
-//            }
-//            // Check if decompressed data matches original data
-//            byte[] decompressed = new byte[suffixWriter.length()];
-//            byte[] original = new byte[suffixWriter.length()];
-//            System.arraycopy(suffixWriter.bytes(), 0, original, 0, suffixWriter.length());
-//            DataInput tempInput = new ByteArrayDataInput(spareWriter.toArrayCopy(), 0, snappyLength);
-//            Snappy.decompress(tempInput, decompressed, decompressed.length);
-//            if (Arrays.equals(decompressed, original)) {
-//              // System.out.println("Snappy compression matches original data");
-//            } else {
-//              System.out.println("Snappy compression does not match original data");
-//              System.out.println("Original data: " + Arrays.toString(original));
-//              System.out.println("Compressed data: " + Arrays.toString(spareWriter.toArrayCopy()));
-//              System.out.println("Decompressed data: " + Arrays.toString(decompressed));
-//            }
             break;
           default:
             throw new AssertionError("Unknown term compression mode: " + termCompressionMode);
