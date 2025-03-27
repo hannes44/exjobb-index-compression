@@ -366,7 +366,6 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
 
   private final int minTermBlockSize;
   private final int maxTermBlockSize;
-  private final TermCompressionMode termCompressionMode;
 
   /** Creates {@code Lucene101PostingsFormat} with default settings. */
   public Lucene101PostingsFormat() {
@@ -387,7 +386,6 @@ public final class Lucene101PostingsFormat extends PostingsFormat {
     Lucene90BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);
     this.minTermBlockSize = minTermBlockSize;
     this.maxTermBlockSize = maxTermBlockSize;
-    this.termCompressionMode = Lucene101Codec.termCompressionMode;
   }
 
 
