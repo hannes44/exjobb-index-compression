@@ -20,7 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
-import org.apache.lucene.util.compress.snappy.Snappy;
+import org.apache.lucene.util.compress.deltaExperiment.IntegerExperiment;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 
@@ -77,11 +77,18 @@ enum CompressionAlgorithm {
     void read(DataInput in, byte[] out, int len) throws IOException {
       LZ4.decompress(in, len, out, 0);
     }
+  },
+
+  INT_EXPERIMENT(0x05) {
+    @Override
+    void read(DataInput in, byte[] out, int len) throws IOException {
+      IntegerExperiment.decompress(in, out, len);
+    }
   };
 
 
 
-  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[5];
+  private static final CompressionAlgorithm[] BY_CODE = new CompressionAlgorithm[6];
 
   static {
     for (CompressionAlgorithm alg : CompressionAlgorithm.values()) {

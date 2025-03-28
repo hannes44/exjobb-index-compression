@@ -49,6 +49,7 @@ import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.TermCompressionMode;
+import org.apache.lucene.util.compress.deltaExperiment.IntegerExperiment;
 import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
@@ -1048,7 +1049,22 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
                 compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
               }
             }
-            break;
+          break;
+          case INTEGER:
+            data = new byte[suffixWriter.length()];
+            System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+            IntegerExperiment.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
+            //System.out.println("Saved : " + (suffixWriter.length() - spareWriter.size()) + " bytes");
+            byte[] uncompressed = new byte[suffixWriter.length()];
+            IntegerExperiment.decompress(spareWriter.toDataInput(), uncompressed, uncompressed.length);
+            if (Arrays.equals(data, uncompressed)) {
+              System.out.println("Matches");
+            }
+            //if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+              // Snappy saved more than 25%, go for it
+           // }
+            compressionAlg = CompressionAlgorithm.INT_EXPERIMENT;
+          break;
           default:
             throw new AssertionError("Unknown term compression mode: " + termCompressionMode);
         }

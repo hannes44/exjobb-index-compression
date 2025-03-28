@@ -22,5 +22,7 @@ public enum TermCompressionMode {
     /** Compress terms with Zstandard {@link UnsafeZSTD} */
     ZSTD,
     /** Compress terms with Snappy {@link UnsafeSnappy} */
-    SNAPPY
+    SNAPPY,
+    /** Compress term with experimental Integer compression {@link } */
+    INTEGER
 }
