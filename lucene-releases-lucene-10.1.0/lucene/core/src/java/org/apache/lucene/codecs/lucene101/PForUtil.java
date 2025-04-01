@@ -120,7 +120,7 @@ public final class PForUtil {
   }
 
   /** Skip 128 integers. */
-  static void skip(DataInput in) throws IOException {
+  public static void skip(DataInput in) throws IOException {
     final int token = Byte.toUnsignedInt(in.readByte());
     final int bitsPerValue = token & 0x1f;
     final int numExceptions = token >>> 5;

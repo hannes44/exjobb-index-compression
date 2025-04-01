@@ -64,7 +64,7 @@ public class Lucene101Codec extends Codec {
 
   public static IntegerCompressor integerCompressor;
 
-  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.DELTA;
+  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.FASTPFOR;
 
   public static TermCompressionMode termCompressionMode = TermCompressionMode.LZ4;
 

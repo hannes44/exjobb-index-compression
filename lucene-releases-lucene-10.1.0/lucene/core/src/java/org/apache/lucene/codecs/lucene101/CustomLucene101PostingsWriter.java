@@ -699,7 +699,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
             }
 
             if (metaOut != null) {
-//                IntegerCompressionUtils.encodeExceptions(exceptions, metaOut);
+                IntegerCompressionUtils.encodeExceptions(exceptions, metaOut);
                 metaOut.writeInt(maxNumImpactsAtLevel0);
                 metaOut.writeInt(maxImpactNumBytesAtLevel0);
                 metaOut.writeInt(maxNumImpactsAtLevel1);

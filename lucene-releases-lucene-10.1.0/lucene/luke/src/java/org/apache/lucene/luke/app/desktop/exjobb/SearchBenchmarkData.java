@@ -6,5 +6,5 @@ import org.apache.lucene.util.compress.TermCompressionMode;
 public class SearchBenchmarkData {
     public IntegerCompressionType integerCompressionType;
     public TermCompressionMode termCompressionMode;
-    public double averageQuerySearchTimeInMS;
+    public double averageQuerySearchTimeInNS;
 }

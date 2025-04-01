@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 
 /** Utils for integer compression */
 public class IntegerCompressionUtils {
@@ -29,6 +30,55 @@ public class IntegerCompressionUtils {
                 minValue = ints[i];
         }
         return minValue;
+    }
+
+    public static boolean isBitMaskZero(byte[] bitMask) {
+        for (int i = 0; i < bitMask.length; i++) {
+            if (bitMask[i] != 0)
+                return false;
+        }
+        return true;
+    }
+
+    // Will map bit count to the ints that require x bits
+    public static HashMap<Integer, List<Integer>> getBitCountToIndexMap(int[] ints) {
+        HashMap<Integer, List<Integer>> bitsNeededCount = new HashMap<>();
+        for (int i = 0; i < 128; i++) {
+            int bitsRequired = PackedInts.bitsRequired(ints[i]);
+            if (!bitsNeededCount.containsKey(bitsRequired)) {
+                bitsNeededCount.put(bitsRequired, new ArrayList<>());
+            }
+            bitsNeededCount.get(bitsRequired).add(i);
+        }
+        return bitsNeededCount;
+    }
+
+    @FunctionalInterface
+    interface CostFunction {
+        int execute(int bitWidth, int totalExceptions, int maxBitsRequired);
+    }
+
+    // Find the optimal bit width for the regular values
+    public static int getBestBitWidth(CostFunction costFunction, int maxBitsRequired, HashMap<Integer, List<Integer>> bitCountToIndex) {
+
+
+        int totalExceptions = 0;
+        int minBitsRequired = maxBitsRequired * 128;
+        int bestBitWidth = maxBitsRequired;
+        for (int i = 32; i > 0; i--) {
+            if (bitCountToIndex.containsKey(i)) {
+                int bitsRequired = costFunction.execute(i, totalExceptions, maxBitsRequired);
+
+                if (minBitsRequired > bitsRequired)
+                {
+                    minBitsRequired = bitsRequired;
+                    bestBitWidth = i;
+                }
+                totalExceptions += bitCountToIndex.get(i).size();
+            }
+        }
+
+        return bestBitWidth;
     }
 
     public static void getMinMaxValue(int[] ints, Integer min, Integer max)
