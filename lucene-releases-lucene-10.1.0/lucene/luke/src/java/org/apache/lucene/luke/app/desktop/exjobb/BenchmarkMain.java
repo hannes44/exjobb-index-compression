@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class BenchmarkMain {
     private static final Dataset defaultDataset = Dataset.COMMONCRAWL;
     private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.NEWPFOR;
-    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.LZ4;
+    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
     // Can only benchmark either searching or indexing during a run since we don't want caching to interfere
@@ -82,7 +82,7 @@ public class BenchmarkMain {
     }
 
     public static IndexingBenchmarkData benchmarkIndexing(IntegerCompressionType type, Dataset dataset, TermCompressionMode termCompressionMode) throws IOException {
-        String indexPath = "index/" + dataset.name()  + "_" + type.name();
+        String indexPath = "index/" + dataset.name()  + "_" + type.name() + "_" + termCompressionMode.name();
 
         BenchmarkUtils.deleteExistingIndex(indexPath);
 
@@ -108,6 +108,7 @@ public class BenchmarkMain {
 
         IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer, indexPath);
         indexingData.integerCompressionType= type;
+        indexingData.termCompressionMode = termCompressionMode;
 
         System.out.println("Benchmark for dataset: " + benchmarker.GetDatasetName());
         System.out.println("Indexing Time In MS: " + indexingData.totalIndexingTimeInMS);
@@ -117,7 +118,7 @@ public class BenchmarkMain {
     }
 
     public static SearchBenchmarkData benchmarkSearching(IntegerCompressionType type, Dataset dataset, TermCompressionMode termCompressionMode) {
-        String indexPath = "index/" + dataset.name()  + "_" + type.name();
+        String indexPath = "index/" + dataset.name()  + "_" + type.name() + "_" + termCompressionMode.name();
         DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
 
         Lucene101Codec.integerCompressionType = type;

@@ -5,7 +5,7 @@ import shutil
 # URL base and range of file numbers
 url_base = "https://data.commoncrawl.org/crawl-data/CC-MAIN-2025-05/segments/1736703361941.29/wet/CC-MAIN-20250126135402-20250126165402-"
 start_index = 0
-end_index = 50  # Change this to the desired number of iterations
+end_index = 100  # Change this to the desired number of iterations
 
 # Destination directory where the files will be saved
 destination_dir = "./Datasets/CommonCrawl-2025-05/"

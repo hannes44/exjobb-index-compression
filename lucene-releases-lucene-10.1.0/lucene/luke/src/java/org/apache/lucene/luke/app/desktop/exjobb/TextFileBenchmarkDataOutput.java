@@ -25,7 +25,7 @@ public class TextFileBenchmarkDataOutput implements BenchmarkDataOutput {
 
         try (FileWriter writer = new FileWriter(indexDataFolderPath + dataset.name() + ".csv", true)) {
 
-            writer.append(data.integerCompressionType.name() + "," + data.totalIndexSizeInMB + "," + data.totalIndexingTimeInMS +  "\n");
+            writer.append(data.integerCompressionType.name() + "," + data.termCompressionMode.name() + "," + data.totalIndexSizeInMB + "," + data.totalIndexingTimeInMS +  "\n");
         }
     }
 
@@ -37,7 +37,7 @@ public class TextFileBenchmarkDataOutput implements BenchmarkDataOutput {
 
         try (FileWriter writer = new FileWriter(searchDataFolderPath + dataset.name() + ".csv", true)) {
 
-            writer.append(data.integerCompressionType.name() + "," + data.averageQuerySearchTimeInNS +  "\n");
+            writer.append(data.integerCompressionType.name() + "," + data.termCompressionMode.name() + "," + data.averageQuerySearchTimeInNS +  "\n");
         }
     }
 
