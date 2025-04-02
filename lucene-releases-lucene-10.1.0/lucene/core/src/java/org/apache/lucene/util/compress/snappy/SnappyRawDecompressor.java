@@ -148,7 +148,7 @@ final class SnappyRawDecompressor
 
                 long matchAddress = output - matchOffset;
                 if (matchAddress < outputAddress || output + length > outputLimit) {
-                    throw new MalformedInputException(input - inputAddress);
+                    throw new MalformedInputException(input - inputAddress); // TODO : Fails here a lot
                 }
                 long matchOutputLimit = output + length;
                 if (matchOutputLimit > outputLimit) {
