@@ -41,7 +41,6 @@ enum CompressionAlgorithm {
   },
 
   ZSTD_COMPRESSION(0x02) {
-
     @Override
     void read(DataInput in, byte[] out, int len) throws IOException {
       // Read the compressed length from the input data, should be 4 bytes
