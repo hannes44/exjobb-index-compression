@@ -50,7 +50,7 @@ import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.TermCompressionMode;
 import org.apache.lucene.util.compress.deltaExperiment.IntegerExperiment;
-import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDCompressor;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 import org.apache.lucene.util.compress.zstd.ZSTD;
@@ -1262,8 +1262,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       } else {
         data = new byte[suffixWriter.length()];
         System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-        compressed = new byte[UnsafeZSTD.maxCompressedLength(data.length)];
-        compressedLength = UnsafeZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
+        compressed = new byte[UnsafeZSTDCompressor.maxCompressedLength(data.length)];
+        compressedLength = UnsafeZSTDCompressor.compress(data, 0, data.length, compressed, 0, compressed.length);
       }
       if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
         return CompressionAlgorithm.ZSTD_COMPRESSION;

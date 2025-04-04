@@ -22,7 +22,7 @@ import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.deltaExperiment.IntegerExperiment;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
-import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDDecompressor;
 
 /** Compression algorithm used for suffixes of a block of terms. */
 enum CompressionAlgorithm {
@@ -51,7 +51,8 @@ enum CompressionAlgorithm {
       in.readBytes(compressed, 0, compressedLen);
 
       // Decompress the data
-      UnsafeZSTD.decompress(compressed, 0, compressedLen, out, 0, len, true);
+      UnsafeZSTDDecompressor decompressor = new UnsafeZSTDDecompressor();
+      decompressor.decompress(compressed, 0, compressedLen, out, 0, len, true);
     }
   },
 

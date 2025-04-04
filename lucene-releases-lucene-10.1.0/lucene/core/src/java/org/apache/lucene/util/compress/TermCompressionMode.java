@@ -9,7 +9,7 @@
 package org.apache.lucene.util.compress;
 
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
-import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDCompressor;
 
 /** Configuration for the compression mode of the terms */
 public enum TermCompressionMode {
@@ -19,7 +19,7 @@ public enum TermCompressionMode {
     LOWERCASE_ASCII,
     /** Compress terms with {@link LZ4} */
     LZ4,
-    /** Compress terms with Zstandard {@link UnsafeZSTD} */
+    /** Compress terms with Zstandard {@link UnsafeZSTDCompressor} */
     ZSTD,
     /** Compress terms with Snappy {@link UnsafeSnappy} */
     SNAPPY,

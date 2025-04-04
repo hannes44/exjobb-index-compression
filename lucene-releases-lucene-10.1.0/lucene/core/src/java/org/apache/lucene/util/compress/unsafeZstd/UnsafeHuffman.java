@@ -18,7 +18,7 @@ import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDUtil.isPowerOf2;
 import static org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDUtil.verify;
 
-class UnsafeHuffman
+public class UnsafeHuffman
 {
     public static final int MAX_SYMBOL = 255;
     public static final int MAX_SYMBOL_COUNT = MAX_SYMBOL + 1;
@@ -28,16 +28,25 @@ class UnsafeHuffman
     public static final int MAX_FSE_TABLE_LOG = 6;
 
     // stats
-    private final byte[] weights = new byte[MAX_SYMBOL + 1];
-    private final int[] ranks = new int[MAX_TABLE_LOG + 1];
+    private final byte[] weights;
+    private final int[] ranks;
 
     // table
     private int tableLog = -1;
-    private final byte[] symbols = new byte[1 << MAX_TABLE_LOG];
-    private final byte[] numbersOfBits = new byte[1 << MAX_TABLE_LOG];
+    private final byte[] symbols;
+    private final byte[] numbersOfBits;
 
-    private final UnsafeFseTableReader reader = new UnsafeFseTableReader();
-    private final UnsafeFiniteStateEntropy.Table fseTable = new UnsafeFiniteStateEntropy.Table(MAX_FSE_TABLE_LOG);
+    private final UnsafeFseTableReader reader;
+    private final UnsafeFiniteStateEntropy.Table fseTable;
+
+    public UnsafeHuffman() {
+        this.reader = new UnsafeFseTableReader();
+        this.fseTable = new UnsafeFiniteStateEntropy.Table(MAX_FSE_TABLE_LOG);
+        this.weights = new byte[MAX_SYMBOL + 1];
+        this.ranks = new int[MAX_TABLE_LOG + 1];
+        this.symbols = new byte[1 << MAX_TABLE_LOG];
+        this.numbersOfBits = new byte[1 << MAX_TABLE_LOG];
+    }
 
     public boolean isLoaded()
     {

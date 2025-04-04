@@ -14,10 +14,15 @@ import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 import static org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDUtil.highestBit;
 import static org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDUtil.verify;
 
-class UnsafeFseTableReader
+public class UnsafeFseTableReader
 {
-    private final short[] nextSymbol = new short[MAX_SYMBOL + 1];
-    private final short[] normalizedCounters = new short[MAX_SYMBOL + 1];
+    private final short[] nextSymbol;
+    private final short[] normalizedCounters;
+
+    public UnsafeFseTableReader() {
+        this.nextSymbol = new short[MAX_SYMBOL + 1];
+        this.normalizedCounters = new short[MAX_SYMBOL + 1];
+    }
 
     public int readFseTable(UnsafeFiniteStateEntropy.Table table, Object inputBase, long inputAddress, long inputLimit, int maxSymbol, int maxTableLog)
     {
