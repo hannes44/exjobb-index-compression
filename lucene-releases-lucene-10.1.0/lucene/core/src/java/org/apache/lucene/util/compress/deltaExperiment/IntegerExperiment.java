@@ -12,21 +12,23 @@ import org.apache.lucene.store.DataInput;
 import org.apache.lucene.store.DataOutput;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public final class IntegerExperiment {
 
     private IntegerExperiment() {}
 
     private static int maxIntegerArraySize(int length) {
-        return (length / Integer.BYTES) + (length % Integer.BYTES);
+        return Math.ceilDiv(length, Integer.BYTES);
     }
 
-    private static void insertIntegersFromByteArray(int[] integerArray, byte[] bytes) {
+    private static void insertIntegersFromByteArray(int[] integerArray, byte[] bytes, int bytesToTransfer) {
         int intIndex = 0;
         int i = 0;
 
+        //System.out.println("Bytes Array : " + Arrays.toString(bytes));
         // Process 4 bytes at a time (most performant)
-        while (i + 3 < bytes.length) {
+        while (i + 3 < bytesToTransfer) {
             integerArray[intIndex++] =
                     ((bytes[i++] & 0xFF) << 24) |
                     ((bytes[i++] & 0xFF) << 16) |
@@ -35,10 +37,10 @@ public final class IntegerExperiment {
         }
 
         // Handle remaining bytes (if any)
-        if (i < bytes.length) {
+        if (i < bytesToTransfer) {
             int remainingInt = 0;
             int shift = 24;
-            while (i < bytes.length) {
+            while (i < bytesToTransfer) {
                 remainingInt |= (bytes[i++] & 0xFF) << shift;
                 shift -= 8;
             }
@@ -46,11 +48,19 @@ public final class IntegerExperiment {
         }
     }
 
+    public static void deltaEncodeIntegers(int[] values) {
+        for (int i = values.length - 1; i > 0; i--) {
+            values[i] -= values[i-1];
+        }
+    }
+
     public static void compress(byte[] in, int originalLength, DataOutput out) throws IOException {
         // Create Int Array large enough to fit all bytes
         int[] integerArray = new int[maxIntegerArraySize(originalLength)];
         // Insert all bytes into Int Array
-        insertIntegersFromByteArray(integerArray, in);
+        insertIntegersFromByteArray(integerArray, in, originalLength);
+        // Now delta encode the integers
+        deltaEncodeIntegers(integerArray);
         // First we write the number of Ints so that the decompressor knows how many to read
         out.writeVInt(integerArray.length);
         // Write Ints as VInts
@@ -72,6 +82,12 @@ public final class IntegerExperiment {
         }
     }
 
+    public static void deltaDecodeIntegers(int[] values) {
+        for (int i = 1; i < values.length; i++) {
+            values[i] += values[i-1];
+        }
+    }
+
     public static void decompress(DataInput in, byte[] out, int originalByteLength) throws IOException {
         // Read original number of bytes
         int numberOfInts = in.readVInt();
@@ -80,6 +96,8 @@ public final class IntegerExperiment {
         for (int i = 0; i < numberOfInts; i++) {
             integerArray[i] = in.readVInt();
         }
+        // Decode delta offsets
+        deltaDecodeIntegers(integerArray);
         // Extract original bytes from Ints
         extractBytesFromIntegerArray(integerArray, out, originalByteLength);
     }
