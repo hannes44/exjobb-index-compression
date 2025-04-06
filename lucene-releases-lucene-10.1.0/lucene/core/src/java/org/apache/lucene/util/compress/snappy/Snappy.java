@@ -26,19 +26,20 @@ public final class Snappy {
 
     private Snappy() {}
 
-    private static final short[] table = new short[SnappyRawCompressor.MAX_HASH_TABLE_SIZE];
+    public static final int MAX_HASH_TABLE_BITS = 14;
+    public static final int MAX_HASH_TABLE_SIZE = 1 << MAX_HASH_TABLE_BITS;
 
     public static short readShort(byte[] data, long address) {
         return (short) BitUtil.VH_NATIVE_SHORT.get(data, (int) address);
     }
 
     public static int readInt(byte[] data, long address) {
-        if (address + Integer.BYTES >= data.length) {
-            try {
-                Thread.sleep(1);        // TODO: WTF IS THIS?????? (Does not work without :despair:)
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        if (address + Integer.BYTES > data.length) {
+//            try {
+//                Thread.sleep(1);        // TODO: WTF IS THIS?????? (Does not work without :despair:)
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
             return 0;
         }
         return (int) BitUtil.VH_NATIVE_INT.get(data, (int) address);
@@ -69,7 +70,7 @@ public final class Snappy {
         return SnappyRawCompressor.maxCompressedLength(uncompressedSize);
     }
 
-    public static int compress(byte[] input, int inputLength, DataOutput output) throws IOException {
+    public static int compress(byte[] input, int inputLength, DataOutput output, short[] table) throws IOException {
         byte[] tempOutput = new byte[SnappyRawCompressor.maxCompressedLength(inputLength)];
 
         int compressedDataSize = SnappyRawCompressor.compress(input, inputLength, tempOutput, table);

@@ -33,9 +33,6 @@ final class SnappyRawCompressor
 
     private static final int INPUT_MARGIN_BYTES = 15;
 
-    private static final int MAX_HASH_TABLE_BITS = 14;
-    public static final int MAX_HASH_TABLE_SIZE = 1 << MAX_HASH_TABLE_BITS;
-
     private SnappyRawCompressor() {}
 
     public static int maxCompressedLength(int sourceLength)

@@ -19,7 +19,6 @@ package org.apache.lucene.codecs.lucene90.blocktree;
 import static org.apache.lucene.util.fst.FSTCompiler.getOnHeapReaderWriter;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,6 +28,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.NormsProducer;
 import org.apache.lucene.codecs.PostingsWriterBase;
+import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
@@ -48,7 +48,9 @@ import org.apache.lucene.util.StringHelper;
 import org.apache.lucene.util.ToStringUtils;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
-import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTD;
+import org.apache.lucene.util.compress.TermCompressionMode;
+import org.apache.lucene.util.compress.deltaExperiment.IntegerExperiment;
+import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDCompressor;
 import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 import org.apache.lucene.util.compress.zstd.ZSTD;
@@ -220,13 +222,13 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
 
   /**
    * Suggested default value for the {@code minItemsInBlock} parameter to {@link
-   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)}.
+   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)}.
    */
   public static final int DEFAULT_MIN_BLOCK_SIZE = 25;
 
   /**
    * Suggested default value for the {@code maxItemsInBlock} parameter to {@link
-   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int,TermCompressionMode)}.
+   * #Lucene90BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int)}.
    */
   public static final int DEFAULT_MAX_BLOCK_SIZE = 48;
 
@@ -234,20 +236,6 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
   // public static boolean DEBUG2 = false;
 
   // private final static boolean SAVE_DOT_FILES = false;
-
-  /** Configuration for the compression mode of the terms */
-  public enum TermCompressionMode {
-    /** No compression */
-    NO_COMPRESSION,
-    /** Compress terms with {@link LowercaseAsciiCompression} */
-    LOWERCASE_ASCII,
-    /** Compress terms with {@link LZ4} */
-    LZ4,
-    /** Compress terms with Zstandard {@link UnsafeZSTD} */
-    ZSTD,
-    /** Compress terms with Snappy {@link Snappy} */
-    SNAPPY
-  }
 
   private final TermCompressionMode termCompressionMode;
 
@@ -280,24 +268,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             postingsWriter,
             minItemsInBlock,
             maxItemsInBlock,
-            TermCompressionMode.LZ4,
             Lucene90BlockTreeTermsReader.VERSION_CURRENT);
-  }
-
-  public Lucene90BlockTreeTermsWriter(
-      SegmentWriteState state,
-      PostingsWriterBase postingsWriter,
-      int minItemsInBlock,
-      int maxItemsInBlock,
-      TermCompressionMode termCompressionMode)
-      throws IOException {
-    this(
-        state,
-        postingsWriter,
-        minItemsInBlock,
-        maxItemsInBlock,
-        termCompressionMode,
-        Lucene90BlockTreeTermsReader.VERSION_CURRENT);
   }
 
   /** Expert constructor that allows configuring the version, used for bw tests. */
@@ -306,14 +277,13 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       PostingsWriterBase postingsWriter,
       int minItemsInBlock,
       int maxItemsInBlock,
-      TermCompressionMode termCompressionMode,
       int version)
       throws IOException {
     validateSettings(minItemsInBlock, maxItemsInBlock);
 
     this.minItemsInBlock = minItemsInBlock;
     this.maxItemsInBlock = maxItemsInBlock;
-    this.termCompressionMode = Objects.requireNonNull(termCompressionMode);
+    this.termCompressionMode = Lucene101Codec.termCompressionMode;
     if (version < Lucene90BlockTreeTermsReader.VERSION_START
         || version > Lucene90BlockTreeTermsReader.VERSION_CURRENT) {
       throw new IllegalArgumentException(
@@ -1019,8 +989,8 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       // We also only start compressing when the prefix length is greater than 2 since blocks whose
       // prefix length is
       // 1 or 2 always all get visited when running a fuzzy query whose max number of edits is 2.
-        boolean safe = false;
-        if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
+      boolean safe = false;
+      if (suffixWriter.length() > 2L * numEntries && prefixLength > 2) {
         switch (termCompressionMode) {
           case NO_COMPRESSION:
           break;
@@ -1028,80 +998,22 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
             // LZ4 inserts references whenever it sees duplicate strings of 4 chars or more, so only try
             // it out if the
             // average suffix length is greater than 6.
-            if (suffixWriter.length() > 6L * numEntries) {
-              if (compressionHashTable == null) {
-                compressionHashTable = new LZ4.HighCompressionHashTable();
-              }
-              LZ4.compress(
-                suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, compressionHashTable);
-                if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-                  // LZ4 saved more than 25%, go for it
-                  compressionAlg = CompressionAlgorithm.LZ4_COMPRESSION;
-                }
-              }
+            if (suffixWriter.length() > 6L * numEntries) { // TODO : Should other algorithms have this ??
+              compressionAlg = LZ4Compression();
+            }
           break;
           case LOWERCASE_ASCII:
-            if (spareBytes.length < suffixWriter.length()) {
-              spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
-            }
-            if (LowercaseAsciiCompression.compress(
-              suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
-                compressionAlg = CompressionAlgorithm.LOWERCASE_ASCII;
-              }
+            compressionAlg = LowercaseASCIICompression();
           break;
           case ZSTD:
-            if (safe) {
-              int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
-              compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
-            } else {
-              data = new byte[suffixWriter.length()];
-              System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-              compressed = new byte[UnsafeZSTD.maxCompressedLength(data.length)];
-              compressedLength = UnsafeZSTD.compress(data, 0, data.length, compressed, 0, compressed.length);
-            }
-              if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-                compressionAlg = CompressionAlgorithm.ZSTD_COMPRESSION;
-              }
+            compressionAlg = ZSTDCompression(safe);
           break;
           case SNAPPY:
-            data = new byte[suffixWriter.length()];
-            System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
-            if (safe) {
-                compressedLength = Snappy.compress(data, data.length, spareWriter);
-            if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-              // Snappy saved more than 25%, go for it
-              compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
-            }
-            } else {
-              compressed = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
-              compressedLength = UnsafeSnappy.compress(data, 0, data.length, compressed, 0, compressed.length);
-              if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
-                compressionAlg = CompressionAlgorithm.SNAPPY_COMPRESSION;
-              }
-            }
-//            if (Arrays.equals(spareWriter.toArrayCopy(),Arrays.copyOf(compressed, compressedLength))) {
-//            } else {
-//              System.out.println("Data did not match");
-//              System.out.println("SpareWriter length : " + spareWriter.size());
-//              System.out.println("Compressed length : " + compressed.length);
-//              System.out.println("Safe data : " + Arrays.toString(spareWriter.toArrayCopy()));
-//              System.out.println("Unsafe data : " + Arrays.toString(Arrays.copyOf(compressed, compressedLength)));
-//            }
-//            // Check if decompressed data matches original data
-//            byte[] decompressed = new byte[suffixWriter.length()];
-//            byte[] original = new byte[suffixWriter.length()];
-//            System.arraycopy(suffixWriter.bytes(), 0, original, 0, suffixWriter.length());
-//            DataInput tempInput = new ByteArrayDataInput(spareWriter.toArrayCopy(), 0, snappyLength);
-//            Snappy.decompress(tempInput, decompressed, decompressed.length);
-//            if (Arrays.equals(decompressed, original)) {
-//              // System.out.println("Snappy compression matches original data");
-//            } else {
-//              System.out.println("Snappy compression does not match original data");
-//              System.out.println("Original data: " + Arrays.toString(original));
-//              System.out.println("Compressed data: " + Arrays.toString(spareWriter.toArrayCopy()));
-//              System.out.println("Decompressed data: " + Arrays.toString(decompressed));
-//            }
-            break;
+            compressionAlg = SnappyCompression(safe);
+          break;
+          case INTEGER:
+            compressionAlg = ExperimentCompression();
+          break;
           default:
             throw new AssertionError("Unknown term compression mode: " + termCompressionMode);
         }
@@ -1321,8 +1233,84 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
       }
     }
 
-    private final ByteBuffersDataOutput suffixLengthsWriter =
-        ByteBuffersDataOutput.newResettableInstance();
+    private CompressionAlgorithm LZ4Compression() throws IOException {
+      if (compressionHashTable == null) {
+        compressionHashTable = new LZ4.HighCompressionHashTable();
+      }
+      LZ4.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, compressionHashTable);
+      if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+        // LZ4 saved more than 25%, go for it
+        return CompressionAlgorithm.LZ4_COMPRESSION;
+      }
+      return CompressionAlgorithm.NO_COMPRESSION;
+    }
+
+    private CompressionAlgorithm LowercaseASCIICompression() throws IOException {
+      if (spareBytes.length < suffixWriter.length()) {
+        spareBytes = new byte[ArrayUtil.oversize(suffixWriter.length(), 1)];
+      }
+      if (LowercaseAsciiCompression.compress(suffixWriter.bytes(), suffixWriter.length(), spareBytes, spareWriter)) {
+        return CompressionAlgorithm.LOWERCASE_ASCII;
+      }
+      return CompressionAlgorithm.NO_COMPRESSION;
+    }
+
+    private CompressionAlgorithm ZSTDCompression(boolean safe) throws IOException {
+      if (safe) {
+        int maxCompressedLength = ZSTD.maxCompressedLength(suffixWriter.length());
+        compressedLength = ZSTD.compress(suffixWriter.bytes(), 0, suffixWriter.length(), spareWriter, 0, maxCompressedLength);
+      } else {
+        data = new byte[suffixWriter.length()];
+        System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+        compressed = new byte[UnsafeZSTDCompressor.maxCompressedLength(data.length)];
+        compressedLength = UnsafeZSTDCompressor.compress(data, 0, data.length, compressed, 0, compressed.length);
+      }
+      if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+        return CompressionAlgorithm.ZSTD_COMPRESSION;
+      }
+      return CompressionAlgorithm.NO_COMPRESSION;
+    }
+
+    private CompressionAlgorithm SnappyCompression(boolean safe) throws IOException {
+      if (snappyTable == null) {
+        snappyTable = new short[Snappy.MAX_HASH_TABLE_SIZE];
+      }
+      data = new byte[suffixWriter.length()];
+      System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+      if (safe) {
+        compressedLength = Snappy.compress(data, data.length, spareWriter, snappyTable);
+        if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+          // Snappy saved more than 25%, go for it
+          return CompressionAlgorithm.SNAPPY_COMPRESSION;
+        }
+      } else {
+        compressed = new byte[UnsafeSnappy.maxCompressedLength(data.length)];
+        compressedLength = UnsafeSnappy.compress(data, 0, data.length, compressed, 0, compressed.length, snappyTable);
+        if (compressedLength < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+          return CompressionAlgorithm.SNAPPY_COMPRESSION;
+        }
+      }
+      return CompressionAlgorithm.NO_COMPRESSION;
+    }
+
+    private CompressionAlgorithm ExperimentCompression() throws IOException {
+      //data = new byte[suffixWriter.length()];
+      //System.arraycopy(suffixWriter.bytes(), 0, data, 0, suffixWriter.length());
+      IntegerExperiment.compress(suffixWriter.bytes(), suffixWriter.length(), spareWriter);
+//            System.out.println("Saved : " + (suffixWriter.length() - spareWriter.size()) + " bytes");
+//            byte[] uncompressed = new byte[suffixWriter.length()];
+//            IntegerExperiment.decompress(spareWriter.toDataInput(), uncompressed, uncompressed.length);
+//            if (!Arrays.equals(data, uncompressed)) {
+//              System.out.println("NO Match");
+//            }
+      if (spareWriter.size() < suffixWriter.length() - (suffixWriter.length() >>> 2)) {
+        // Integer saved more than 25%, go for it
+        return CompressionAlgorithm.INT_EXPERIMENT;
+      }
+      return CompressionAlgorithm.NO_COMPRESSION;
+    }
+
+    private final ByteBuffersDataOutput suffixLengthsWriter = ByteBuffersDataOutput.newResettableInstance();
     private final BytesRefBuilder suffixWriter = new BytesRefBuilder();
     private final ByteBuffersDataOutput statsWriter = ByteBuffersDataOutput.newResettableInstance();
     private final ByteBuffersDataOutput metaWriter = ByteBuffersDataOutput.newResettableInstance();
@@ -1331,7 +1319,7 @@ public final class Lucene90BlockTreeTermsWriter extends FieldsConsumer {
     private byte[] data;
     private byte[] compressed;
     private int compressedLength;
-    private int zstdLength;
+    private short[] snappyTable;
     private LZ4.HighCompressionHashTable compressionHashTable;
   }
 

@@ -12,6 +12,7 @@ class BenchmarkData:
         return [self.integerCompressionAlgorithm, self.termCompressionAlgorithm, self.IndexSizeMB, self.IndexingSpeed, self.SearchSpeedNS]
 
 integerCompressionAlgorithmsToBenchmark = ["PFOR", "NEWPFOR", "DELTA", "DEFAULT"]
+termCompressionAlgorithmsToBenchmark = ["LZ4", "LOWERCASE_ASCII", "ZSTD"]
 datasetsToBenchmark = ["COMMONCRAWL"]
 benchmarkTypes = ["INDEXING", "SEARCH"]
 
@@ -30,25 +31,27 @@ for dataset in datasetsToBenchmark:
 
     if os.path.exists(indexDataFilePath):
         os.remove(indexDataFilePath)
-        
+
     if os.path.exists(searchDataFilePath):
         os.remove(searchDataFilePath)
         
     for benchmarkType in benchmarkTypes:
-        for integerComp in integerCompressionAlgorithmsToBenchmark:
+        for termComp in termCompressionAlgorithmsToBenchmark:
+            for integerComp in integerCompressionAlgorithmsToBenchmark:
 
                 command = (
                     'call java --add-modules jdk.incubator.vector -jar '
                     '"lucene\\luke\\build\\lucene-luke-10.1.0-SNAPSHOT\\lucene-luke-10.1.0-SNAPSHOT-standalone.jar" '
-                    + benchmarkType + ' '  + dataset + ' ' + integerComp
+                    + benchmarkType + ' '  + dataset + ' ' + integerComp + ' ' + termComp
                 )
-                os.system(command)
+                if os.system(command) != 0:
+                    raise RuntimeError(benchmarkType + " | " + integerComp + " and " + termComp + " | FAILED!")
             
     # Parse the benchmark data for the current dataset
     
             
     benchmarkDatas = []
-    integerCompressionToIndex = {}
+    compressionModeToIndex = {}
 
     # Specify the file path
 
@@ -60,10 +63,10 @@ for dataset in datasetsToBenchmark:
         for row in reader:
             benchmarkData = BenchmarkData()
             benchmarkData.integerCompressionAlgorithm = row[0]
-            benchmarkData.SearchSpeedNS = row[1]
-            benchmarkData.termCompressionAlgorithm = "LZ4"
+            benchmarkData.termCompressionAlgorithm = row[1]
+            benchmarkData.SearchSpeedNS = row[2]
             benchmarkDatas.append(benchmarkData)
-            integerCompressionToIndex[row[0]] = len(benchmarkDatas) - 1
+            compressionModeToIndex[row[0] + row[1]] = len(benchmarkDatas) - 1
             
     # Open the CSV file
     with open(indexDataFilePath, mode="r", newline="", encoding="utf-8") as file:
@@ -72,9 +75,10 @@ for dataset in datasetsToBenchmark:
         # Iterate through each row in the CSV
         for row in reader:
             integerCompressionAlg = row[0]
-            index = integerCompressionToIndex[integerCompressionAlg]
-            benchmarkDatas[index].IndexSizeMB = row[1]
-            benchmarkDatas[index].IndexingSpeed = row[2]
+            termCompressionAlg = row[1]
+            index = compressionModeToIndex[integerCompressionAlg+termCompressionAlg]
+            benchmarkDatas[index].IndexSizeMB = row[2]
+            benchmarkDatas[index].IndexingSpeed = row[3]
            
         finalCSVOutputPath = "../BenchmarkData/" + dataset + ".csv"
                 # Open the file in write mode

@@ -19,14 +19,12 @@ import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
 public final class UnsafeSnappy {
 
-    private final static short[] table = new short[MAX_SNAPPY_HASH_TABLE_SIZE];
-
     public static int maxCompressedLength(int uncompressedSize)
     {
         return UnsafeSnappyRawCompressor.maxCompressedLength(uncompressedSize);
     }
 
-    public static int compress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
+    public static int compress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, short[] table)
     {
         verifyRange(input, inputOffset, inputLength);
         verifyRange(output, outputOffset, maxOutputLength);
