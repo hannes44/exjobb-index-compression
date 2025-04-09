@@ -17,9 +17,9 @@ import java.util.ArrayList;
 
 
 public class BenchmarkMain {
-    private static final Dataset defaultDataset = Dataset.COMMONCRAWL;
-    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.NEWPFOR;
-    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
+    private static final Dataset defaultDataset = Dataset.COMMONCRAWL_2025;
+    private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DEFAULT;
+    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.ZSTD;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
     // Can only benchmark either searching or indexing during a run since we don't want caching to interfere
@@ -70,11 +70,11 @@ public class BenchmarkMain {
 
         if (benchmarkingType == BenchmarkingType.INDEXING) {
             IndexingBenchmarkData indexData = benchmarkIndexing(integerCompressionType, dataset, termMode);
-            output.write(indexData, Dataset.COMMONCRAWL);
+            output.write(indexData, dataset);
         }
         else if (benchmarkingType == BenchmarkingType.SEARCH) {
             SearchBenchmarkData searchData = benchmarkSearching(integerCompressionType, dataset, termMode);
-            output.write(searchData, Dataset.COMMONCRAWL);
+            output.write(searchData, dataset);
         }
 
 
@@ -135,8 +135,10 @@ public class BenchmarkMain {
 
     public static DatasetCompressionBenchmarker getBenchmarker(Dataset dataset) {
         switch (dataset) {
-            case COMMONCRAWL:
-                return new CommonCrawlBenchmarker();
+            case COMMONCRAWL_2025:
+                return new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2025-05");
+            case COMMONCRAWL_2014:
+                return new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2014-10");
             default:
                 System.out.println("ERROR, The given dataset is not supported for benchmarking");
                 return null;
