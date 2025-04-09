@@ -24,10 +24,10 @@ import java.util.Random;
 
 public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
-    private static String folderPath;
+    private final String folderPath;
 
     public CommonCrawlBenchmarker(String folderPath) {
-        CommonCrawlBenchmarker.folderPath = folderPath;
+        this.folderPath = folderPath;
     }
 
     public static void parseWETFile(String filePath, WETHandler handler) throws IOException {
