@@ -13,13 +13,10 @@ import java.util.HashMap;
 
 /** Default Compressor for lucene 10.1.0 */
 public class LuceneDefaultCompressor implements IntegerCompressor {
-
+    private final PForUtil pforUtil = new PForUtil();
     @Override
     public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-       // for ()
 
-        final ForUtil forUtil = new ForUtil();
-        PForUtil pforUtil = new PForUtil();
         pforUtil.encode(positions, out);
     }
 
@@ -35,14 +32,11 @@ public class LuceneDefaultCompressor implements IntegerCompressor {
 
     @Override
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-        final ForUtil forUtil = new ForUtil();
-        PForUtil pforUtil = new PForUtil();
         pforUtil.decode(pdu, ints);
     }
 
     @Override
     public void skip(IndexInput in) throws IOException {
-        PForUtil pforUtil = new PForUtil();
         PForUtil.skip(in);
     }
 
