@@ -16,16 +16,14 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 /**
  * Implements FOR compression for integer sequences.
  */
-public class FORCompression implements IntegerCompressor {
-
+public final class FORCompression implements IntegerCompressor {
+    ForUtil forUtil = new ForUtil();
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
+
         //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
-
-       int bitWidth = 10;
-
         // We store the reference as a VInt
         int minValue = ints[0];
         int maxValue = ints[0];
@@ -35,47 +33,28 @@ public class FORCompression implements IntegerCompressor {
             if (maxValue < ints[i])
                 maxValue = ints[i];
         }
+        for (int i = 0; i < 128; i++) {
+            ints[i] -= minValue;
+        }
 
-        int maxBitsRequired = PackedInts.bitsRequired(maxValue - minValue);
-        out.writeVInt(bitWidth);
+        int bitWidth = PackedInts.bitsRequired(maxValue - minValue);
+        out.writeByte((byte) bitWidth);
         out.writeVInt(minValue);
-        out.writeVInt(maxBitsRequired);
 
-        ForUtil forUtil = new ForUtil();
-
-
-
-        ArrayList<Integer> rightBits = new ArrayList<>();
-
-        final long maxUnpatchedValue = (1L << bitWidth) - 1;
-        // Now store the offsets from the reference
-        for (int i = 0; i < 128; i++) {
-            ints[i] = ints[i] - minValue;
-            rightBits.add(IntegerCompressionUtils.getLeftBits(ints[i], 32 - bitWidth));
-            ints[i] &= maxUnpatchedValue;
-        }
         forUtil.encode(ints, bitWidth, out);
-
-        for (int i = 0; i < 128; i++) {
-            out.writeInt(rightBits.get(i));
-        }
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-        int bitWidth = pdu.in.readVInt();
+        int bitWidth = pdu.in.readByte();
         int minValue = pdu.in.readVInt();
-        int maxBits = pdu.in.readVInt();
-        ForUtil forUtil = new ForUtil();
+
 
         forUtil.decode(bitWidth, pdu, ints);
 
         for (int i = 0; i < 128; i++) {
             ints[i] += minValue;
-            int value = pdu.in.readInt();
-            value = value << bitWidth;
-            ints[i] += value;
         }
     }
 
@@ -92,16 +71,10 @@ public class FORCompression implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
-        int bitWidth = in.readVInt();
+        int bitWidth = in.readByte();
         int minValue = in.readVInt();
-        int maxBits = in.readVInt();
-        ForUtil forUtil = new ForUtil();
 
         in.skipBytes(ForUtil.numBytes(bitWidth));
-        for (int i = 0; i < 128; i++) {
-
-            in.readInt();
-        }
     }
 
     public IntegerCompressionType getType() {
