@@ -34,6 +34,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.CompetitiveImpactAccumulator;
 import org.apache.lucene.codecs.PushPostingsWriterBase;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionFactory;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
@@ -137,7 +138,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
 
     /** Sole constructor. */
     public CustomLucene101PostingsWriter(SegmentWriteState state) throws IOException {
-        this.integerCompressor = Lucene101Codec.integerCompressor;
+
 
         exceptions = new HashMap<Integer, ArrayList<Integer>>();
         IntegerCompressionUtils.setupExceptionHashmap(exceptions);
@@ -162,6 +163,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
                     docOut, DOC_CODEC, VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
             forDeltaUtil = new ForDeltaUtil();
             pforUtil = new PForUtil();
+            this.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(Lucene101Codec.integerCompressionType);
             if (state.fieldInfos.hasProx()) {
                 posDeltaBuffer = new int[BLOCK_SIZE];
                 String posFileName =
@@ -352,7 +354,7 @@ public class CustomLucene101PostingsWriter extends PushPostingsWriterBase {
         posBufferUpto++;
         lastPosition = position;
         if (posBufferUpto == BLOCK_SIZE) {
-            //pforUtil.encode(posDeltaBuffer, posOut);
+           // pforUtil.encode(posDeltaBuffer, posOut);
             integerCompressor.encode(posDeltaBuffer, posOut, exceptions);
 
 

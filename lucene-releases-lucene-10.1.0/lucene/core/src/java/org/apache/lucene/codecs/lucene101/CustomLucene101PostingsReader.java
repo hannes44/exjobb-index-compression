@@ -26,6 +26,7 @@ import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
 import org.apache.lucene.codecs.exjobb.integercompression.DeltaCompressor;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionFactory;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
@@ -77,11 +78,11 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
     HashMap<Integer, ArrayList<Integer>> exceptions;
 
-    private IntegerCompressor integerCompressor;
+
 
     /** Sole constructor. */
     public CustomLucene101PostingsReader(SegmentReadState state) throws IOException {
-        this.integerCompressor = Lucene101Codec.integerCompressor;
+
 
         String metaName =
                 IndexFileNames.segmentFileName(
@@ -318,6 +319,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
         private ForDeltaUtil forDeltaUtil;
         private PForUtil pforUtil;
+        private IntegerCompressor integerCompressor;
 
         private final int[] docBuffer = new int[BLOCK_SIZE];
 
@@ -422,6 +424,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
         public BlockPostingsEnum(FieldInfo fieldInfo, int flags, boolean needsImpacts)
                 throws IOException {
+            integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(Lucene101Codec.integerCompressionType);
             options = fieldInfo.getIndexOptions();
             indexHasFreq = options.compareTo(IndexOptions.DOCS_AND_FREQS) >= 0;
             indexHasPos = options.compareTo(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS) >= 0;
@@ -934,7 +937,6 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 while (toSkip >= BLOCK_SIZE) {
                     assert posIn.getFilePointer() != lastPosBlockFP;
                     //PForUtil.skip(posIn);
-                   // DeltaCompressor.skip(posIn);
                     integerCompressor.skip(posIn);
 
                     if (payIn != null) {
