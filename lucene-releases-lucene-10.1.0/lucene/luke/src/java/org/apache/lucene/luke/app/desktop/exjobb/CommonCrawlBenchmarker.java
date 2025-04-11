@@ -24,7 +24,12 @@ import java.util.Random;
 
 public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
-    final static String folderPath = "../Datasets/CommonCrawl-2025-05";
+    private final String folderPath;
+
+    public CommonCrawlBenchmarker(String folderPath) {
+        this.folderPath = folderPath;
+    }
+
     public static void parseWETFile(String filePath, WETHandler handler) throws IOException {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -52,10 +57,11 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         }
     }
 
+    /*
+     * This method is used to get the name of the dataset. In this case, it returns the last directory in the folder path.
+     */
     @Override
-    public String GetDatasetName() {
-        return "CommonCrawl-2025-05";
-    }
+    public String GetDatasetName() { return folderPath.substring(folderPath.lastIndexOf(File.separator) + 1); }
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
