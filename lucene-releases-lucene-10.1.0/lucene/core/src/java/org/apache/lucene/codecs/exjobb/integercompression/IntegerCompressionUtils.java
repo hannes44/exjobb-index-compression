@@ -103,10 +103,10 @@ public class IntegerCompressionUtils {
 
     public static void encodeExceptions(HashMap<Integer, ArrayList<Integer>> exceptions, DataOutput out) throws IOException {
         for (int i = 1; i < 33; i++) {
-            byte[] bytes = LimitTestCompressor.bitPack(exceptions.get(i), i);
-            out.writeVInt(bytes.length);
+          //  byte[] bytes = LimitTestCompressor.bitPack(exceptions.get(i), i);
+          //  out.writeVInt(bytes.length);
 
-            out.writeBytes(bytes, bytes.length);
+//            out.writeBytes(bytes, bytes.length);
         }
     }
 
@@ -114,15 +114,16 @@ public class IntegerCompressionUtils {
         HashMap<Integer, ArrayList<Integer>> exceptions = new HashMap<Integer, ArrayList<Integer>>();
 
         for (int i = 1; i < 33; i++) {
-            int byteCount = input.readVInt();
 
-            if (byteCount == 0)
-                continue;
+       //     int byteCount = input.readVInt();
 
-            byte[] bytes = new byte[byteCount];
-            input.readBytes(bytes, 0, byteCount);
-            ArrayList<Integer> ints = (ArrayList<Integer>) LimitTestCompressor.bitUnpack(bytes, i);
-            exceptions.put(i, ints);
+       //     if (byteCount == 0)
+       //         continue;
+
+       //     byte[] bytes = new byte[byteCount];
+       //     input.readBytes(bytes, 0, byteCount);
+        //    ArrayList<Integer> ints = (ArrayList<Integer>) LimitTestCompressor.bitUnpack(bytes, i);
+     //       exceptions.put(i, ints);
         }
         return exceptions;
     }

@@ -2,6 +2,7 @@ package org.apache.lucene.codecs.exjobb.integercompression;
 
 
 import org.apache.lucene.codecs.lucene101.ForUtil;
+import org.apache.lucene.codecs.lucene101.PForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
@@ -10,6 +11,7 @@ import org.apache.lucene.util.packed.PackedInts;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -34,27 +36,39 @@ public final class FORCompression implements IntegerCompressor {
                 maxValue = ints[i];
         }
         for (int i = 0; i < 128; i++) {
-            ints[i] -= minValue;
+            //          ints[i] -= minValue;
         }
 
-        int bitWidth = PackedInts.bitsRequired(maxValue - minValue);
-        out.writeByte((byte) bitWidth);
-        out.writeVInt(minValue);
+        int bitWidth = PackedInts.bitsRequired(maxValue);
+        int bitWidthMultipleOf8 = ((bitWidth + 7) / 8) * 8;
+        // To most significant bit is flag for if all vales are equal, the rest 7 bits are the bitwidth
+        byte token = (byte)bitWidthMultipleOf8;
 
-        forUtil.encode(ints, bitWidth, out);
+        // out.writeVInt(minValue);
+
+        if (PForUtil.allEqual(ints)) {
+            token = (byte) (token | 0x80);
+            out.writeByte(token);
+            out.writeVInt(ints[0]);
+        } else {
+            out.writeByte(token);
+            forUtil.encode(ints, token, out);
+        }
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
     /** Delta Decode 128 integers into {@code ints}. */
     public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-        int bitWidth = pdu.in.readByte();
-        int minValue = pdu.in.readVInt();
+        byte token = pdu.in.readByte();
+        int bitWidth = (byte) (token & 0b01111111);
+        int isAllEqual = (byte) (token & 0b10000000);
+//        int minValue = pdu.in.readVInt();
 
-
-        forUtil.decode(bitWidth, pdu, ints);
-
-        for (int i = 0; i < 128; i++) {
-            ints[i] += minValue;
+        if (isAllEqual == 0) {
+            forUtil.decode(bitWidth, pdu, ints);
+        }
+        else {
+            Arrays.fill(ints, 0, ForUtil.BLOCK_SIZE, pdu.in.readVInt());
         }
     }
 
@@ -71,10 +85,14 @@ public final class FORCompression implements IntegerCompressor {
 
     @Override
     public void skip(IndexInput in) throws IOException {
-        int bitWidth = in.readByte();
-        int minValue = in.readVInt();
-
-        in.skipBytes(ForUtil.numBytes(bitWidth));
+        int token = in.readByte();
+        int bitWidth = (byte) (token & 0b01111111);
+        int isAllEqual = (byte) (token & 0b10000000);
+        //     int minValue = in.readVInt();
+        if (isAllEqual == 0)
+            in.skipBytes(ForUtil.numBytes(bitWidth));
+        else
+            in.readVInt();
     }
 
     public IntegerCompressionType getType() {

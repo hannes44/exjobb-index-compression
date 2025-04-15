@@ -95,13 +95,13 @@ public class PFORCompressor implements IntegerCompressor {
         }
 
 
-        byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
+        //byte[] regularBytes = LimitTestCompressor.bitPack(regularValues, bestBitWidth);
 
         // Only write the regular len if there is exceptions
-        if (isThereExceptions != 0)
-            out.writeVInt(regularBytes.length);
+     //   if (isThereExceptions != 0)
+     //       out.writeVInt(regularBytes.length);
 
-        out.writeBytes(regularBytes, regularBytes.length);
+     //   out.writeBytes(regularBytes, regularBytes.length);
 
         for (Integer exception : exceptionValues)
         {
@@ -141,12 +141,12 @@ public class PFORCompressor implements IntegerCompressor {
         byte[] regularBytes = new byte[regularBytesLen];
         pdu.in.readBytes(regularBytes, 0, regularBytesLen);
 
-        List<Integer> regularValues = LimitTestCompressor.bitUnpack(regularBytes, regularBitWidth);
+       // List<Integer> regularValues = LimitTestCompressor.bitUnpack(regularBytes, regularBitWidth);
 
         int regularValueCount = 0;
         for (int i = 0; i < 128; i++) {
             if (isThereExceptions == 0 || IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 0) {
-                ints[i] = regularValues.get(regularValueCount) + minValue;
+//                ints[i] = regularValues.get(regularValueCount) + minValue;
                 regularValueCount++;
             }
             else {
@@ -179,7 +179,7 @@ public class PFORCompressor implements IntegerCompressor {
         byte[] regularBytes = new byte[regularBytesLen];
         in.skipBytes(regularBytesLen);
 
-        List<Integer> regularValues = LimitTestCompressor.bitUnpack(regularBytes, regularBitWidth);
+      //  List<Integer> regularValues = LimitTestCompressor.bitUnpack(regularBytes, regularBitWidth);
 
         int regularValueCount = 0;
         for (int i = 0; i < 128; i++) {

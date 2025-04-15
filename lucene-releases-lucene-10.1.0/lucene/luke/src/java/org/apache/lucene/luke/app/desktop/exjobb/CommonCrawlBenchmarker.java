@@ -11,6 +11,7 @@ import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
 
 import java.io.BufferedReader;
 import java.io.File;

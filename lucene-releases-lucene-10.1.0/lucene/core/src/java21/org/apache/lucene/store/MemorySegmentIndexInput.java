@@ -220,6 +220,78 @@ abstract class MemorySegmentIndexInput extends IndexInput
   }
 
   @Override
+  public void read1ByteToInts(int[] dst, int offset, int length) throws IOException {
+    try {
+      if (curPosition + length > curSegment.byteSize()) {
+        throw new IndexOutOfBoundsException("Trying to read beyond segment bounds.");
+      }
+
+      byte[] buffer = new byte[length];
+      curSegment.asByteBuffer().position((int) curPosition).get(buffer);
+      curPosition += length;
+
+      for (int i = 0; i < length; i++) {
+        dst[offset + i] = buffer[i] & 0xFF;  // zero-extend byte to int
+      }
+
+    } catch (NullPointerException | IllegalStateException e) {
+      throw alreadyClosed(e);
+    }
+  }
+
+  @Override
+  public void read2ByteToInts(int[] dst, int offset, int length) throws IOException {
+    try {
+      int totalBytes = 2 * length;
+      if (curPosition + totalBytes > curSegment.byteSize()) {
+        throw new IndexOutOfBoundsException("Trying to read beyond segment bounds.");
+      }
+
+      byte[] buffer = new byte[totalBytes];
+      curSegment.asByteBuffer().position((int) curPosition).get(buffer);
+      curPosition += totalBytes;
+
+      for (int i = 0; i < length; i++) {
+        int base = i * 2;
+        int b0 = buffer[base] & 0xFF;
+        int b1 = buffer[base + 1] & 0xFF;
+        dst[offset + i] = b0 | (b1 << 8);  // little-endian short as int
+      }
+
+    } catch (NullPointerException | IllegalStateException e) {
+      throw alreadyClosed(e);
+    }
+  }
+
+  @Override
+  public void read3ByteToInts(int[] dst, int offset, int length) throws IOException {
+    try {
+      int totalBytes = 3 * length;
+      if (curPosition + totalBytes > curSegment.byteSize()) {
+        throw new IndexOutOfBoundsException("Trying to read beyond segment bounds.");
+      }
+
+      // Temporary buffer to hold all 3-byte values
+      byte[] buffer = new byte[totalBytes];
+      curSegment.asByteBuffer().position((int) curPosition).get(buffer);
+      curPosition += totalBytes;
+
+      // Convert 3 bytes into int
+      for (int i = 0; i < length; i++) {
+        int base = i * 3;
+        int b0 = buffer[base] & 0xFF;
+        int b1 = buffer[base + 1] & 0xFF;
+        int b2 = buffer[base + 2] & 0xFF;
+        dst[offset + i] = b0 | (b1 << 8) | (b2 << 16);  // 24-bit little-endian
+      }
+
+    } catch (NullPointerException | IllegalStateException e) {
+      throw alreadyClosed(e);
+    }
+  }
+
+
+  @Override
   public void readLongs(long[] dst, int offset, int length) throws IOException {
     try {
       MemorySegment.copy(curSegment, LAYOUT_LE_LONG, curPosition, dst, offset, length);

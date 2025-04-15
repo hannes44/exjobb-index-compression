@@ -9,7 +9,7 @@ command = (
     'call java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 --add-modules jdk.incubator.vector -jar '
     '"lucene\\luke\\build\\lucene-luke-10.1.0-SNAPSHOT\\lucene-luke-10.1.0-SNAPSHOT-standalone.jar" ' 'INDEXING'
 )
-os.system(command)
+#os.system(command)
 
 
 command = (
