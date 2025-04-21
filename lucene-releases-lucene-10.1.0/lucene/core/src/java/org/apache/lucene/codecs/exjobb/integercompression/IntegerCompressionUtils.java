@@ -81,17 +81,7 @@ public class IntegerCompressionUtils {
         return bestBitWidth;
     }
 
-    public static void getMinMaxValue(int[] ints, Integer min, Integer max)
-    {
-        min = ints[0];
-        max = ints[0];
-        for (int i = 0; i < 128; i++) {
-            if (min > ints[i])
-                min = ints[i];
-            if (max < ints[i])
-                max = ints[i];
-        }
-    }
+
 
     public static void setupExceptionHashmap(HashMap<Integer, ArrayList<Integer>> exceptions)
     {
@@ -103,12 +93,115 @@ public class IntegerCompressionUtils {
 
     public static void encodeExceptions(HashMap<Integer, ArrayList<Integer>> exceptions, DataOutput out) throws IOException {
         for (int i = 1; i < 33; i++) {
-          //  byte[] bytes = LimitTestCompressor.bitPack(exceptions.get(i), i);
-          //  out.writeVInt(bytes.length);
+            //           byte[] bytes = IntegerCompressionUtils.bitPack(exceptions.get(i), i);
+            //out.writeVInt(bytes.length);
 
 //            out.writeBytes(bytes, bytes.length);
         }
     }
+
+    public static void getExceptionsFromIndexMap(List<Integer> exceptionIndices, List<Integer> exceptionValues, HashMap<Integer, List<Integer>> bitCountToIndex, int[] ints, int bestBitWidth) {
+        for (int i = 32; i > 0; i--) {
+            if (bitCountToIndex.containsKey(i))
+            {
+                if (i > bestBitWidth) {
+                    for (Integer index : bitCountToIndex.get(i))
+                    {
+                        exceptionIndices.add(index);
+                        exceptionValues.add(ints[index]);
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Bit-packs a list of longs into a byte array.
+     *
+     * @param values The list of long values to pack.
+     * @param bits   The number of bits to use for each value.
+     * @return The packed byte array.
+     * @throws IllegalArgumentException if bits is not in the range [1, 64].
+     */
+    public static byte[] bitPack(List<Integer> values, int bits) {
+        if (bits < 1 || bits > 64) {
+            throw new IllegalArgumentException("Bits must be between 1 and 64.");
+        }
+
+        // Calculate the total number of bytes required
+        int totalBits = values.size() * bits;
+        int totalBytes = (totalBits + 7) / 8; // Round up to the nearest byte
+        byte[] output = new byte[totalBytes];
+
+        int bitIndex = 0; // Tracks the current bit position in the output array
+
+        for (long value : values) {
+            // Mask to extract the lower 'bits' bits
+            long mask = (1L << bits) - 1;
+            long packedValue = value & mask;
+
+            // Write the bits into the output array
+            for (int i = 0; i < bits; i++) {
+                if ((packedValue & (1L << i)) != 0) {
+                    int byteIndex = bitIndex / 8;
+                    int bitOffset = bitIndex % 8;
+                    output[byteIndex] |= (1 << bitOffset); // Set the bit
+                }
+                bitIndex++;
+            }
+        }
+
+        return output;
+    }
+
+    /**
+     * Unpacks a byte array into a list of longs.
+     *
+     * @param bytes The byte array to unpack.
+     * @param bits  The number of bits used for each value.
+     * @return The list of unpacked long values.
+     * @throws IllegalArgumentException if bits is not in the range [1, 64].
+     */
+    public static List<Integer> bitUnpack(byte[] bytes, int bits) {
+        if (bits == 0)
+            return new ArrayList<>();
+
+        if (bits < 1 || bits > 64) {
+            throw new IllegalArgumentException("Bits must be between 1 and 64.");
+        }
+
+        List<Integer> values = new ArrayList<>();
+        int bitIndex = 0; // Tracks the current bit position in the byte array
+
+        while (bitIndex + bits <= bytes.length * 8) {
+            int value = 0;
+            for (int i = 0; i < bits; i++) {
+                // Read the bit and add it to the value
+                value |= readBit(bytes, bitIndex) << i;
+                bitIndex++;
+            }
+            values.add(value);
+        }
+
+        return values;
+    }
+
+    /**
+     * Reads a bit from the byte array at the specified bit index.
+     *
+     * @param bytes    The byte array to read from.
+     * @param bitIndex The index of the bit to read.
+     * @return The value of the bit (0 or 1).
+     */
+    private static int readBit(byte[] bytes, int bitIndex) {
+        int byteIndex = bitIndex / 8;
+        int bitOffset = bitIndex % 8;
+        return (bytes[byteIndex] >> bitOffset) & 1;
+    }
+
 
     public static HashMap<Integer, ArrayList<Integer>> decodeExceptions(IndexInput input) throws IOException {
         HashMap<Integer, ArrayList<Integer>> exceptions = new HashMap<Integer, ArrayList<Integer>>();
