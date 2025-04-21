@@ -22,29 +22,17 @@ public final class FORCompression implements IntegerCompressor {
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
-
-        //IntegerCompressionUtils.turnDeltasIntoAbsolutes(positions);
-        // We store the reference as a VInt
-        int minValue = ints[0];
-        int maxValue = ints[0];
-        for (int i = 0; i < 128; i++) {
-            if (minValue > ints[i])
-                minValue = ints[i];
-            if (maxValue < ints[i])
-                maxValue = ints[i];
-        }
-        for (int i = 0; i < 128; i++) {
-            //          ints[i] -= minValue;
-        }
+        MinMax minMax = IntegerCompressionUtils.findMinMax(ints);
+        int minValue = minMax.min();
+        int maxValue = minMax.max();
 
         int bitWidth = PackedInts.bitsRequired(maxValue);
-        int bitWidthMultipleOf8 = ((bitWidth + 7) / 8) * 8;
+
         // To most significant bit is flag for if all vales are equal, the rest 7 bits are the bitwidth
-        byte token = (byte)bitWidthMultipleOf8;
+        byte token = (byte)bitWidth;
 
-        // out.writeVInt(minValue);
-
-        if (PForUtil.allEqual(ints)) {
+        // If all values are the same, we can save many bits
+        if (minValue == maxValue) {
             token = (byte) (token | 0x80);
             out.writeByte(token);
             out.writeVInt(ints[0]);
@@ -64,7 +52,6 @@ public final class FORCompression implements IntegerCompressor {
         byte token = pdu.in.readByte();
         int bitWidth = (byte) (token & 0b01111111);
         int isAllEqual = (byte) (token & 0b10000000);
-//        int minValue = pdu.in.readVInt();
 
         if (isAllEqual == 0) {
             forUtil.decode(bitWidth, pdu, ints);

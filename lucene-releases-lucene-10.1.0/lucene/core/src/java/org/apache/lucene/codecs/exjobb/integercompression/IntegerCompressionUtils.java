@@ -128,6 +128,21 @@ public class IntegerCompressionUtils {
         return exceptions;
     }
 
+    public static MinMax findMinMax(int[] arr) {
+        if (arr == null || arr.length == 0) {
+            throw new IllegalArgumentException("Array must not be null or empty");
+        }
+
+        int min = arr[0], max = arr[0];
+        for (int i = 1; i < arr.length; i++) {
+            int val = arr[i];
+            if (val < min) min = val;
+            if (val > max) max = val;
+        }
+
+        return new MinMax(min, max);
+    }
+
     public static void setNthBit(byte[] byteArray, int n) {
         // Calculate the byte index and bit position
         int byteIndex = n / 8;       // Which byte contains the nth bit
