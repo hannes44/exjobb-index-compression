@@ -154,7 +154,6 @@ public class Lucene101Codec extends Codec {
     Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
     this.integerCompressionType = integerCompressionType;
     Lucene101Codec.termCompressionMode = termCompressionMode;
-    Lucene101Codec.useDefaultCompression = false;
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();

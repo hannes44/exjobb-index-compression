@@ -5,7 +5,6 @@ import org.apache.lucene.codecs.lucene101.ForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.LongHeap;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
@@ -84,8 +83,12 @@ public class NEWPFORCompressor implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         int regularValueBitWidth = Byte.toUnsignedInt(pdu.in.readByte());
 
         byte exceptionCount = pdu.in.readByte();
@@ -104,6 +107,7 @@ public class NEWPFORCompressor implements IntegerCompressor {
         }
 
         //IntegerCompressionUtils.turnAbsolutesIntoDeltas(ints);
+        return false;
     }
 
     @Override

@@ -9,11 +9,9 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Implements FOR compression for integer sequences.
@@ -22,6 +20,10 @@ public final class LimitTestCompressor implements IntegerCompressor {
     ForUtil forUtil = new ForUtil();
     // https://en.wikipedia.org/wiki/Delta_encoding
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
+    public static long averageShortTime = 0;
+    private long averageShortCount = 0;
+    public static long averageIntTime = 0;
+    private long averageIntCount = 0;
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
     {
 
@@ -41,6 +43,14 @@ public final class LimitTestCompressor implements IntegerCompressor {
 
         int bitWidth = PackedInts.bitsRequired(maxValue);
         int bitWidthMultipleOf8 = ((bitWidth + 7) / 8) * 8;
+        if (bitWidth == 16)
+            bitWidthMultipleOf8 = 32;
+        if (bitWidthMultipleOf8 == 24)
+            bitWidthMultipleOf8 = 32;
+        if (bitWidthMultipleOf8 == 8)
+            bitWidthMultipleOf8 = 32;
+        if (bitWidthMultipleOf8 == 0)
+            bitWidthMultipleOf8 = 32;
         // To most significant bit is flag for if all vales are equal, the rest 7 bits are the bitwidth
         byte token = (byte)bitWidthMultipleOf8;
 
@@ -67,11 +77,16 @@ public final class LimitTestCompressor implements IntegerCompressor {
 
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-        byte token = pdu.in.readByte();
-        int bitWidth = (byte) (token & 0b01111111);
-        int isAllEqual = (byte) (token & 0b10000000);
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
+        final byte token = pdu.in.readByte();
+        final int bitWidth = (byte) (token & 0b01111111);
+        final int isAllEqual = (byte) (token & 0b10000000);
+        var in = pdu.in;
 //        int minValue = pdu.in.readVInt();
 
         if (isAllEqual == 0) {
@@ -79,19 +94,59 @@ public final class LimitTestCompressor implements IntegerCompressor {
                 case 8:  // 1 byte
 
                     pdu.in.read1ByteToInts(ints, 0, 128);
+                    //in.readInts(ints, 0, 32);
                     break;
 
                 case 16: // 2 bytes
+                    long start = System.nanoTime();
+               //     if (shorts == null)
+                     //   pdu.in.read2ByteToInts(ints, 0, 128);
 
-                    pdu.in.read2ByteToInts(ints, 0, 128);
-                    break;
+                        //pdu.in.readShorts(shorts, 0, 128);
+                    pdu.in.readInts(ints, 0, 64);
+
+                    for (int i = 0; i < 64; i++) {
+                        int value = ints[i];
+
+                        // Extract low and high shorts with masking
+                        shorts[2 * i]     = (short) (value & 0xFFFF);           // lower 16 bits
+                        shorts[2 * i + 1] = (short) ((value >>> 16) & 0xFFFF);  // upper 16 bits
+                    }
+                    long duration = System.nanoTime() - start;
+                       // for (int i = 0; i < 128; i++) {
+
+                       //     ints[i] = shorts[i] & 0xFFFF;
+                       // }
+
+                    averageShortCount += 1;
+                    averageShortTime += (duration - averageShortCount) / averageShortCount;
+                    return true;
+                   // else {
+                    //  in.readShorts(shorts, 0, 128);
+
+                  //    return true;
+                   // }
+
+
+               //     for (int i = 0; i < 128; i++) {
+                //        ints[i] = shorts[i];
+                //    }
+                //    break;
+                  //  pdu.in.readInts(ints, 0, 64);
+                  //  break;
+
 
                 case 24: // 3 bytes
                     pdu.in.read3ByteToInts(ints, 0, 128);
+                   // in.readInts(ints, 0, 96);
                     break;
 
                 case 32: // 4 bytes
-                    pdu.in.readInts(ints, 0, 128);
+                    long start2 = System.nanoTime();
+                    in.readInts(ints, 0, 128);
+                    long duration2 = System.nanoTime() - start2;
+                    averageIntCount += 1;
+                    averageIntTime += (duration2 - averageIntCount) / averageIntCount;
 
                     break;
 
@@ -101,17 +156,19 @@ public final class LimitTestCompressor implements IntegerCompressor {
 
         }
         else {
-            Arrays.fill(ints, 0, ForUtil.BLOCK_SIZE, pdu.in.readVInt());
+            Arrays.fill(ints, 0, ForUtil.BLOCK_SIZE, in.readVInt());
         }
+        return false;
     }
+
 
 
 
     @Override
     public void skip(IndexInput in) throws IOException {
-        int token = in.readByte();
-        int bitWidth = (byte) (token & 0b01111111);
-        int isAllEqual = (byte) (token & 0b10000000);
+        final int token = in.readByte();
+        final int bitWidth = (byte) (token & 0b01111111);
+        final int isAllEqual = (byte) (token & 0b10000000);
         //     int minValue = in.readVInt();
         if (isAllEqual == 0) {
             in.skipBytes(128 * bitWidth / 8);

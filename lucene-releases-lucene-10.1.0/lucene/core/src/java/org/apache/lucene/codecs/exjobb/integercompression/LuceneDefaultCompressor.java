@@ -1,7 +1,6 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
 
-import org.apache.lucene.codecs.lucene101.ForUtil;
 import org.apache.lucene.codecs.lucene101.PForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
@@ -31,8 +30,9 @@ public class LuceneDefaultCompressor implements IntegerCompressor {
     }
 
     @Override
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         pforUtil.decode(pdu, ints);
+        return false;
     }
 
     @Override

@@ -4,6 +4,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.codecs.exjobb.integercompression.LimitTestCompressor;
 import org.apache.lucene.util.compress.TermCompressionMode;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.index.*;
@@ -51,6 +52,9 @@ public class BenchmarkMain {
         } catch (IOException e) {
             System.out.println(e);
         }
+
+        System.out.println(LimitTestCompressor.averageShortTime + " SHORT");
+        System.out.println(LimitTestCompressor.averageIntTime + " INT");
     }
 
     public static void luceneCompressionTesting(Dataset dataset, IntegerCompressionType integerCompressionType, TermCompressionMode termMode, BenchmarkingType benchmarkingType) throws IOException {

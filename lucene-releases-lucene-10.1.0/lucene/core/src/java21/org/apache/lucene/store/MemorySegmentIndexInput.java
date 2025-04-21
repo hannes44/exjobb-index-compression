@@ -30,6 +30,7 @@ import org.apache.lucene.util.BitUtil;
 import org.apache.lucene.util.Constants;
 import org.apache.lucene.util.GroupVIntUtil;
 import org.apache.lucene.util.IOConsumer;
+import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
 
 /**
  * Base IndexInput implementation that uses an array of MemorySegments to represent a file.
@@ -219,21 +220,99 @@ abstract class MemorySegmentIndexInput extends IndexInput
     }
   }
 
+
+
+  @Override
+  public void readShorts(short[] dst, int offset, int length) throws IOException {
+    try {
+      // Reinterpret the segment as shorts (2 bytes per element)
+/*
+
+
+        for (int i = 0; i < 128; i++) {
+          dst[i] = readShort(curPosition);
+          curPosition += Short.BYTES;
+        }
+ */
+
+
+
+/*
+
+ */
+      /*
+            MemorySegment.copy(
+              curSegment,
+              LAYOUT_LE_SHORT,
+              curPosition,
+              dst,
+              offset,
+              length
+      );
+       */
+
+
+
+/*
+
+
+            long addr = curSegment.address() + offset;
+      UNSAFE.copyMemory(null, addr, dst,
+              UNSAFE.ARRAY_SHORT_BASE_OFFSET,
+              length * 2L);
+
+ */
+
+      int[] temp = new int[64];
+      readInts(temp, 0, 64);
+
+      long INT_BASE_OFFSET = UNSAFE.arrayBaseOffset(int[].class);
+      long SHORT_BASE_OFFSET = UNSAFE.arrayBaseOffset(short[].class);
+      long byteLength = 64 * 4L; // 4 bytes per int = 2 shorts
+
+      UNSAFE.copyMemory(
+              temp, INT_BASE_OFFSET,
+              dst, SHORT_BASE_OFFSET,
+              byteLength
+      );
+
+/*
+      for (int i = 0; i < 64; i++) {
+        int value = temp[i];
+
+        // Extract low and high shorts with masking
+        dst[2 * i]     = (short) (value & 0xFFFF);           // lower 16 bits
+        dst[2 * i + 1] = (short) ((value >>> 16) & 0xFFFF);  // upper 16 bits
+      }
+ */
+
+
+
+
+   //   curPosition += Short.BYTES * (long) length;
+    } catch (IndexOutOfBoundsException iobe) {
+      System.out.println("EROOROROROROROOR");
+      super.readShorts(dst, offset, length); // Fallback if needed
+    } catch (NullPointerException | IllegalStateException e) {
+      throw alreadyClosed(e);
+    }
+  }
+
+
   @Override
   public void read1ByteToInts(int[] dst, int offset, int length) throws IOException {
+    byte[] temp = new byte[length];
+
     try {
-      if (curPosition + length > curSegment.byteSize()) {
-        throw new IndexOutOfBoundsException("Trying to read beyond segment bounds.");
-      }
-
-      byte[] buffer = new byte[length];
-      curSegment.asByteBuffer().position((int) curPosition).get(buffer);
+      MemorySegment.copy(curSegment, LAYOUT_BYTE, curPosition, temp, 0, length);
       curPosition += length;
-
       for (int i = 0; i < length; i++) {
-        dst[offset + i] = buffer[i] & 0xFF;  // zero-extend byte to int
+        dst[offset + i] = temp[i] & 0xFF; // convert byte to unsigned int
       }
-
+    } catch (
+            @SuppressWarnings("unused")
+            IndexOutOfBoundsException iobe) {
+      super.readInts(dst, offset, length);
     } catch (NullPointerException | IllegalStateException e) {
       throw alreadyClosed(e);
     }
@@ -241,23 +320,28 @@ abstract class MemorySegmentIndexInput extends IndexInput
 
   @Override
   public void read2ByteToInts(int[] dst, int offset, int length) throws IOException {
+    byte[] temp = new byte[length * 2];
+
     try {
-      int totalBytes = 2 * length;
-      if (curPosition + totalBytes > curSegment.byteSize()) {
-        throw new IndexOutOfBoundsException("Trying to read beyond segment bounds.");
-      }
+  //    long startTime = System.nanoTime();
+      MemorySegment.copy(curSegment, LAYOUT_BYTE, curPosition, temp, 0, length * 2);
+  //    long endTime = System.nanoTime();
+  //    System.out.println("COPY TIME: " + (endTime - startTime));
+      curPosition += length * 2;
 
-      byte[] buffer = new byte[totalBytes];
-      curSegment.asByteBuffer().position((int) curPosition).get(buffer);
-      curPosition += totalBytes;
-
+   //   startTime = System.nanoTime();
       for (int i = 0; i < length; i++) {
-        int base = i * 2;
-        int b0 = buffer[base] & 0xFF;
-        int b1 = buffer[base + 1] & 0xFF;
-        dst[offset + i] = b0 | (b1 << 8);  // little-endian short as int
+        // Little-endian: least significant byte first
+        int lo = temp[2 * i] & 0xFF;
+        int hi = temp[2 * i + 1] & 0xFF;
+        dst[offset + i] = (hi << 8) | lo;
       }
-
+    //  endTime = System.nanoTime();
+    //  System.out.println("LOOP TIME:" + (endTime - startTime));
+    } catch (
+            @SuppressWarnings("unused")
+            IndexOutOfBoundsException iobe) {
+      super.readInts(dst, offset, length);
     } catch (NullPointerException | IllegalStateException e) {
       throw alreadyClosed(e);
     }
@@ -265,26 +349,21 @@ abstract class MemorySegmentIndexInput extends IndexInput
 
   @Override
   public void read3ByteToInts(int[] dst, int offset, int length) throws IOException {
+    byte[] temp = new byte[length * 3];
+
     try {
-      int totalBytes = 3 * length;
-      if (curPosition + totalBytes > curSegment.byteSize()) {
-        throw new IndexOutOfBoundsException("Trying to read beyond segment bounds.");
-      }
-
-      // Temporary buffer to hold all 3-byte values
-      byte[] buffer = new byte[totalBytes];
-      curSegment.asByteBuffer().position((int) curPosition).get(buffer);
-      curPosition += totalBytes;
-
-      // Convert 3 bytes into int
+      MemorySegment.copy(curSegment, LAYOUT_BYTE, curPosition, temp, 0, length * 3);
+      curPosition += length * 3;
       for (int i = 0; i < length; i++) {
-        int base = i * 3;
-        int b0 = buffer[base] & 0xFF;
-        int b1 = buffer[base + 1] & 0xFF;
-        int b2 = buffer[base + 2] & 0xFF;
-        dst[offset + i] = b0 | (b1 << 8) | (b2 << 16);  // 24-bit little-endian
+        int b0 = temp[3 * i]     & 0xFF;
+        int b1 = temp[3 * i + 1] & 0xFF;
+        int b2 = temp[3 * i + 2] & 0xFF;
+        dst[offset + i] = (b2 << 16) | (b1 << 8) | b0;
       }
-
+    } catch (
+            @SuppressWarnings("unused")
+            IndexOutOfBoundsException iobe) {
+      super.readInts(dst, offset, length);
     } catch (NullPointerException | IllegalStateException e) {
       throw alreadyClosed(e);
     }

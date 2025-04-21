@@ -9,11 +9,9 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Implements FOR compression for integer sequences.
@@ -57,8 +55,12 @@ public final class FORCompression implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         byte token = pdu.in.readByte();
         int bitWidth = (byte) (token & 0b01111111);
         int isAllEqual = (byte) (token & 0b10000000);
@@ -70,6 +72,7 @@ public final class FORCompression implements IntegerCompressor {
         else {
             Arrays.fill(ints, 0, ForUtil.BLOCK_SIZE, pdu.in.readVInt());
         }
+        return false;
     }
 
 

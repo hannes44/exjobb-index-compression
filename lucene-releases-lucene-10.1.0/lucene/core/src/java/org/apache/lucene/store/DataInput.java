@@ -195,6 +195,12 @@ public abstract class DataInput implements Cloneable {
     }
   }
 
+  public void readShorts(short[] dst, int offset, int length) throws IOException {
+    for (int i = 0; i < length; ++i) {
+      dst[offset + i] = readShort();
+    }
+  }
+
   public void read1ByteToInts(int[] dst, int offset, int length) throws IOException {
     Objects.checkFromIndexSize(offset, length, dst.length);
     for (int i = 0; i < length; ++i) {
@@ -215,6 +221,7 @@ public abstract class DataInput implements Cloneable {
       dst[offset + i] = read3ByteIntoInt();
     }
   }
+
 
   /**
    * Reads a specified number of floats into an array at the specified offset.

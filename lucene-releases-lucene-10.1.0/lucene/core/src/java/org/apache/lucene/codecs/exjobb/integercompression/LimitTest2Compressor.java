@@ -119,8 +119,12 @@ public class LimitTest2Compressor implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         byte isThereExceptions = pdu.in.readByte();
         long minValue = pdu.in.readVLong();
         long regularBitWidth = pdu.in.readVLong();
@@ -152,7 +156,7 @@ public class LimitTest2Compressor implements IntegerCompressor {
             }
         }
          */
-
+        return false;
     }
 
     @Override
