@@ -1,6 +1,5 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
-
 import org.apache.lucene.codecs.lucene101.ForUtil;
 import org.apache.lucene.codecs.lucene101.PForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;

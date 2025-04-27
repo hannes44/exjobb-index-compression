@@ -64,7 +64,10 @@ public class Lucene101Codec extends Codec {
 
   public static IntegerCompressor integerCompressor;
 
-  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.LIMITTTEST;
+  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.FASTPFOR;
+
+  // Use SIMD when possible
+  public static boolean useVectorization = false;
 
   public static TermCompressionMode termCompressionMode = TermCompressionMode.ZSTD;
 

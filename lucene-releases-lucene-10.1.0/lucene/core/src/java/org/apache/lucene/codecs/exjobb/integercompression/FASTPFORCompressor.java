@@ -14,7 +14,7 @@ import java.util.*;
  * Implements FOR compression for integer sequences.
  */
 public class FASTPFORCompressor implements IntegerCompressor {
-
+    ForUtil forUtil = new ForUtil();
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
@@ -100,7 +100,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         out.writeByte((byte)exceptionBitCount);
 
         // The position in the exception list
-        out.writeVInt(exceptions.get(exceptionBitCount).size());
+        out.writeInt(exceptions.get(exceptionBitCount).size());
 
         int count = 0;
         // Now the exceptions Lists
@@ -133,7 +133,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         byte regularValueBitWidth = pdu.in.readByte();
 
         byte exceptionCount = pdu.in.readByte();
-        ForUtil forUtil = new ForUtil();
+
 
         forUtil.decode(regularValueBitWidth, pdu, ints);
         //LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
@@ -143,7 +143,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
 
         int exceptionBitCount = pdu.in.readByte();
 
-        int exceptionIndexStart = pdu.in.readVInt();
+        int exceptionIndexStart = pdu.in.readInt();
 
         int exceptionIndex = exceptionIndexStart;
 
@@ -167,20 +167,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         if (exceptionCount == 0)
             return;
 
-        int exceptionBitCount = in.readByte();
-
-        int exceptionIndexStart = in.readVInt();
-
-        int exceptionIndex = exceptionIndexStart;
-
-        //in.skipBytes(exceptionBitCount);
-        for (int i = 0; i < exceptionCount; i++) {
-            in.readByte();
-
-
-           // ints[index] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
-           // exceptionIndex++;
-        }
+        in.skipBytes(exceptionCount + 5);
     }
 
     public IntegerCompressionType getType() {
