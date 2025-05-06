@@ -70,13 +70,13 @@ final class UnsafeSnappyRawCompressor
     {
         // The compression code assumes output is larger than the max compression size (with 32 bytes of
         // extra padding), and does not check bounds for writing to output.
-        int maxCompressedLength = maxCompressedLength((int) (inputLimit - inputAddress));
-        if (outputLimit - outputAddress < maxCompressedLength) {
-            throw new IllegalArgumentException("Output buffer must be at least " + maxCompressedLength + " bytes");
-        }
+//        int maxCompressedLength = maxCompressedLength((int) (inputLimit - inputAddress));
+//        if (outputLimit - outputAddress < maxCompressedLength) {
+//            throw new IllegalArgumentException("Output buffer must be at least " + maxCompressedLength + " bytes");
+//        }
 
         // First write the uncompressed size to the output as a variable length int
-        long output = writeUncompressedLength(outputBase, outputAddress, (int) (inputLimit - inputAddress));
+        long output = outputAddress; //writeUncompressedLength(outputBase, outputAddress, (int) (inputLimit - inputAddress));
 
         for (long blockAddress = inputAddress; blockAddress < inputLimit; blockAddress += BLOCK_SIZE) {
             final long blockLimit = Math.min(inputLimit, blockAddress + BLOCK_SIZE);

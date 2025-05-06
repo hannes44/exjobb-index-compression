@@ -23,8 +23,6 @@ os.system("call gradlew :lucene:core:assemble")
 os.system("call gradlew :lucene:luke:assemble")
 
 
-
-
 for dataset in datasetsToBenchmark:
     indexDataFilePath = "../BenchmarkData/IndexingData/" + dataset + ".csv"
     searchDataFilePath = "../BenchmarkData/SearchData/" + dataset + ".csv"

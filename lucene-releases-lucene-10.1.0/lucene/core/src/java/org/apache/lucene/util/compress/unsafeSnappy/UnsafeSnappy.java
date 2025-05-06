@@ -13,7 +13,6 @@ import org.apache.lucene.util.MalformedInputException;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.apache.lucene.util.UnsafeUtil.UNSAFE;
-import static org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappyConstants.MAX_SNAPPY_HASH_TABLE_SIZE;
 import static org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappyConstants.SIZE_OF_INT;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
@@ -26,8 +25,8 @@ public final class UnsafeSnappy {
 
     public static int compress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, short[] table)
     {
-        verifyRange(input, inputOffset, inputLength);
-        verifyRange(output, outputOffset, maxOutputLength);
+        //verifyRange(input, inputOffset, inputLength);
+        //verifyRange(output, outputOffset, maxOutputLength);
 
         long inputAddress = ARRAY_BYTE_BASE_OFFSET + inputOffset;
         long inputLimit = inputAddress + inputLength;
@@ -55,11 +54,11 @@ public final class UnsafeSnappy {
         return UnsafeSnappyRawDecompressor.getUncompressedLength(compressed, compressedAddress, compressedLimit);
     }
 
-    public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, boolean lengthKnown)
+    public static void decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength, boolean lengthKnown)
             throws MalformedInputException
     {
-        verifyRange(input, inputOffset, inputLength);
-        verifyRange(output, outputOffset, maxOutputLength);
+        //verifyRange(input, inputOffset, inputLength);
+        //verifyRange(output, outputOffset, maxOutputLength);
 
         long inputAddress = ARRAY_BYTE_BASE_OFFSET + inputOffset;
         long inputLimit = inputAddress + inputLength;
@@ -73,7 +72,7 @@ public final class UnsafeSnappy {
             inputLimit = compressedSize + inputAddress;
         }
 
-        return UnsafeSnappyRawDecompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
+        UnsafeSnappyRawDecompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
     }
 
     private static void verifyRange(byte[] data, int offset, int length)
