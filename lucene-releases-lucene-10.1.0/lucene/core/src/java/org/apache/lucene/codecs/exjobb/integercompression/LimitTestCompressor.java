@@ -109,7 +109,7 @@ public final class LimitTestCompressor implements IntegerCompressor {
                         //pdu.in.readShorts(shorts, 0, 128);
                     pdu.in.readInts(ints, 0, 64);
 
-                    IntegerCompressionUtils.intToShort(ints, shorts);
+//                    IntegerCompressionUtils.intToShort(ints, shorts);
                     long duration = System.nanoTime() - start;
                        // for (int i = 0; i < 128; i++) {
 

@@ -130,10 +130,10 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
 
         int exceptionIndex = exceptionIndexStart;
 
-
+        ArrayList<Integer> excpetionValues = exceptions.get(exceptionBitCount);
         for (int i = 0; i < 128; i++) {
             if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1) {
-                ints[i] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
+                ints[i] += excpetionValues.get(exceptionIndex) << regularValueBitWidth;
                 exceptionIndex++;
             }
         }

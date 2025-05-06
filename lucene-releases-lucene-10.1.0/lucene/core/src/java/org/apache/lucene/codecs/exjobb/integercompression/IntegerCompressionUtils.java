@@ -1,7 +1,5 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
-import jdk.incubator.vector.*;
-import static jdk.incubator.vector.VectorOperators.*;
 
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.store.DataOutput;
@@ -36,40 +34,6 @@ public class IntegerCompressionUtils {
         return minValue;
     }
 
-    // Copies 64 ints into 128 shorts
-    public static void intToShort(int[] ints, short[] shorts) {
-        /*
-        for (int i = 0; i < 64; i++) {
-            int value = ints[i];
-
-            // Extract low and high shorts with masking
-            shorts[2 * i]     = (short) (value & 0xFFFF);           // lower 16 bits
-            shorts[2 * i + 1] = (short) ((value >>> 16) & 0xFFFF);  // upper 16 bits
-        }
-         */
-        VectorSpecies<Integer> intSpecies = IntVector.SPECIES_PREFERRED;
-        VectorSpecies<Short> shortSpecies = ShortVector.SPECIES_PREFERRED;
-
-
-        int vectorLength = intSpecies.length(); // Typically 8 for IntVector.SPECIES_256
-
-        int shortVectorLength = shortSpecies.length(); // Typically 16 for ShortVector.SPECIES_256
-
-        for (int i = 0; i < 64; i += intSpecies.length()) {
-            // Load ints
-            IntVector intVec = IntVector.fromArray(intSpecies, ints, i);
-
-            // Get lower 16 bits
-            IntVector lowerInts = intVec.and(IntVector.broadcast(intSpecies, 0xFFFF));
-            ShortVector lowerShorts = lowerInts.reinterpretAsShorts();
-            lowerShorts.intoArray(shorts, i * 2);
-
-            // Get upper 16 bits
-            IntVector upperInts = intVec.lanewise(LSHR, 16);
-            ShortVector upperShorts = upperInts.reinterpretAsShorts();
-            upperShorts.intoArray(shorts, i * 2 + shortSpecies.length());
-        }
-    }
 
     public static boolean isBitMaskZero(byte[] bitMask) {
         for (int i = 0; i < bitMask.length; i++) {
@@ -265,39 +229,15 @@ public class IntegerCompressionUtils {
             throw new IllegalArgumentException("Array must not be null or empty");
         }
 
-        if (Lucene101Codec.useVectorization) {
-            VectorSpecies<Integer> species = IntVector.SPECIES_PREFERRED;
-            IntVector minVec = IntVector.broadcast(species, Integer.MAX_VALUE);
-            IntVector maxVec = IntVector.broadcast(species, Integer.MIN_VALUE);
 
-            int i = 0;
-            // Process array in vector-sized chunks
-            for (; i < species.loopBound(arr.length); i += species.length()) {
-                IntVector vec = IntVector.fromArray(species, arr, i);
-                minVec = minVec.min(vec);
-                maxVec = maxVec.max(vec);
-            }
-
-            // Compute final min/max from the vector results
-            int min = minVec.reduceLanes(MIN);
-            int max = maxVec.reduceLanes(MAX);
-
-            // Process remaining elements
-            for (; i < arr.length; i++) {
-                int val = arr[i];
-                min = Math.min(min, val);
-                max = Math.max(max, val);
-            }
-            return new MinMax(min, max);
-        } else {
-            int min = arr[0], max = arr[0];
-            for (int i = 1; i < arr.length; i++) {
-                int val = arr[i];
-                if (val < min) min = val;
-                if (val > max) max = val;
-            }
-            return new MinMax(min, max);
+        int min = arr[0], max = arr[0];
+        for (int i = 1; i < arr.length; i++) {
+            int val = arr[i];
+            if (val < min) min = val;
+            if (val > max) max = val;
         }
+        return new MinMax(min, max);
+
     }
 
     public static void setNthBit(byte[] byteArray, int n) {

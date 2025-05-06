@@ -11,8 +11,8 @@ class BenchmarkData:
     def getDataRow(self):
         return [self.integerCompressionAlgorithm, self.termCompressionAlgorithm, self.IndexSizeMB, self.IndexingSpeed, self.SearchSpeedNS]
 
-integerCompressionAlgorithmsToBenchmark = ["PFOR", "NEWPFOR", "DELTA", "DEFAULT"]
-termCompressionAlgorithmsToBenchmark = ["LZ4", "LOWERCASE_ASCII", "ZSTD"]
+integerCompressionAlgorithmsToBenchmark = ["PFOR", "NEWPFOR", "DELTA", "DEFAULT", "SIMPLE8B", "NONE", "OPTIMALFASTPFOR"]
+termCompressionAlgorithmsToBenchmark = ["LZ4"]
 datasetsToBenchmark = ["COMMONCRAWL"]
 benchmarkTypes = ["INDEXING", "SEARCH"]
 
@@ -40,7 +40,7 @@ for dataset in datasetsToBenchmark:
             for integerComp in integerCompressionAlgorithmsToBenchmark:
 
                 command = (
-                    'call java --add-modules jdk.incubator.vector -jar '
+                    'call java -Xms16000m --add-modules jdk.incubator.vector -jar '
                     '"lucene\\luke\\build\\lucene-luke-10.1.0-SNAPSHOT\\lucene-luke-10.1.0-SNAPSHOT-standalone.jar" '
                     + benchmarkType + ' '  + dataset + ' ' + integerComp + ' ' + termComp
                 )

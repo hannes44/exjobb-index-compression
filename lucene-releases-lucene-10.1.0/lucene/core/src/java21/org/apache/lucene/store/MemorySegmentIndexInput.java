@@ -260,7 +260,6 @@ abstract class MemorySegmentIndexInput extends IndexInput
       UNSAFE.copyMemory(null, addr, dst,
               UNSAFE.ARRAY_SHORT_BASE_OFFSET,
               length * 2L);
-
  */
 
       int[] temp = new int[64];
