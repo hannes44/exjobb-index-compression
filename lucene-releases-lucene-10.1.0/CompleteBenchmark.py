@@ -11,9 +11,9 @@ class BenchmarkData:
     def getDataRow(self):
         return [self.integerCompressionAlgorithm, self.termCompressionAlgorithm, self.IndexSizeMB, self.IndexingSpeed, self.SearchSpeedNS]
 
-integerCompressionAlgorithmsToBenchmark = ["PFOR", "NEWPFOR", "DELTA", "DEFAULT", "SIMPLE8B", "NONE", "OPTIMALFASTPFOR"]
-termCompressionAlgorithmsToBenchmark = ["LZ4"]
-datasetsToBenchmark = ["COMMONCRAWL"]
+integerCompressionAlgorithmsToBenchmark = ["NONE"]
+termCompressionAlgorithmsToBenchmark = ["SNAPPY", "ZSTD"]
+datasetsToBenchmark = ["COMMONCRAWL_2025"]
 benchmarkTypes = ["INDEXING", "SEARCH"]
 
 benchmarkDataForDataset = {}
