@@ -5,7 +5,6 @@ import org.apache.lucene.codecs.lucene101.ForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.LongHeap;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
@@ -15,7 +14,7 @@ import java.util.*;
  * Implements FOR compression for integer sequences.
  */
 public class FASTPFORCompressor implements IntegerCompressor {
-
+    ForUtil forUtil = new ForUtil();
     /** FOR Encode 128 integers from {@code longs} into {@code out}. */
     // TODO: try using normal bitpacking instead of variable integers
     public void encode(int[] ints, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException
@@ -101,7 +100,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         out.writeByte((byte)exceptionBitCount);
 
         // The position in the exception list
-        out.writeVInt(exceptions.get(exceptionBitCount).size());
+        out.writeInt(exceptions.get(exceptionBitCount).size());
 
         int count = 0;
         // Now the exceptions Lists
@@ -125,22 +124,26 @@ public class FASTPFORCompressor implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         byte regularValueBitWidth = pdu.in.readByte();
 
         byte exceptionCount = pdu.in.readByte();
-        ForUtil forUtil = new ForUtil();
+
 
         forUtil.decode(regularValueBitWidth, pdu, ints);
         //LimitTestCompressor.decode(regularValueBitWidth, pdu, ints);
 
         if (exceptionCount == 0)
-            return;
+            return false;
 
         int exceptionBitCount = pdu.in.readByte();
 
-        int exceptionIndexStart = pdu.in.readVInt();
+        int exceptionIndexStart = pdu.in.readInt();
 
         int exceptionIndex = exceptionIndexStart;
 
@@ -150,7 +153,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
             ints[index] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
             exceptionIndex++;
         }
-
+        return false;
     }
 
     @Override
@@ -164,20 +167,7 @@ public class FASTPFORCompressor implements IntegerCompressor {
         if (exceptionCount == 0)
             return;
 
-        int exceptionBitCount = in.readByte();
-
-        int exceptionIndexStart = in.readVInt();
-
-        int exceptionIndex = exceptionIndexStart;
-
-        //in.skipBytes(exceptionBitCount);
-        for (int i = 0; i < exceptionCount; i++) {
-            in.readByte();
-
-
-           // ints[index] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
-           // exceptionIndex++;
-        }
+        in.skipBytes(exceptionCount + 5);
     }
 
     public IntegerCompressionType getType() {

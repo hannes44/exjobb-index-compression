@@ -20,7 +20,8 @@
 module org.apache.lucene.core {
   requires java.logging;
   requires static jdk.management; // this is optional but explicit declaration is recommended
-  requires jdk.unsupported; // TODO: Remove when usage of UNSAFE is removed
+  requires jdk.unsupported;
+    requires jdk.incubator.vector; // TODO: Remove when usage of UNSAFE is removed
 
   exports org.apache.lucene.analysis.standard;
   exports org.apache.lucene.analysis.tokenattributes;

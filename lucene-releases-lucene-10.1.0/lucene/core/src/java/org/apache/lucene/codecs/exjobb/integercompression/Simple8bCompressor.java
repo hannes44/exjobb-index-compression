@@ -3,7 +3,6 @@ package org.apache.lucene.codecs.exjobb.integercompression;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -108,8 +107,12 @@ public class Simple8bCompressor implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         int i = 0;
 
         while (i < 128) {
@@ -123,6 +126,7 @@ public class Simple8bCompressor implements IntegerCompressor {
                 ints[i] = (int) ((encodedWord >>> (j * bitWidth)) & ((1L << bitWidth) - 1));
             }
         }
+        return false;
     }
 
     @Override

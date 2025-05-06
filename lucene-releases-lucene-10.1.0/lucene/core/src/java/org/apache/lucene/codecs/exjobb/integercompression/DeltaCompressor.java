@@ -3,7 +3,6 @@ package org.apache.lucene.codecs.exjobb.integercompression;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,13 +35,18 @@ public class DeltaCompressor implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
 
         // Since we are returning the ints as deltas we can simply read them
         for (int i = 0; i < 128; i++) {
             ints[i] = pdu.in.readVInt();
         }
+        return false;
     }
 
     @Override

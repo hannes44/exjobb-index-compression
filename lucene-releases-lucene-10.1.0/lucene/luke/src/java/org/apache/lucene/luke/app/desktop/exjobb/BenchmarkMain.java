@@ -4,6 +4,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.codecs.exjobb.integercompression.LimitTestCompressor;
 import org.apache.lucene.util.compress.TermCompressionMode;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.index.*;
@@ -15,22 +16,22 @@ import java.nio.file.Paths;
 
 import java.util.ArrayList;
 
-
 public class BenchmarkMain {
     private static final Dataset defaultDataset = Dataset.COMMONCRAWL_2025;
     private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DEFAULT;
     private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.ZSTD;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
-    // Can only benchmark either searching or indexing during a run since we don't want caching to interfere
+    // Can only benchmark either searching or indexing during a run since we don't
+    // want caching to interfere
     public enum BenchmarkingType {
         SEARCH,
         INDEXING
     }
 
-    // args[0]: BenchmarkingType, args[1]: Dataset: args[2]: IntegerCompressionType, args[3] TermCompressionMode
-    public static void entryPoint(String[] args)
-    {
+    // args[0]: BenchmarkingType, args[1]: Dataset: args[2]: IntegerCompressionType,
+    // args[3] TermCompressionMode
+    public static void entryPoint(String[] args) {
         BenchmarkingType benchmarkingType = defaultBenchmarkingType;
         Dataset dataset = defaultDataset;
         IntegerCompressionType integerCompressionType = defaultIntegerCompressionType;
@@ -51,13 +52,17 @@ public class BenchmarkMain {
         } catch (IOException e) {
             System.out.println(e);
         }
+
+        System.out.println(LimitTestCompressor.averageShortTime + " SHORT");
+        System.out.println(LimitTestCompressor.averageIntTime + " INT");
     }
 
-    public static void luceneCompressionTesting(Dataset dataset, IntegerCompressionType integerCompressionType, TermCompressionMode termMode, BenchmarkingType benchmarkingType) throws IOException {
-        // For testing a specific setup, set to false. For complete testing of all compression types on all datasets, set to true
+    public static void luceneCompressionTesting(Dataset dataset, IntegerCompressionType integerCompressionType,
+            TermCompressionMode termMode, BenchmarkingType benchmarkingType) throws IOException {
+        // For testing a specific setup, set to false. For complete testing of all
+        // compression types on all datasets, set to true
         BenchmarkDataOutput output = new TextFileBenchmarkDataOutput();
         ArrayList<BenchmarkPerformanceData> benchmarkPerformanceDatas = new ArrayList<>();
-
 
         if (dataset == null)
             dataset = defaultDataset;
@@ -66,23 +71,22 @@ public class BenchmarkMain {
         if (termMode == null)
             termMode = defaultTermCompressionMode;
 
-        System.out.println("Benchmarking dataset: " + dataset.name() + " Using integer compression algorithm: " + integerCompressionType.name() + " And using term compression algorithm: " + termMode.name());
+        System.out.println("Benchmarking dataset: " + dataset.name() + " Using integer compression algorithm: "
+                + integerCompressionType.name() + " And using term compression algorithm: " + termMode.name());
 
         if (benchmarkingType == BenchmarkingType.INDEXING) {
             IndexingBenchmarkData indexData = benchmarkIndexing(integerCompressionType, dataset, termMode);
             output.write(indexData, dataset);
-        }
-        else if (benchmarkingType == BenchmarkingType.SEARCH) {
+        } else if (benchmarkingType == BenchmarkingType.SEARCH) {
             SearchBenchmarkData searchData = benchmarkSearching(integerCompressionType, dataset, termMode);
             output.write(searchData, dataset);
         }
 
-
-
     }
 
-    public static IndexingBenchmarkData benchmarkIndexing(IntegerCompressionType type, Dataset dataset, TermCompressionMode termCompressionMode) throws IOException {
-        String indexPath = "index/" + dataset.name()  + "_" + type.name() + "_" + termCompressionMode.name();
+    public static IndexingBenchmarkData benchmarkIndexing(IntegerCompressionType type, Dataset dataset,
+            TermCompressionMode termCompressionMode) throws IOException {
+        String indexPath = "index/" + dataset.name() + "_" + type.name() + "_" + termCompressionMode.name();
 
         BenchmarkUtils.deleteExistingIndex(indexPath);
 
@@ -101,13 +105,12 @@ public class BenchmarkMain {
         else
             config.setCodec(new Lucene101Codec(Lucene101Codec.Mode.BEST_SPEED, type, termCompressionMode));
 
-
         IndexWriter writer = new IndexWriter(directory, config);
 
         DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
 
         IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer, indexPath);
-        indexingData.integerCompressionType= type;
+        indexingData.integerCompressionType = type;
         indexingData.termCompressionMode = termCompressionMode;
 
         System.out.println("Benchmark for dataset: " + benchmarker.GetDatasetName());
@@ -117,8 +120,9 @@ public class BenchmarkMain {
         return indexingData;
     }
 
-    public static SearchBenchmarkData benchmarkSearching(IntegerCompressionType type, Dataset dataset, TermCompressionMode termCompressionMode) {
-        String indexPath = "index/" + dataset.name()  + "_" + type.name() + "_" + termCompressionMode.name();
+    public static SearchBenchmarkData benchmarkSearching(IntegerCompressionType type, Dataset dataset,
+            TermCompressionMode termCompressionMode) {
+        String indexPath = "index/" + dataset.name() + "_" + type.name() + "_" + termCompressionMode.name();
         DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
 
         Lucene101Codec.integerCompressionType = type;
@@ -143,7 +147,6 @@ public class BenchmarkMain {
                 System.out.println("ERROR, The given dataset is not supported for benchmarking");
                 return null;
         }
-
 
     }
 

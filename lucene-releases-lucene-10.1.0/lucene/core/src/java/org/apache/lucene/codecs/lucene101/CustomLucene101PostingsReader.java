@@ -25,7 +25,7 @@ import java.util.*;
 import org.apache.lucene.codecs.BlockTermState;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.PostingsReaderBase;
-import org.apache.lucene.codecs.exjobb.integercompression.DeltaCompressor;
+import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionFactory;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionUtils;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressor;
 import org.apache.lucene.codecs.lucene101.Lucene101PostingsFormat.IntBlockTermState;
@@ -77,11 +77,11 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
     HashMap<Integer, ArrayList<Integer>> exceptions;
 
-    private IntegerCompressor integerCompressor;
+
 
     /** Sole constructor. */
     public CustomLucene101PostingsReader(SegmentReadState state) throws IOException {
-        this.integerCompressor = Lucene101Codec.integerCompressor;
+
 
         String metaName =
                 IndexFileNames.segmentFileName(
@@ -318,8 +318,10 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
         private ForDeltaUtil forDeltaUtil;
         private PForUtil pforUtil;
+        private IntegerCompressor integerCompressor;
 
         private final int[] docBuffer = new int[BLOCK_SIZE];
+        private final short[] docBufferShorts = new short[BLOCK_SIZE];
 
         private int doc; // doc we last read
 
@@ -348,6 +350,8 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
         private final int[] freqBuffer = new int[BLOCK_SIZE];
         private final int[] posDeltaBuffer;
+        private final short[] posDeltaBufferShorts;
+        private boolean useShorts = false;
 
         private final int[] payloadLengthBuffer;
         private final int[] offsetStartDeltaBuffer;
@@ -422,6 +426,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
 
         public BlockPostingsEnum(FieldInfo fieldInfo, int flags, boolean needsImpacts)
                 throws IOException {
+            integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(Lucene101Codec.integerCompressionType);
             options = fieldInfo.getIndexOptions();
             indexHasFreq = options.compareTo(IndexOptions.DOCS_AND_FREQS) >= 0;
             indexHasPos = options.compareTo(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS) >= 0;
@@ -460,10 +465,12 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 this.posIn = CustomLucene101PostingsReader.this.posIn.clone();
                 posInUtil = VECTORIZATION_PROVIDER.newPostingDecodingUtil(posIn);
                 posDeltaBuffer = new int[BLOCK_SIZE];
+                posDeltaBufferShorts = new short[BLOCK_SIZE];
             } else {
                 this.posIn = null;
                 this.posInUtil = null;
                 posDeltaBuffer = null;
+                posDeltaBufferShorts = null;
             }
 
             if (needsOffsets || needsPayloads) {
@@ -597,14 +604,14 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
             if (!Lucene101Codec.customEncodeDocIds)
                 forDeltaUtil.decodeAndPrefixSum(docInUtil, prevDocID, docBuffer);
             else {
-                integerCompressor.decode(docInUtil, docBuffer, exceptions);
+                boolean useShorts = integerCompressor.decode(docInUtil, docBuffer, exceptions, docBufferShorts);
 
-                for (int i = 0; i < 128; i++)
-                {
-                    if (i != 0)
-                        docBuffer[i] += docBuffer[i-1];
-                    else
-                        docBuffer[i] += prevDocID;
+                int prev = prevDocID;
+
+                for (int i = 0; i < 128; i++) {
+                    int val = useShorts ? (docBufferShorts[i] & 0xFFFF) : docBuffer[i];
+                    docBuffer[i] = val + prev;
+                    prev = docBuffer[i];
                 }
             }
 
@@ -934,7 +941,6 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 while (toSkip >= BLOCK_SIZE) {
                     assert posIn.getFilePointer() != lastPosBlockFP;
                     //PForUtil.skip(posIn);
-                   // DeltaCompressor.skip(posIn);
                     integerCompressor.skip(posIn);
 
                     if (payIn != null) {
@@ -988,6 +994,7 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                     }
                 } else {
                     posDeltaBuffer[i] = code;
+                    useShorts = false;
                 }
 
                 if (indexHasOffsets) {
@@ -1043,7 +1050,9 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 return;
             }
             //pforUtil.decode(posInUtil, posDeltaBuffer);
-            integerCompressor.decode(posInUtil, posDeltaBuffer, exceptions);
+            useShorts = integerCompressor.decode(posInUtil, posDeltaBuffer, exceptions, posDeltaBufferShorts);
+
+
 
             if (indexHasOffsetsOrPayloads) {
                 refillOffsetsOrPayloads();
@@ -1097,7 +1106,10 @@ public final class CustomLucene101PostingsReader extends PostingsReaderBase {
                 refillPositions();
                 posBufferUpto = 0;
             }
-            position += posDeltaBuffer[posBufferUpto];
+            if (!useShorts)
+                position += posDeltaBuffer[posBufferUpto];
+            else
+                position += posDeltaBufferShorts[posBufferUpto] & 0xFFFF;
 
             if (needsOffsetsOrPayloads) {
                 accumulatePayloadAndOffsets();
