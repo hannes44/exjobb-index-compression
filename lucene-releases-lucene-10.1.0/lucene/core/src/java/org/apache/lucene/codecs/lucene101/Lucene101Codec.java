@@ -64,7 +64,10 @@ public class Lucene101Codec extends Codec {
 
   public static IntegerCompressor integerCompressor;
 
-  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.NEWPFOR;
+  public static IntegerCompressionType integerCompressionType = IntegerCompressionType.FASTPFOR;
+
+  // Use SIMD when possible
+  public static boolean useVectorization = false;
 
   public static TermCompressionMode termCompressionMode = TermCompressionMode.ZSTD;
 
@@ -152,8 +155,8 @@ public class Lucene101Codec extends Codec {
     this.storedFieldsFormat =
             new Lucene90StoredFieldsFormat(Objects.requireNonNull(mode).storedMode);
     Lucene101Codec.integerCompressor = IntegerCompressionFactory.CreateIntegerCompressor(integerCompressionType);
+    this.integerCompressionType = integerCompressionType;
     Lucene101Codec.termCompressionMode = termCompressionMode;
-    Lucene101Codec.useDefaultCompression = false;
     this.defaultPostingsFormat = new Lucene101PostingsFormat();
     this.defaultDVFormat = new Lucene90DocValuesFormat();
     this.defaultKnnVectorsFormat = new Lucene99HnswVectorsFormat();

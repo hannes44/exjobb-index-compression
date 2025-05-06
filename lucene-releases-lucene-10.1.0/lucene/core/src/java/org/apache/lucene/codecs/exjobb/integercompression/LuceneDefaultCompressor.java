@@ -1,7 +1,6 @@
 package org.apache.lucene.codecs.exjobb.integercompression;
 
 
-import org.apache.lucene.codecs.lucene101.ForUtil;
 import org.apache.lucene.codecs.lucene101.PForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
@@ -13,13 +12,10 @@ import java.util.HashMap;
 
 /** Default Compressor for lucene 10.1.0 */
 public class LuceneDefaultCompressor implements IntegerCompressor {
-
+    private final PForUtil pforUtil = new PForUtil();
     @Override
     public void encode(int[] positions, DataOutput out, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-       // for ()
 
-        final ForUtil forUtil = new ForUtil();
-        PForUtil pforUtil = new PForUtil();
         pforUtil.encode(positions, out);
     }
 
@@ -34,15 +30,13 @@ public class LuceneDefaultCompressor implements IntegerCompressor {
     }
 
     @Override
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
-        final ForUtil forUtil = new ForUtil();
-        PForUtil pforUtil = new PForUtil();
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         pforUtil.decode(pdu, ints);
+        return false;
     }
 
     @Override
     public void skip(IndexInput in) throws IOException {
-        PForUtil pforUtil = new PForUtil();
         PForUtil.skip(in);
     }
 

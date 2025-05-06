@@ -18,7 +18,7 @@ public interface IntegerCompressor {
 
     public int decodeSingleInt(IndexInput input) throws IOException;
 
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException;
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException;
 
     public void skip(IndexInput in) throws IOException;
 

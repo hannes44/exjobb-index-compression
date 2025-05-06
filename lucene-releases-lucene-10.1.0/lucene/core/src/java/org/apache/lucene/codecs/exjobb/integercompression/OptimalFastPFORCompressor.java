@@ -5,7 +5,6 @@ import org.apache.lucene.codecs.lucene101.ForUtil;
 import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.LongHeap;
 import org.apache.lucene.util.packed.PackedInts;
 
 import java.io.IOException;
@@ -107,8 +106,12 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
     }
 
     //https://en.wikipedia.org/wiki/Delta_encoding
-    /** Delta Decode 128 integers into {@code ints}. */
-    public void decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions) throws IOException {
+    /**
+     * Delta Decode 128 integers into {@code ints}.
+     *
+     * @return
+     */
+    public boolean decode(PostingDecodingUtil pdu, int[] ints, HashMap<Integer, ArrayList<Integer>> exceptions, short[] shorts) throws IOException {
         byte[] exceptionBitMask = new byte[16];
 
         byte regularValueBitWidth = pdu.in.readByte();
@@ -119,7 +122,7 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
         int exceptionBitCount = pdu.in.readByte();
 
         if (exceptionBitCount == 0)
-            return;
+            return false;
 
         pdu.in.readBytes(exceptionBitMask, 0, 16);
 
@@ -127,14 +130,14 @@ public class OptimalFastPFORCompressor implements IntegerCompressor {
 
         int exceptionIndex = exceptionIndexStart;
 
-
+        ArrayList<Integer> excpetionValues = exceptions.get(exceptionBitCount);
         for (int i = 0; i < 128; i++) {
             if (IntegerCompressionUtils.getNthBit(exceptionBitMask, i) == 1) {
-                ints[i] += exceptions.get(exceptionBitCount).get(exceptionIndex) << regularValueBitWidth;
+                ints[i] += excpetionValues.get(exceptionIndex) << regularValueBitWidth;
                 exceptionIndex++;
             }
         }
-
+        return false;
     }
 
     @Override

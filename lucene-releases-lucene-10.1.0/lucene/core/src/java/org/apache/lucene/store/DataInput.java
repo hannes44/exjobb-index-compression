@@ -26,6 +26,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import org.apache.lucene.internal.vectorization.PostingDecodingUtil;
 import org.apache.lucene.util.BitUtil;
 import org.apache.lucene.util.GroupVIntUtil;
 
@@ -98,6 +100,26 @@ public abstract class DataInput implements Cloneable {
     final byte b4 = readByte();
     return ((b4 & 0xFF) << 24) | ((b3 & 0xFF) << 16) | ((b2 & 0xFF) << 8) | (b1 & 0xFF);
   }
+
+  public int read1ByteIntoInt() throws IOException {
+    final byte b1 = readByte();
+
+    return (b1 & 0xFF);
+  }
+
+  public int read2ByteIntoInt() throws IOException {
+    final byte b1 = readByte();
+    final byte b2 = readByte();
+    return ((b2 & 0xFF) << 8) | (b1 & 0xFF);
+  }
+
+  public int read3ByteIntoInt() throws IOException {
+    final byte b1 = readByte();
+    final byte b2 = readByte();
+    final byte b3 = readByte();
+    return ((b3 & 0xFF) << 16) | ((b2 & 0xFF) << 8) | (b1 & 0xFF);
+  }
+
 
   /**
    * Override if you have an efficient implementation. In general this is when the input supports
@@ -172,6 +194,34 @@ public abstract class DataInput implements Cloneable {
       dst[offset + i] = readInt();
     }
   }
+
+  public void readShorts(short[] dst, int offset, int length) throws IOException {
+    for (int i = 0; i < length; ++i) {
+      dst[offset + i] = readShort();
+    }
+  }
+
+  public void read1ByteToInts(int[] dst, int offset, int length) throws IOException {
+    Objects.checkFromIndexSize(offset, length, dst.length);
+    for (int i = 0; i < length; ++i) {
+      dst[offset + i] = read1ByteIntoInt();
+    }
+  }
+
+  public void read2ByteToInts(int[] dst, int offset, int length) throws IOException {
+    Objects.checkFromIndexSize(offset, length, dst.length);
+    for (int i = 0; i < length; ++i) {
+      dst[offset + i] = read2ByteIntoInt();
+    }
+  }
+
+  public void read3ByteToInts(int[] dst, int offset, int length) throws IOException {
+    Objects.checkFromIndexSize(offset, length, dst.length);
+    for (int i = 0; i < length; ++i) {
+      dst[offset + i] = read3ByteIntoInt();
+    }
+  }
+
 
   /**
    * Reads a specified number of floats into an array at the specified offset.

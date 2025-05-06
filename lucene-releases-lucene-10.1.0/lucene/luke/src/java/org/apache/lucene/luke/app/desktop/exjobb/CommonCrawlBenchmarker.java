@@ -11,6 +11,7 @@ import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -65,32 +66,26 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
-        int maxFiles = 100;
+        double maxSizeGB = 100; // Default to 1GB if not specified
+        long maxSizeBytes = (long) (maxSizeGB * 1024 * 1024 * 1024);
 
         long startTime = System.currentTimeMillis();
-
         File folder = new File(folderPath);
-        File[] wetFiles = folder.listFiles((dir, name) -> name.endsWith(".wet")); // Filter for .wet files
-        int fileCount = wetFiles.length;
-
-        int filesToIndex = maxFiles > fileCount ? fileCount : maxFiles;
+        File[] wetFiles = folder.listFiles((dir, name) -> name.endsWith(".wet"));
 
         if (wetFiles == null || wetFiles.length == 0) {
             System.out.println("No WET files found in the folder: " + folderPath);
             return null;
         }
 
-        // Implement the WETHandler to index the content
+        // Implement the WETHandler
         WETHandler handler = new WETHandler() {
             @Override
             public void handleRecord(String url, String content) {
                 try {
-                    // Create a Lucene document
                     Document doc = new Document();
-                    doc.add(new StringField("url", url, Field.Store.YES)); // Store the URL
-                    doc.add(new TextField("content", content, Field.Store.NO)); // Store the content
-
-                    // Add the document to the index
+                    doc.add(new StringField("url", url, Field.Store.YES));
+                    doc.add(new TextField("content", content, Field.Store.NO));
                     indexWriter.addDocument(doc);
                 } catch (IOException e) {
                     System.err.println("Failed to index URL: " + url);
@@ -100,22 +95,40 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         };
 
         int totalFilesProcessed = 0;
+        long totalProcessedSize = 0;
+        boolean shouldStop = false;
+
         for (File wetFile : wetFiles) {
-            if (filesToIndex <= totalFilesProcessed)
+            if (shouldStop) {
                 break;
+            }
+
+            long fileSize = wetFile.length();
+
+            // Check if processing this file would exceed the limit (but process it anyway)
+            if (totalProcessedSize + fileSize > maxSizeBytes) {
+                shouldStop = true;
+                System.out.println("Next file would exceed limit, but processing it anyway...");
+            }
 
             try {
-                System.out.println("Processing file: " + wetFile.getName());
-                System.out.print("File: " + (totalFilesProcessed + 1) + " Out of: " + filesToIndex);
+                System.out.printf("Processing: %s (%.2f MB)%n",
+                        wetFile.getName(), fileSize / (1024.0 * 1024.0));
+
                 parseWETFile(wetFile.getAbsolutePath(), handler);
                 totalFilesProcessed++;
+                totalProcessedSize += fileSize;
+
+                System.out.printf("Cumulative: %.2f/%.2f GB%n",
+                        totalProcessedSize / (1024.0 * 1024.0 * 1024.0),
+                        maxSizeGB);
+
             } catch (IOException e) {
                 System.err.println("Failed to process file: " + wetFile.getName());
                 e.printStackTrace();
             }
         }
 
-        // Commit and close the index writer
         try {
             indexWriter.commit();
             indexWriter.close();
@@ -127,7 +140,15 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
 
-        System.out.println("Indexing completed for " + totalFilesProcessed + " files in " + duration + " milliseconds.");
+        System.out.printf(
+                "Indexing completed for %d files (%.2f GB input) in %d ms.%n" +
+                        "Final size: %.2f GB (%.2f GB over limit)%n",
+                totalFilesProcessed,
+                totalProcessedSize / (1024.0 * 1024.0 * 1024.0),
+                duration,
+                totalProcessedSize / (1024.0 * 1024.0 * 1024.0),
+                Math.max(0, (totalProcessedSize - maxSizeBytes) / (1024.0 * 1024.0 * 1024.0))
+        );
 
         IndexingBenchmarkData result = new IndexingBenchmarkData();
         result.totalIndexingTimeInMS = duration;

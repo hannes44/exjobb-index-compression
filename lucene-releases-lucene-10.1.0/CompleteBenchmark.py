@@ -38,7 +38,7 @@ for dataset in datasetsToBenchmark:
             for integerComp in integerCompressionAlgorithmsToBenchmark:
 
                 command = (
-                    'call java --add-modules jdk.incubator.vector -jar '
+                    'call java -Xms16000m --add-modules jdk.incubator.vector -jar '
                     '"lucene\\luke\\build\\lucene-luke-10.1.0-SNAPSHOT\\lucene-luke-10.1.0-SNAPSHOT-standalone.jar" '
                     + benchmarkType + ' '  + dataset + ' ' + integerComp + ' ' + termComp
                 )

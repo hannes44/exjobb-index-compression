@@ -29,7 +29,7 @@ public final class PForUtil {
 
   private static final int MAX_EXCEPTIONS = 7;
 
-  static boolean allEqual(int[] l) {
+  public static boolean allEqual(int[] l) {
     for (int i = 1; i < ForUtil.BLOCK_SIZE; ++i) {
       if (l[i] != l[0]) {
         return false;
