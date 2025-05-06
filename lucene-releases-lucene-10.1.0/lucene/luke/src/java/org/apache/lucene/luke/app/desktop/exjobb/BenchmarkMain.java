@@ -4,6 +4,8 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 //import org.apache.lucene.codecs.lucene912.IntegerCompressionType;
 //import org.apache.lucene.codecs.lucene912.Lucene912Codec;
 import org.apache.lucene.codecs.exjobb.integercompression.IntegerCompressionType;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.compress.TermCompressionMode;
 import org.apache.lucene.codecs.lucene101.Lucene101Codec;
 import org.apache.lucene.index.*;
@@ -19,7 +21,7 @@ import java.util.ArrayList;
 public class BenchmarkMain {
     private static final Dataset defaultDataset = Dataset.COMMONCRAWL_2025;
     private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DEFAULT;
-    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.ZSTD;
+    private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
 
     // Can only benchmark either searching or indexing during a run since we don't want caching to interfere

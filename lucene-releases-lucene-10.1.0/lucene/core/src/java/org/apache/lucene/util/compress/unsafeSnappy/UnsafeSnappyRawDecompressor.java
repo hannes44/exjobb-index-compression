@@ -25,7 +25,7 @@ final class UnsafeSnappyRawDecompressor
         return readUncompressedLength(compressed, compressedAddress, compressedLimit)[0];
     }
 
-    public static int decompress(
+    public static void decompress(
             final Object inputBase,
             final long inputAddress,
             final long inputLimit,
@@ -34,30 +34,29 @@ final class UnsafeSnappyRawDecompressor
             final long outputLimit)
     {
         // Read the uncompressed length from the front of the input
-        long input = inputAddress;
-        int[] varInt = readUncompressedLength(inputBase, input, inputLimit);
-        int expectedLength = varInt[0];
-        input += varInt[1];
+        //int[] varInt = readUncompressedLength(inputBase, input, inputLimit);
+        //int expectedLength = varInt[0];
+        //input += varInt[1];
 
-        UnsafeSnappyInternalUtils.checkArgument(expectedLength <= (outputLimit - outputAddress),
-                "Uncompressed length %s must be less than %s", expectedLength, (outputLimit - outputAddress));
+        //UnsafeSnappyInternalUtils.checkArgument(expectedLength <= (outputLimit - outputAddress),
+        //        "Uncompressed length %s must be less than %s", expectedLength, (outputLimit - outputAddress));
 
         // Process the entire input
         int uncompressedSize = uncompressAll(
                 inputBase,
-                input,
+                inputAddress,
                 inputLimit,
                 outputBase,
                 outputAddress,
                 outputLimit);
 
-        if (!(expectedLength == uncompressedSize)) {
-            throw new MalformedInputException(0, String.format("Recorded length is %s bytes but actual length after decompression is %s bytes ",
-                    expectedLength,
-                    uncompressedSize));
-        }
+//        if (!(expectedLength == uncompressedSize)) {
+//            throw new MalformedInputException(0, String.format("Recorded length is %s bytes but actual length after decompression is %s bytes ",
+//                    expectedLength,
+//                    uncompressedSize));
+//        }
 
-        return expectedLength;
+        //return expectedLength;
     }
 
     @SuppressWarnings("fallthrough")
@@ -98,9 +97,9 @@ final class UnsafeSnappyRawDecompressor
                         trailer |= (UNSAFE.getByte(inputBase, input) & 0xff);
                 }
             }
-            if (trailer < 0) {
-                throw new MalformedInputException(input - inputAddress);
-            }
+//            if (trailer < 0) {
+//                throw new MalformedInputException(input - inputAddress);
+//            }
             input += trailerBytes;
 
             int length = entry & 0xff;
@@ -110,16 +109,16 @@ final class UnsafeSnappyRawDecompressor
 
             if ((opCode & 0x3) == LITERAL) {
                 int literalLength = length + trailer;
-                if (literalLength < 0) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (literalLength < 0) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
 
                 // copy literal
                 long literalOutputLimit = output + literalLength;
                 if (literalOutputLimit > fastOutputLimit || input + literalLength > inputLimit - SIZE_OF_LONG) {
-                    if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
-                        throw new MalformedInputException(input - inputAddress);
-                    }
+//                    if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
+//                        throw new MalformedInputException(input - inputAddress);
+//                    }
 
                     // slow, precise copy
                     UNSAFE.copyMemory(inputBase, input, outputBase, output, literalLength);
@@ -144,18 +143,18 @@ final class UnsafeSnappyRawDecompressor
                 // bit 8).
                 int matchOffset = entry & 0x700;
                 matchOffset += trailer;
-                if (matchOffset < 0) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (matchOffset < 0) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
 
                 long matchAddress = output - matchOffset;
-                if (matchAddress < outputAddress || output + length > outputLimit) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (matchAddress < outputAddress || output + length > outputLimit) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
                 long matchOutputLimit = output + length;
-                if (matchOutputLimit > outputLimit) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (matchOutputLimit > outputLimit) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
 
                 if (output > fastOutputLimit) {
                     // slow match copy
@@ -292,25 +291,25 @@ final class UnsafeSnappyRawDecompressor
                             b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
                             bytesRead++;
                             result |= (b & 0x7f) << 28;
-                            if ((b & 0x80) != 0) {
-                                throw new MalformedInputException(compressedAddress + bytesRead, "last byte of compressed length int has high bit set");
-                            }
+//                            if ((b & 0x80) != 0) {
+//                                throw new MalformedInputException(compressedAddress + bytesRead, "last byte of compressed length int has high bit set");
+//                            }
                         }
                     }
                 }
             }
         }
-        if (result < 0) {
-            throw new MalformedInputException(compressedAddress, "invalid compressed length");
-        }
+//        if (result < 0) {
+//            throw new MalformedInputException(compressedAddress, "invalid compressed length");
+//        }
         return new int[] {result, bytesRead};
     }
 
     private static int getUnsignedByteSafe(Object base, long address, long limit)
     {
-        if (address >= limit) {
-            throw new MalformedInputException(limit - address, "Input is truncated");
-        }
+//        if (address >= limit) {
+//            throw new MalformedInputException(limit - address, "Input is truncated");
+//        }
         return UNSAFE.getByte(base, address) & 0xFF;
     }
 }

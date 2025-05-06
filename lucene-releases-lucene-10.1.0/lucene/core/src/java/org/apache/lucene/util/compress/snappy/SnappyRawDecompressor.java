@@ -23,7 +23,7 @@ final class SnappyRawDecompressor
 
     private SnappyRawDecompressor() {}
 
-    public static int decompress(
+    public static void decompress(
             final byte[] inputBase,
             final long inputAddress,
             final long inputLimit,
@@ -32,34 +32,34 @@ final class SnappyRawDecompressor
             final long outputLimit)
     {
         // Read the uncompressed length from the front of the input
-        long input = inputAddress;
-        int[] varInt = readUncompressedLength(inputBase, input, inputLimit);
-        int expectedLength = varInt[0];
-        input += varInt[1];
+        //int[] varInt = readUncompressedLength(inputBase, input, inputLimit);
+        //int expectedLength = varInt[0];
+        //input += varInt[1];
 
-        SnappyInternalUtils.checkArgument(expectedLength <= (outputLimit - outputAddress),
-                "Uncompressed length %s must be less than %s", expectedLength, (outputLimit - outputAddress));
+        //SnappyInternalUtils.checkArgument(expectedLength <= (outputLimit - outputAddress),
+        //        "Uncompressed length %s must be less than %s", expectedLength, (outputLimit - outputAddress));
 
         // Process the entire input
-        int uncompressedSize = uncompressAll(
-                inputBase,
-                input,
-                inputLimit,
-                outputBase,
-                outputAddress,
-                outputLimit);
+        //int uncompressedSize =
+        uncompressAll(
+            inputBase,
+            inputAddress,
+            inputLimit,
+            outputBase,
+            outputAddress,
+            outputLimit);
 
-        if (!(expectedLength == uncompressedSize)) {
-            throw new MalformedInputException(0, String.format("Recorded length is %s bytes but actual length after decompression is %s bytes ",
-                    expectedLength,
-                    uncompressedSize));
-        }
+//        if (!(expectedLength == uncompressedSize)) {
+//            throw new MalformedInputException(0, String.format("Recorded length is %s bytes but actual length after decompression is %s bytes ",
+//                    expectedLength,
+//                    uncompressedSize));
+//        }
 
-        return expectedLength;
+//        return expectedLength;
     }
 
     @SuppressWarnings("fallthrough")
-    private static int uncompressAll(
+    private static void uncompressAll(
             final byte[] inputBase,
             final long inputAddress,
             final long inputLimit,
@@ -82,9 +82,9 @@ final class SnappyRawDecompressor
                 trailer = readInt(inputBase, input) & wordmask[trailerBytes];
             }
             else {
-                if (input + trailerBytes > inputLimit) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (input + trailerBytes > inputLimit) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
                 switch (trailerBytes) {
                     case 4:
                         trailer = (inputBase[(int) input + 3] & 0xff) << 24;
@@ -96,9 +96,9 @@ final class SnappyRawDecompressor
                         trailer |= (inputBase[(int) input] & 0xff);
                 }
             }
-            if (trailer < 0) {
-                throw new MalformedInputException(input - inputAddress);
-            }
+//            if (trailer < 0) {
+//                throw new MalformedInputException(input - inputAddress);
+//            }
             input += trailerBytes;
 
             int length = entry & 0xff;
@@ -108,16 +108,16 @@ final class SnappyRawDecompressor
 
             if ((opCode & 0x3) == LITERAL) {
                 int literalLength = length + trailer;
-                if (literalLength < 0) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (literalLength < 0) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
 
                 // copy literal
                 long literalOutputLimit = output + literalLength;
                 if (literalOutputLimit > fastOutputLimit || input + literalLength > inputLimit - SIZE_OF_LONG) {
-                    if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
-                        throw new MalformedInputException(input - inputAddress);
-                    }
+//                    if (literalOutputLimit > outputLimit || input + literalLength > inputLimit) {
+//                        throw new MalformedInputException(input - inputAddress);
+//                    }
 
                     // slow, precise copy
                     System.arraycopy(inputBase, (int) input, outputBase, (int) output, literalLength);
@@ -142,18 +142,18 @@ final class SnappyRawDecompressor
                 // bit 8).
                 int matchOffset = entry & 0x700;
                 matchOffset += trailer;
-                if (matchOffset < 0) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (matchOffset < 0) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
 
                 long matchAddress = output - matchOffset;
-                if (matchAddress < outputAddress || output + length > outputLimit) {
-                    throw new MalformedInputException(input - inputAddress); // TODO : Fails here a lot
-                }
+//                if (matchAddress < outputAddress || output + length > outputLimit) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
                 long matchOutputLimit = output + length;
-                if (matchOutputLimit > outputLimit) {
-                    throw new MalformedInputException(input - inputAddress);
-                }
+//                if (matchOutputLimit > outputLimit) {
+//                    throw new MalformedInputException(input - inputAddress);
+//                }
 
                 if (output > fastOutputLimit) {
                     // slow match copy
@@ -208,7 +208,7 @@ final class SnappyRawDecompressor
             }
         }
 
-        return (int) (output - outputAddress);
+        //return (int) (output - outputAddress);
     }
 
     // Mapping from i in range [0,4] to a mask to extract the bottom 8*i bits
@@ -290,17 +290,17 @@ final class SnappyRawDecompressor
                             b = getUnsignedByteSafe(compressed, compressedAddress + bytesRead, compressedLimit);
                             bytesRead++;
                             result |= (b & 0x7f) << 28;
-                            if ((b & 0x80) != 0) {
-                                throw new MalformedInputException(compressedAddress + bytesRead, "last byte of compressed length int has high bit set");
-                            }
+//                            if ((b & 0x80) != 0) {
+//                                throw new MalformedInputException(compressedAddress + bytesRead, "last byte of compressed length int has high bit set");
+//                            }
                         }
                     }
                 }
             }
         }
-        if (result < 0) {
-            throw new MalformedInputException(compressedAddress, "invalid compressed length");
-        }
+//        if (result < 0) {
+//            throw new MalformedInputException(compressedAddress, "invalid compressed length");
+//        }
         return new int[] {result, bytesRead};
     }
 

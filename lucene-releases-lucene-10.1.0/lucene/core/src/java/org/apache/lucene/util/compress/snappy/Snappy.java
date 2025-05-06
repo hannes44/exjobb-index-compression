@@ -86,13 +86,13 @@ public final class Snappy {
         return SnappyRawCompressor.getHashTableSize(inputLength);
     }
 
-    public static int decompress(DataInput input, byte[] output, int maxOutputLength)
+    public static void decompress(DataInput input, byte[] output, int maxOutputLength)
             throws MalformedInputException, IOException {
         // Read the compressed data size
         int compressedDataSize = input.readInt(); // VInt?
         byte[] tempInput = new byte[compressedDataSize];
         input.readBytes(tempInput, 0, compressedDataSize);
-        return SnappyRawDecompressor.decompress(tempInput, 0, compressedDataSize, output, 0, maxOutputLength);
+        SnappyRawDecompressor.decompress(tempInput, 0, compressedDataSize, output, 0, maxOutputLength);
     }
 
     private static void verifyRange(byte[] data, int offset, int length)

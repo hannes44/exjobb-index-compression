@@ -21,6 +21,7 @@ import org.apache.lucene.store.DataInput;
 import org.apache.lucene.util.compress.LZ4;
 import org.apache.lucene.util.compress.LowercaseAsciiCompression;
 import org.apache.lucene.util.compress.deltaExperiment.IntegerExperiment;
+import org.apache.lucene.util.compress.snappy.Snappy;
 import org.apache.lucene.util.compress.unsafeSnappy.UnsafeSnappy;
 import org.apache.lucene.util.compress.unsafeZstd.UnsafeZSTDDecompressor;
 
