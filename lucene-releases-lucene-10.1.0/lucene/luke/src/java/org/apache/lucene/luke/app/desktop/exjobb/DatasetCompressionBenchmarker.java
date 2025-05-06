@@ -15,5 +15,5 @@ public interface DatasetCompressionBenchmarker {
 
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter writer, String indexPath) throws IOException;
 
-    public SearchBenchmarkData BenchmarkSearching(String indexPath);
+    public SearchBenchmarkData BenchmarkSearching(String indexPath) throws IOException;
 }

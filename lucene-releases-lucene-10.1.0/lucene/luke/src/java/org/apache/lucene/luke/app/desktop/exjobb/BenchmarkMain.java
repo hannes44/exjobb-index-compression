@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 public class BenchmarkMain {
     private static final Dataset defaultDataset = Dataset.COMMONCRAWL_2025;
+    private static final Queryset defaultQueryset = Queryset.RANDOMWORDS;
     private static final IntegerCompressionType defaultIntegerCompressionType = IntegerCompressionType.DEFAULT;
     private static final TermCompressionMode defaultTermCompressionMode = TermCompressionMode.SNAPPY;
     private static final BenchmarkingType defaultBenchmarkingType = BenchmarkingType.INDEXING;
@@ -36,6 +37,7 @@ public class BenchmarkMain {
     public static void entryPoint(String[] args) {
         BenchmarkingType benchmarkingType = defaultBenchmarkingType;
         Dataset dataset = defaultDataset;
+        Queryset queryset = defaultQueryset;
         IntegerCompressionType integerCompressionType = defaultIntegerCompressionType;
         TermCompressionMode termCompressionMode = defaultTermCompressionMode;
 
@@ -45,12 +47,14 @@ public class BenchmarkMain {
             else if (i == 1)
                 dataset = Dataset.valueOf(args[i]);
             else if (i == 2)
-                integerCompressionType = IntegerCompressionType.valueOf(args[i]);
+                queryset = Queryset.valueOf(args[i]);
             else if (i == 3)
+                integerCompressionType = IntegerCompressionType.valueOf(args[i]);
+            else if (i == 4)
                 termCompressionMode = TermCompressionMode.valueOf(args[i]);
         }
         try {
-            luceneCompressionTesting(dataset, integerCompressionType, termCompressionMode, benchmarkingType);
+            luceneCompressionTesting(dataset, queryset, integerCompressionType, termCompressionMode, benchmarkingType);
         } catch (IOException e) {
             System.out.println(e);
         }
@@ -59,7 +63,7 @@ public class BenchmarkMain {
         System.out.println(LimitTestCompressor.averageIntTime + " INT");
     }
 
-    public static void luceneCompressionTesting(Dataset dataset, IntegerCompressionType integerCompressionType,
+    public static void luceneCompressionTesting(Dataset dataset, Queryset queryset, IntegerCompressionType integerCompressionType,
             TermCompressionMode termMode, BenchmarkingType benchmarkingType) throws IOException {
         // For testing a specific setup, set to false. For complete testing of all
         // compression types on all datasets, set to true
@@ -68,25 +72,27 @@ public class BenchmarkMain {
 
         if (dataset == null)
             dataset = defaultDataset;
+        if (queryset == null)
+            queryset = defaultQueryset;
         if (integerCompressionType == null)
             integerCompressionType = defaultIntegerCompressionType;
         if (termMode == null)
             termMode = defaultTermCompressionMode;
 
-        System.out.println("Benchmarking dataset: " + dataset.name() + " Using integer compression algorithm: "
+        System.out.println("Benchmarking dataset: " + dataset.name() + ". Current queryset: " + queryset.name() + ". Using integer compression algorithm: "
                 + integerCompressionType.name() + " And using term compression algorithm: " + termMode.name());
 
         if (benchmarkingType == BenchmarkingType.INDEXING) {
-            IndexingBenchmarkData indexData = benchmarkIndexing(integerCompressionType, dataset, termMode);
+            IndexingBenchmarkData indexData = benchmarkIndexing(integerCompressionType, dataset, queryset, termMode);
             output.write(indexData, dataset);
         } else if (benchmarkingType == BenchmarkingType.SEARCH) {
-            SearchBenchmarkData searchData = benchmarkSearching(integerCompressionType, dataset, termMode);
+            SearchBenchmarkData searchData = benchmarkSearching(integerCompressionType, dataset, queryset, termMode);
             output.write(searchData, dataset);
         }
 
     }
 
-    public static IndexingBenchmarkData benchmarkIndexing(IntegerCompressionType type, Dataset dataset,
+    public static IndexingBenchmarkData benchmarkIndexing(IntegerCompressionType type, Dataset dataset, Queryset queryset,
             TermCompressionMode termCompressionMode) throws IOException {
         String indexPath = "index/" + dataset.name() + "_" + type.name() + "_" + termCompressionMode.name();
 
@@ -109,7 +115,7 @@ public class BenchmarkMain {
 
         IndexWriter writer = new IndexWriter(directory, config);
 
-        DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
+        DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset, queryset);
 
         IndexingBenchmarkData indexingData = benchmarker.BenchmarkIndexing(writer, indexPath);
         indexingData.integerCompressionType = type;
@@ -122,10 +128,10 @@ public class BenchmarkMain {
         return indexingData;
     }
 
-    public static SearchBenchmarkData benchmarkSearching(IntegerCompressionType type, Dataset dataset,
-            TermCompressionMode termCompressionMode) {
+    public static SearchBenchmarkData benchmarkSearching(IntegerCompressionType type, Dataset dataset, Queryset queryset,
+            TermCompressionMode termCompressionMode) throws IOException {
         String indexPath = "index/" + dataset.name() + "_" + type.name() + "_" + termCompressionMode.name();
-        DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset);
+        DatasetCompressionBenchmarker benchmarker = getBenchmarker(dataset, queryset);
 
         Lucene101Codec.integerCompressionType = type;
 
@@ -139,12 +145,22 @@ public class BenchmarkMain {
         return searchBenchmarkData;
     }
 
-    public static DatasetCompressionBenchmarker getBenchmarker(Dataset dataset) {
+    public static DatasetCompressionBenchmarker getBenchmarker(Dataset dataset, Queryset queryset) {
         switch (dataset) {
             case COMMONCRAWL_2025:
-                return new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2025-05");
+                return switch (queryset) {
+                    case RANDOMWORDS ->
+                            new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2025-05", "../Datasets/Queries/10000Words.txt");
+                    case TRECMILLION ->
+                            new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2025-05", "../Datasets/Queries/09.mq.topics.20001-60000.txt");
+                };
             case COMMONCRAWL_2014:
-                return new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2014-10");
+                return switch (queryset) {
+                    case RANDOMWORDS ->
+                            new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2014-10", "../Datasets/Queries/10000Words.txt");
+                    case TRECMILLION ->
+                            new CommonCrawlBenchmarker("../Datasets/CommonCrawl-2014-10", "../Datasets/Queries/09.mq.topics.20001-60000.txt");
+                };
             default:
                 System.out.println("ERROR, The given dataset is not supported for benchmarking");
                 return null;
