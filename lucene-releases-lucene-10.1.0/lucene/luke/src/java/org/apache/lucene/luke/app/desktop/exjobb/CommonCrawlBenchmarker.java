@@ -8,10 +8,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.spans.SpanNearQuery;
 import org.apache.lucene.queries.spans.SpanQuery;
 import org.apache.lucene.queries.spans.SpanTermQuery;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.NIOFSDirectory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,16 +19,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 
 public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
-    private final String folderPath;
+    private final String datasetPath;
+    private final String querysetPath;
 
-    public CommonCrawlBenchmarker(String folderPath) {
-        this.folderPath = folderPath;
+    public CommonCrawlBenchmarker(String datasetPath, String querysetPath) {
+        this.datasetPath = datasetPath;
+        this.querysetPath = querysetPath;
     }
 
     public static void parseWETFile(String filePath, WETHandler handler) throws IOException {
@@ -62,7 +65,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
      * This method is used to get the name of the dataset. In this case, it returns the last directory in the folder path.
      */
     @Override
-    public String GetDatasetName() { return folderPath.substring(folderPath.lastIndexOf(File.separator) + 1); }
+    public String GetDatasetName() { return datasetPath.substring(datasetPath.lastIndexOf(File.separator) + 1); }
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
@@ -70,11 +73,11 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         long maxSizeBytes = (long) (maxSizeGB * 1024 * 1024 * 1024);
 
         long startTime = System.currentTimeMillis();
-        File folder = new File(folderPath);
+        File folder = new File(datasetPath);
         File[] wetFiles = folder.listFiles((dir, name) -> name.endsWith(".wet"));
 
         if (wetFiles == null || wetFiles.length == 0) {
-            System.out.println("No WET files found in the folder: " + folderPath);
+            System.out.println("No WET files found in the folder: " + datasetPath);
             return null;
         }
 
@@ -171,32 +174,48 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
             IndexSearcher searcher = new IndexSearcher(reader);
 
             // Define a list of queries to benchmark
-            List<Query> queries = createCommonCrawlQueries();
+            List<Query> queries = createQueries();
 
             // Warm-up: Run each query once to warm up the JVM
             for (Query query : queries) {
                 searcher.search(query, 10);
             }
 
-            // Benchmark: Run each query multiple times and record the time taken
-            int iterations = 1; // Number of times to run each query
+            // Benchmark: Run each query and record the time taken
             List<Long> queryTimes = new ArrayList<>();
             List<Long> queryHits = new ArrayList<>();
 
             for (Query query : queries) {
-                long totalTime = 0;
+                // Counters for total time and hits
+                long time = 0;
                 long hits = 0;
-                for (int i = 0; i < iterations; i++) {
-                    long startTime = System.nanoTime();
-                    TopDocs results = searcher.search(query, 10);
-                    long endTime = System.nanoTime();
-                    totalTime += (endTime - startTime);
-                    hits += results.totalHits.value();
+
+                // Number of hits to return
+                int k = 10;
+
+                // Timestamp for the start of the query
+                long startTime = System.nanoTime();
+                // Run the query
+                TopDocs results = searcher.search(query, k);
+                // Timestamp for the end of the query
+                long endTime = System.nanoTime();
+
+                // Change the number of hits to return based on previous value
+                if (k == 10) {
+                    k = 100;
+                } else if (k == 100) {
+                    k = 1000;
+                } else if (k == 1000) {
+                    k = 10;
                 }
-                long averageTime = totalTime / iterations;
-                queryTimes.add(averageTime);
-                long averageHits = hits / iterations;
-                queryHits.add(averageHits);
+
+                // Calculate the time taken for this query and add it to the total time
+                time += (endTime - startTime);
+                hits += results.totalHits.value();
+
+                // Add the time and hits to the lists
+                queryTimes.add(time);
+                queryHits.add(hits);
             }
 
             // Print results
@@ -211,6 +230,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
             for (Long time : queryTimes) {
                 totalTime += time;
             }
+
             long averageTime = totalTime / queryTimes.size();
             benchmarkData.averageQuerySearchTimeInNS = averageTime;
             System.out.println("Average query time in ns:" + averageTime);
@@ -237,48 +257,82 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         }
     }
 
-    private List<Query> createCommonCrawlQueries() throws Exception {
+    private List<Query> createQueries() throws Exception {
         List<Query> queries = new ArrayList<>();
         StandardAnalyzer analyzer = new StandardAnalyzer();
 
-        String filePath = "../Datasets/10000Words.txt";
+        if (querysetPath.equals("../Datasets/Queries/10000Words.txt")) {
+            // List to store words temporarily
+            List<String> wordList = new ArrayList<>();
 
-        // List to store words temporarily
-        List<String> wordList = new ArrayList<>();
+            long seed = 12345L; // Fixed seed value
+            Random random = new Random(seed);
 
-        long seed = 12345L; // Fixed seed value
-        Random random = new Random(seed);
-
-
-
-        // Read the file
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                wordList.add(line); // Add each word to the list
+            // Read the file
+            try (BufferedReader br = new BufferedReader(new FileReader(querysetPath))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    wordList.add(line); // Add each word to the list
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            // Get a random index
+            int randomIndex = random.nextInt(wordList.size());
+
+            for (String word : wordList) {
+                // 1. Simple Term Query (Search for a specific word in the content)
+                //  queries.add(new TermQuery(new Term("content", word)));
+
+                // Create a SpanNearQuery for proximity search
+                SpanTermQuery term1 = new SpanTermQuery(new Term("content", word));
+                SpanTermQuery term2 = new SpanTermQuery(new Term("content", wordList.get(randomIndex)));
+                int slop = 3; // Maximum allowed distance between terms
+                boolean inOrder = true; // Terms must appear in the specified order
+                SpanNearQuery proximityQuery = new SpanNearQuery(new SpanQuery[]{term1, term2}, slop, inOrder);
+                queries.add(proximityQuery);
+            }
+
+            return queries;
+        } else if (querysetPath.equals("../Datasets/Queries/09.mq.topics.20001-60000.txt")) {
+            // List to store words temporarily
+            List<String> wordsList = new ArrayList<>();
+
+            // Set of allowed groups (1, 2, 3)
+            List<Integer> allowedGroups = List.of(1, 2, 3);
+
+            // Read the TREC file
+            try (BufferedReader br = new BufferedReader(new FileReader(querysetPath))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(":");
+                    if (parts.length == 3) {
+                        //int queryID = Integer.parseInt(parts[0]);
+                        int groupID = Integer.parseInt(parts[1]);
+                        String queryText = parts[2];
+
+                        // Only process queries in allowed groups (1, 2, 3)
+                        if (allowedGroups.contains(groupID)) {
+                            // Add words from the query to the word list
+                            wordsList.add(queryText);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // Create QueryParser and parse each TREC query
+            QueryParser parser = new QueryParser("content", analyzer);
+            for (String words : wordsList) {
+                Query query = parser.parse(words);
+                // Add the parsed query to the list of queries
+                queries.add(query);
+            }
+
+            return queries;
         }
-
-        // Get a random index
-        int randomIndex = random.nextInt(wordList.size());
-
-        for (String word : wordList) {
-            // 1. Simple Term Query (Search for a specific word in the content)
-          //  queries.add(new TermQuery(new Term("content", word)));
-
-            // Create a SpanNearQuery for proximity search
-            SpanTermQuery term1 = new SpanTermQuery(new Term("content", word));
-            SpanTermQuery term2 = new SpanTermQuery(new Term("content", wordList.get(randomIndex)));
-            int slop = 3; // Maximum allowed distance between terms
-            boolean inOrder = true; // Terms must appear in the specified order
-            SpanNearQuery proximityQuery = new SpanNearQuery(new SpanQuery[]{term1, term2}, slop, inOrder);
-            queries.add(proximityQuery);
-        }
-
-
-
         /*
 
 
@@ -306,8 +360,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
         // 8. Prefix Query (Search for domains starting with "news")
         queries.add(new PrefixQuery(new Term("domain", "news")));
          */
-
-        return queries;
+        return null;
     }
 
 }
