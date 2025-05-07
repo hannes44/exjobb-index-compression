@@ -182,25 +182,41 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
                 searcher.search(query, 10);
             }
 
-            // Benchmark: Run each query multiple times and record the time taken
-            int iterations = 1; // Number of times to run each query
+            // Benchmark: Run each query and record the time taken
             List<Long> queryTimes = new ArrayList<>();
             List<Long> queryHits = new ArrayList<>();
 
             for (Query query : queries) {
-                long totalTime = 0;
+                // Counters for total time and hits
+                long time = 0;
                 long hits = 0;
-                for (int i = 0; i < iterations; i++) {
-                    long startTime = System.nanoTime();
-                    TopDocs results = searcher.search(query, 10); // TODO : Change to 10, 100, 1000
-                    long endTime = System.nanoTime();
-                    totalTime += (endTime - startTime);
-                    hits += results.totalHits.value();
+
+                // Number of hits to return
+                int k = 10;
+
+                // Timestamp for the start of the query
+                long startTime = System.nanoTime();
+                // Run the query
+                TopDocs results = searcher.search(query, k);
+                // Timestamp for the end of the query
+                long endTime = System.nanoTime();
+
+                // Change the number of hits to return based on previous value
+                if (k == 10) {
+                    k = 100;
+                } else if (k == 100) {
+                    k = 1000;
+                } else if (k == 1000) {
+                    k = 10;
                 }
-                long averageTime = totalTime / iterations;
-                queryTimes.add(averageTime);
-                long averageHits = hits / iterations;
-                queryHits.add(averageHits);
+
+                // Calculate the time taken for this query and add it to the total time
+                time += (endTime - startTime);
+                hits += results.totalHits.value();
+
+                // Add the time and hits to the lists
+                queryTimes.add(time);
+                queryHits.add(hits);
             }
 
             // Print results
@@ -215,6 +231,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
             for (Long time : queryTimes) {
                 totalTime += time;
             }
+
             long averageTime = totalTime / queryTimes.size();
             benchmarkData.averageQuerySearchTimeInNS = averageTime;
             System.out.println("Average query time in ns:" + averageTime);
