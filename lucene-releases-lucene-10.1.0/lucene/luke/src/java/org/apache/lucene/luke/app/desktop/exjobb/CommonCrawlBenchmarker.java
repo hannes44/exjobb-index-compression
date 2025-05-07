@@ -175,7 +175,6 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
             // Define a list of queries to benchmark
             List<Query> queries = createQueries();
-            System.out.println(queries.size());
 
             // Warm-up: Run each query once to warm up the JVM
             for (Query query : queries) {
