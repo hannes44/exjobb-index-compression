@@ -15,7 +15,7 @@ integerCompressionAlgorithmsToBenchmark = ["DEFAULT"]
 termCompressionAlgorithmsToBenchmark = ["SNAPPY"]
 datasetsToBenchmark = ["COMMONCRAWL_2025"]
 querysetsToBenchmark = ["TRECMILLION"]
-benchmarkTypes = ["SEARCH"]
+benchmarkTypes = ["INDEXING", "SEARCH"]
 
 benchmarkDataForDataset = {}
 
