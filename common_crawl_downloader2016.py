@@ -3,12 +3,12 @@ import gzip
 import shutil
 
 # URL base and range of file numbers
-url_base = "https://data.commoncrawl.org/crawl-data/CC-MAIN-2014-10/segments/1393999635677/wet/CC-MAIN-20140305060715-"
+url_base = "https://data.commoncrawl.org/crawl-data/CC-MAIN-2016-44/segments/1476988717783.68/wet/CC-MAIN-20161020183837-"
 start_index = 0
-end_index = 100  # Change this to the desired number of iterations
+end_index = 1000  # Change this to the desired number of iterations
 
 # Destination directory where the files will be saved
-destination_dir = "./Datasets/CommonCrawl-2014-10/"
+destination_dir = "./Datasets/CommonCrawl-2016-44/"
 
 # Ensure the destination directory exists
 os.makedirs(destination_dir, exist_ok=True)
@@ -29,10 +29,10 @@ print(f"Cleared all files in {destination_dir}")
 # Loop through numbers and download the files
 for i in range(start_index, end_index):
     file_num = f"{i:05d}"  # Format the number to 5 digits (e.g., 00001, 00002)
-    file_url = f"{url_base}{file_num}-ip-10-183-142-35.ec2.internal.warc.wet.gz"
+    file_url = f"{url_base}{file_num}-ip-10-171-6-4.ec2.internal.warc.wet.gz"
     
     # Create the full file paths
-    gz_file_path = os.path.join(destination_dir, f"CC-MAIN-20140305060715-{file_num}-ip-10-183-142-35.ec2.internal.warc.wet.gz")
+    gz_file_path = os.path.join(destination_dir, f"CC-MAIN-20161020183837-{file_num}-ip-10-171-6-4.ec2.internal.warc.wet.gz")
     output_file_path = gz_file_path.replace(".gz", "")
     
     # Use curl to download the file to the destination directory
