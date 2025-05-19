@@ -1,6 +1,51 @@
 import os
 import gzip
 import shutil
+import time
+import pathlib
+import subprocess
+
+def download_and_unzip(file_url: str, gz_path: pathlib.Path, out_path: pathlib.Path,
+                       retries: int = 3, backoff: int = 5):
+    """
+    Download file_url with curl into gz_path, then gunzip to out_path.
+    Retries the download 'retries' times with exponential back‑off if curl
+    returns a non‑zero exit status OR if gunzip fails.
+    """
+    attempt = 0
+    while attempt <= retries:
+        # ---- download ----------------------------------------------------
+        print(f"[{attempt+1}/{retries+1}] downloading {file_url}")
+        res = subprocess.run(
+            ["curl", "--fail", "--location", "--continue-at", "-",
+             "-o", str(gz_path), file_url],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        
+        if res.returncode != 0:
+            print("curl failed:", res.stdout.decode().strip())
+        else:
+            # quick sanity‑check: first two bytes of a gzip file are 0x1f 0x8b
+            with open(gz_path, "rb") as fh:
+                magic = fh.read(2)
+            if magic == b"\x1f\x8b":      # looks like a gzip
+                try:
+                    # ---- unzip ------------------------------------------
+                    with gzip.open(gz_path, "rb") as f_in, \
+                         open(out_path, "wb") as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                    print("✓ downloaded and unzipped OK")
+                    return True
+                except (gzip.BadGzipFile, OSError) as e:
+                    print("gunzip failed:", e)
+
+        # either curl or gunzip failed – retry after a back‑off
+        attempt += 1
+        if attempt > retries:
+            print(f"✗ Giving up on {file_url} after {retries+1} attempts.")
+            return False
+        sleep_time = backoff * attempt
+        print(f"Retrying in {sleep_time}s …")
+        time.sleep(sleep_time)
 
 # URL base and range of file numbers
 url_base = "https://data.commoncrawl.org/crawl-data/CC-MAIN-2016-44/segments/1476988717783.68/wet/CC-MAIN-20161020183837-"
@@ -35,15 +80,12 @@ for i in range(start_index, end_index):
     gz_file_path = os.path.join(destination_dir, f"CC-MAIN-20161020183837-{file_num}-ip-10-171-6-4.ec2.internal.warc.wet.gz")
     output_file_path = gz_file_path.replace(".gz", "")
     
-    # Use curl to download the file to the destination directory
-    os.system(f"curl -o {gz_file_path} {file_url}")
-    print(f"Downloaded {file_url} to {gz_file_path}")
-    
-    # Unzip the downloaded .gz file
-    with gzip.open(gz_file_path, 'rb') as f_in:
-        with open(output_file_path, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-    print(f"Unzipped {gz_file_path} to {output_file_path}")
+    # Download and unzip the file
+    ok = download_and_unzip(file_url, pathlib.Path(gz_file_path), pathlib.Path(output_file_path))
+    if not ok:
+        print(f"Failed to download or unzip {file_url}")
+        continue
+    print(f"Downloaded and unzipped {file_url} to {output_file_path}")
     
     # Optionally remove the .gz file after extraction
     os.remove(gz_file_path)
