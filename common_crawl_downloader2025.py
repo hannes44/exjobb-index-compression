@@ -34,14 +34,15 @@ def download_and_unzip(file_url: str, gz_path: pathlib.Path, out_path: pathlib.P
                          open(out_path, "wb") as f_out:
                         shutil.copyfileobj(f_in, f_out)
                     print("✓ downloaded and unzipped OK")
-                    return                   # success
+                    return True
                 except (gzip.BadGzipFile, OSError) as e:
                     print("gunzip failed:", e)
 
         # either curl or gunzip failed – retry after a back‑off
         attempt += 1
         if attempt > retries:
-            raise RuntimeError(f"Failed after {retries+1} attempts: {file_url}")
+            print(f"✗ Giving up on {file_url} after {retries+1} attempts.")
+            return False
         sleep_time = backoff * attempt
         print(f"Retrying in {sleep_time}s …")
         time.sleep(sleep_time)
@@ -80,7 +81,15 @@ for i in range(start_index, end_index):
     output_file_path = gz_file_path.replace(".gz", "")
     
     # Download and unzip the file
+<<<<<<< HEAD
     download_and_unzip(file_url, pathlib.Path(gz_file_path), pathlib.Path(output_file_path))
+=======
+    ok = download_and_unzip(file_url, pathlib.Path(gz_file_path), pathlib.Path(output_file_path))
+    if not ok:
+        print(f"Failed to download or unzip {file_url}")
+        continue
+    print(f"Downloaded and unzipped {file_url} to {output_file_path}")
+>>>>>>> main
     
     # Optionally remove the .gz file after extraction
     os.remove(gz_file_path)
