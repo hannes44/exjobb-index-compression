@@ -80,7 +80,11 @@ for i in range(start_index, end_index):
     output_file_path = gz_file_path.replace(".gz", "")
     
     # Download and unzip the file
-    download_and_unzip(file_url, pathlib.Path(gz_file_path), pathlib.Path(output_file_path))
+    ok = download_and_unzip(file_url, pathlib.Path(gz_file_path), pathlib.Path(output_file_path))
+    if not ok:
+        print(f"Failed to download or unzip {file_url}")
+        continue
+    print(f"Downloaded and unzipped {file_url} to {output_file_path}")
     
     # Optionally remove the .gz file after extraction
     os.remove(gz_file_path)
