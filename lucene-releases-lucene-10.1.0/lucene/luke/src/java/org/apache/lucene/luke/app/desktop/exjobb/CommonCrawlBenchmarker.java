@@ -69,7 +69,7 @@ public class CommonCrawlBenchmarker implements DatasetCompressionBenchmarker {
 
     @Override
     public IndexingBenchmarkData BenchmarkIndexing(IndexWriter indexWriter, String indexPath) {
-        double maxSizeGB = 10; // Default to 1GB if not specified
+        double maxSizeGB = 100; // Default to 1GB if not specified
         long maxSizeBytes = (long) (maxSizeGB * 1024 * 1024 * 1024);
 
         long startTime = System.currentTimeMillis();
