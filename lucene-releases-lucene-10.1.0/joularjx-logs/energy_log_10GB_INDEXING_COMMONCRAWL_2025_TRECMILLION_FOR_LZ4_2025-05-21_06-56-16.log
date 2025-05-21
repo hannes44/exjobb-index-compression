@@ -1,0 +1,1776 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+21/05/2025 06:56:16.959 - [INFO] - Could not locate config.properties, will use default values
+21/05/2025 06:56:16.960 - [INFO] - +---------------------------------+
+21/05/2025 06:56:16.960 - [INFO] - | JoularJX Agent Version 3.0.1    |
+21/05/2025 06:56:16.960 - [INFO] - +---------------------------------+
+21/05/2025 06:56:16.977 - [INFO] - Results will be stored in joularjx-result/11637-1747803376976/
+21/05/2025 06:56:16.981 - [INFO] - Initializing for platform: 'linux' running on architecture: 'amd64'
+21/05/2025 06:56:16.998 - [INFO] - Please wait while initializing JoularJX...
+21/05/2025 06:56:18.010 - [INFO] - Initialization finished
+21/05/2025 06:56:18.011 - [INFO] - Started monitoring application with ID 11637
+Benchmarking dataset: COMMONCRAWL_2025. Current queryset: TRECMILLION. Using integer compression algorithm: FOR And using term compression algorithm: LZ4
+Index directory and all files deleted.
+WARNING: A restricted method in java.lang.foreign.Linker has been called
+WARNING: java.lang.foreign.Linker::downcallHandle has been called by the unnamed module
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for this module
+
+May 21, 2025 6:56:18 AM org.apache.lucene.internal.vectorization.PanamaVectorizationProvider <init>
+INFO: Java vector incubator API enabled; uses preferredBitSize=512; FMA enabled
+Processing: CC-MAIN-20250126135402-20250126165402-00194.warc.wet (276.62 MB)
+21/05/2025 06:56:25.333 - [INFO] - Thread CPU time negative, taking previous time + 1 : 532228035 for thread: 43
+Cumulative: 0.27/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00039.warc.wet (272.55 MB)
+21/05/2025 06:56:29.512 - [INFO] - Thread CPU time negative, taking previous time + 1 : 460338359 for thread: 44
+21/05/2025 06:56:33.688 - [INFO] - Thread CPU time negative, taking previous time + 1 : 305624488 for thread: 45
+21/05/2025 06:56:38.906 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1182427754 for thread: 46
+Cumulative: 0.54/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00029.warc.wet (269.84 MB)
+21/05/2025 06:56:43.080 - [INFO] - Thread CPU time negative, taking previous time + 1 : 924341179 for thread: 47
+21/05/2025 06:56:47.252 - [INFO] - Thread CPU time negative, taking previous time + 1 : 733171948 for thread: 48
+Cumulative: 0.80/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00149.warc.wet (271.08 MB)
+21/05/2025 06:56:51.425 - [INFO] - Thread CPU time negative, taking previous time + 1 : 487886206 for thread: 49
+21/05/2025 06:56:55.594 - [INFO] - Thread CPU time negative, taking previous time + 1 : 967243572 for thread: 50
+21/05/2025 06:56:59.751 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1060400010 for thread: 51
+Cumulative: 1.06/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00168.warc.wet (271.03 MB)
+21/05/2025 06:57:02.881 - [INFO] - Thread CPU time negative, taking previous time + 1 : 509838937 for thread: 52
+21/05/2025 06:57:07.048 - [INFO] - Thread CPU time negative, taking previous time + 1 : 252058027 for thread: 53
+Cumulative: 1.33/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00103.warc.wet (266.91 MB)
+21/05/2025 06:57:11.218 - [INFO] - Thread CPU time negative, taking previous time + 1 : 727580237 for thread: 54
+21/05/2025 06:57:19.573 - [INFO] - Thread CPU time negative, taking previous time + 1 : 886346900 for thread: 56
+Cumulative: 1.59/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00183.warc.wet (270.90 MB)
+21/05/2025 06:57:21.662 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7078409092 for thread: 55
+21/05/2025 06:57:22.704 - [INFO] - Thread CPU time negative, taking previous time + 1 : 230668404 for thread: 57
+21/05/2025 06:57:25.829 - [INFO] - Thread CPU time negative, taking previous time + 1 : 140154858 for thread: 58
+21/05/2025 06:57:29.996 - [INFO] - Thread CPU time negative, taking previous time + 1 : 617077444 for thread: 59
+Cumulative: 1.85/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00357.warc.wet (269.57 MB)
+21/05/2025 06:57:34.153 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1138543258 for thread: 60
+21/05/2025 06:57:37.279 - [INFO] - Thread CPU time negative, taking previous time + 1 : 615983470 for thread: 61
+Cumulative: 2.12/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00034.warc.wet (275.63 MB)
+21/05/2025 06:57:41.446 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1106637911 for thread: 62
+21/05/2025 06:57:44.570 - [INFO] - Thread CPU time negative, taking previous time + 1 : 640141413 for thread: 63
+21/05/2025 06:57:48.737 - [INFO] - Thread CPU time negative, taking previous time + 1 : 780989416 for thread: 64
+Cumulative: 2.39/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00102.warc.wet (279.74 MB)
+21/05/2025 06:57:51.863 - [INFO] - Thread CPU time negative, taking previous time + 1 : 691815481 for thread: 65
+Cumulative: 2.66/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00177.warc.wet (268.91 MB)
+21/05/2025 06:58:00.201 - [INFO] - Thread CPU time negative, taking previous time + 1 : 687883952 for thread: 67
+21/05/2025 06:58:02.282 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7366889274 for thread: 66
+21/05/2025 06:58:03.326 - [INFO] - Thread CPU time negative, taking previous time + 1 : 337560479 for thread: 68
+21/05/2025 06:58:07.496 - [INFO] - Thread CPU time negative, taking previous time + 1 : 816396356 for thread: 69
+Cumulative: 2.92/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00203.warc.wet (270.30 MB)
+21/05/2025 06:58:10.620 - [INFO] - Thread CPU time negative, taking previous time + 1 : 271486571 for thread: 70
+21/05/2025 06:58:14.783 - [INFO] - Thread CPU time negative, taking previous time + 1 : 828063358 for thread: 71
+21/05/2025 06:58:17.905 - [INFO] - Thread CPU time negative, taking previous time + 1 : 307107609 for thread: 72
+Cumulative: 3.19/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00374.warc.wet (275.23 MB)
+21/05/2025 06:58:22.072 - [INFO] - Thread CPU time negative, taking previous time + 1 : 818958680 for thread: 73
+21/05/2025 06:58:25.201 - [INFO] - Thread CPU time negative, taking previous time + 1 : 318283107 for thread: 74
+21/05/2025 06:58:29.365 - [INFO] - Thread CPU time negative, taking previous time + 1 : 801922440 for thread: 75
+Cumulative: 3.46/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00268.warc.wet (273.91 MB)
+21/05/2025 06:58:32.488 - [INFO] - Thread CPU time negative, taking previous time + 1 : 258832651 for thread: 76
+Cumulative: 3.72/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00001.warc.wet (277.35 MB)
+21/05/2025 06:58:40.832 - [INFO] - Thread CPU time negative, taking previous time + 1 : 718130249 for thread: 78
+21/05/2025 06:58:43.957 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7969298180 for thread: 77
+21/05/2025 06:58:44.999 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1172584775 for thread: 79
+21/05/2025 06:58:48.124 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1044819670 for thread: 80
+Cumulative: 3.99/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00162.warc.wet (279.71 MB)
+21/05/2025 06:58:51.249 - [INFO] - Thread CPU time negative, taking previous time + 1 : 492325364 for thread: 81
+21/05/2025 06:58:55.409 - [INFO] - Thread CPU time negative, taking previous time + 1 : 623683197 for thread: 82
+21/05/2025 06:58:58.524 - [INFO] - Thread CPU time negative, taking previous time + 1 : 206052469 for thread: 83
+Cumulative: 4.27/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00325.warc.wet (275.30 MB)
+21/05/2025 06:59:02.690 - [INFO] - Thread CPU time negative, taking previous time + 1 : 709930244 for thread: 84
+21/05/2025 06:59:06.855 - [INFO] - Thread CPU time negative, taking previous time + 1 : 814485215 for thread: 85
+Cumulative: 4.54/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00326.warc.wet (281.91 MB)
+21/05/2025 06:59:10.003 - [INFO] - Thread CPU time negative, taking previous time + 1 : 195073683 for thread: 86
+21/05/2025 06:59:14.170 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1103841299 for thread: 87
+Cumulative: 4.81/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00040.warc.wet (279.27 MB)
+21/05/2025 06:59:21.470 - [INFO] - Thread CPU time negative, taking previous time + 1 : 421853923 for thread: 89
+21/05/2025 06:59:24.590 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7783867955 for thread: 88
+21/05/2025 06:59:25.629 - [INFO] - Thread CPU time negative, taking previous time + 1 : 772545215 for thread: 90
+21/05/2025 06:59:28.756 - [INFO] - Thread CPU time negative, taking previous time + 1 : 656956627 for thread: 91
+Cumulative: 5.08/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00126.warc.wet (275.08 MB)
+21/05/2025 06:59:32.918 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1111554130 for thread: 92
+21/05/2025 06:59:36.036 - [INFO] - Thread CPU time negative, taking previous time + 1 : 591462239 for thread: 93
+21/05/2025 06:59:40.197 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1075138699 for thread: 94
+Cumulative: 5.35/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00061.warc.wet (274.73 MB)
+21/05/2025 06:59:43.322 - [INFO] - Thread CPU time negative, taking previous time + 1 : 582054290 for thread: 95
+21/05/2025 06:59:47.489 - [INFO] - Thread CPU time negative, taking previous time + 1 : 696650450 for thread: 96
+Cumulative: 5.62/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00076.warc.wet (278.68 MB)
+21/05/2025 06:59:50.601 - [INFO] - Thread CPU time negative, taking previous time + 1 : 173287238 for thread: 97
+21/05/2025 06:59:58.920 - [INFO] - Thread CPU time negative, taking previous time + 1 : 671631070 for thread: 99
+Cumulative: 5.89/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00075.warc.wet (273.24 MB)
+21/05/2025 07:00:02.047 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7876467727 for thread: 98
+21/05/2025 07:00:03.087 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1045328298 for thread: 100
+21/05/2025 07:00:06.207 - [INFO] - Thread CPU time negative, taking previous time + 1 : 950304545 for thread: 101
+21/05/2025 07:00:09.330 - [INFO] - Thread CPU time negative, taking previous time + 1 : 407664114 for thread: 102
+Cumulative: 6.16/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00011.warc.wet (265.71 MB)
+21/05/2025 07:00:13.499 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1010517336 for thread: 103
+21/05/2025 07:00:16.625 - [INFO] - Thread CPU time negative, taking previous time + 1 : 209282393 for thread: 104
+Cumulative: 6.42/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00094.warc.wet (278.16 MB)
+21/05/2025 07:00:20.781 - [INFO] - Thread CPU time negative, taking previous time + 1 : 680171261 for thread: 105
+21/05/2025 07:00:23.906 - [INFO] - Thread CPU time negative, taking previous time + 1 : 164980564 for thread: 106
+21/05/2025 07:00:28.076 - [INFO] - Thread CPU time negative, taking previous time + 1 : 853905074 for thread: 107
+Cumulative: 6.69/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00336.warc.wet (266.46 MB)
+21/05/2025 07:00:31.201 - [INFO] - Thread CPU time negative, taking previous time + 1 : 177432458 for thread: 108
+21/05/2025 07:00:35.366 - [INFO] - Thread CPU time negative, taking previous time + 1 : 292189369 for thread: 109
+Cumulative: 6.95/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00130.warc.wet (287.41 MB)
+21/05/2025 07:00:43.707 - [INFO] - Thread CPU time negative, taking previous time + 1 : 375045694 for thread: 111
+21/05/2025 07:00:46.830 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7690855081 for thread: 110
+21/05/2025 07:00:47.870 - [INFO] - Thread CPU time negative, taking previous time + 1 : 690071357 for thread: 112
+Cumulative: 7.23/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00166.warc.wet (271.21 MB)
+21/05/2025 07:00:52.036 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1025713480 for thread: 113
+21/05/2025 07:00:55.163 - [INFO] - Thread CPU time negative, taking previous time + 1 : 238584600 for thread: 114
+21/05/2025 07:00:59.324 - [INFO] - Thread CPU time negative, taking previous time + 1 : 729037414 for thread: 115
+Cumulative: 7.50/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00204.warc.wet (269.43 MB)
+21/05/2025 07:01:03.491 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1153192586 for thread: 116
+21/05/2025 07:01:06.613 - [INFO] - Thread CPU time negative, taking previous time + 1 : 534221148 for thread: 117
+21/05/2025 07:01:10.772 - [INFO] - Thread CPU time negative, taking previous time + 1 : 914431353 for thread: 118
+Cumulative: 7.76/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00141.warc.wet (273.84 MB)
+21/05/2025 07:01:14.932 - [INFO] - Thread CPU time negative, taking previous time + 1 : 417432837 for thread: 119
+21/05/2025 07:01:19.083 - [INFO] - Thread CPU time negative, taking previous time + 1 : 445569305 for thread: 120
+Cumulative: 8.03/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00062.warc.wet (280.73 MB)
+21/05/2025 07:01:28.447 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1171906433 for thread: 122
+21/05/2025 07:01:29.487 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7018549636 for thread: 121
+21/05/2025 07:01:31.573 - [INFO] - Thread CPU time negative, taking previous time + 1 : 787949662 for thread: 123
+Cumulative: 8.30/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00156.warc.wet (268.51 MB)
+21/05/2025 07:01:35.736 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1130166022 for thread: 124
+21/05/2025 07:01:38.859 - [INFO] - Thread CPU time negative, taking previous time + 1 : 399634602 for thread: 125
+21/05/2025 07:01:43.021 - [INFO] - Thread CPU time negative, taking previous time + 1 : 855375602 for thread: 126
+Cumulative: 8.56/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00260.warc.wet (274.86 MB)
+21/05/2025 07:01:46.134 - [INFO] - Thread CPU time negative, taking previous time + 1 : 232127651 for thread: 127
+21/05/2025 07:01:50.291 - [INFO] - Thread CPU time negative, taking previous time + 1 : 628267187 for thread: 128
+21/05/2025 07:01:54.457 - [INFO] - Thread CPU time negative, taking previous time + 1 : 727997071 for thread: 129
+Cumulative: 8.83/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00010.warc.wet (273.96 MB)
+21/05/2025 07:01:58.623 - [INFO] - Thread CPU time negative, taking previous time + 1 : 352001025 for thread: 130
+Cumulative: 9.10/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00064.warc.wet (281.21 MB)
+21/05/2025 07:02:06.961 - [INFO] - Thread CPU time negative, taking previous time + 1 : 502999748 for thread: 132
+21/05/2025 07:02:10.089 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7955811118 for thread: 131
+21/05/2025 07:02:11.131 - [INFO] - Thread CPU time negative, taking previous time + 1 : 836103956 for thread: 133
+21/05/2025 07:02:14.248 - [INFO] - Thread CPU time negative, taking previous time + 1 : 480104711 for thread: 134
+Cumulative: 9.37/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00296.warc.wet (269.83 MB)
+21/05/2025 07:02:18.411 - [INFO] - Thread CPU time negative, taking previous time + 1 : 850874963 for thread: 135
+21/05/2025 07:02:22.576 - [INFO] - Thread CPU time negative, taking previous time + 1 : 886820595 for thread: 136
+21/05/2025 07:02:26.734 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1126026396 for thread: 137
+Cumulative: 9.64/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00104.warc.wet (277.74 MB)
+21/05/2025 07:02:29.856 - [INFO] - Thread CPU time negative, taking previous time + 1 : 499690694 for thread: 138
+21/05/2025 07:02:34.022 - [INFO] - Thread CPU time negative, taking previous time + 1 : 930856997 for thread: 139
+Cumulative: 9.91/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00087.warc.wet (282.77 MB)
+21/05/2025 07:02:37.137 - [INFO] - Thread CPU time negative, taking previous time + 1 : 347053690 for thread: 140
+21/05/2025 07:02:41.300 - [INFO] - Thread CPU time negative, taking previous time + 1 : 574901578 for thread: 141
+Cumulative: 10.18/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00302.warc.wet (278.02 MB)
+21/05/2025 07:02:50.681 - [INFO] - Thread CPU time negative, taking previous time + 1 : 843661593 for thread: 143
+21/05/2025 07:02:52.769 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7221203005 for thread: 142
+21/05/2025 07:02:53.813 - [INFO] - Thread CPU time negative, taking previous time + 1 : 169734854 for thread: 144
+21/05/2025 07:02:57.980 - [INFO] - Thread CPU time negative, taking previous time + 1 : 794888970 for thread: 145
+Cumulative: 10.46/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00026.warc.wet (282.85 MB)
+21/05/2025 07:03:02.133 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1101353893 for thread: 146
+21/05/2025 07:03:06.292 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1144536561 for thread: 147
+21/05/2025 07:03:09.421 - [INFO] - Thread CPU time negative, taking previous time + 1 : 890554871 for thread: 148
+Cumulative: 10.73/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00227.warc.wet (282.12 MB)
+21/05/2025 07:03:12.547 - [INFO] - Thread CPU time negative, taking previous time + 1 : 251738111 for thread: 149
+21/05/2025 07:03:16.708 - [INFO] - Thread CPU time negative, taking previous time + 1 : 214479397 for thread: 150
+Cumulative: 11.01/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00380.warc.wet (274.86 MB)
+21/05/2025 07:03:21.926 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1136226252 for thread: 151
+21/05/2025 07:03:26.093 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1150747783 for thread: 152
+Cumulative: 11.28/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00266.warc.wet (281.43 MB)
+21/05/2025 07:03:33.398 - [INFO] - Thread CPU time negative, taking previous time + 1 : 283365091 for thread: 154
+21/05/2025 07:03:36.525 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7697725363 for thread: 153
+21/05/2025 07:03:37.564 - [INFO] - Thread CPU time negative, taking previous time + 1 : 474216981 for thread: 155
+21/05/2025 07:03:40.690 - [INFO] - Thread CPU time negative, taking previous time + 1 : 198669938 for thread: 156
+Cumulative: 11.55/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00128.warc.wet (275.84 MB)
+21/05/2025 07:03:44.857 - [INFO] - Thread CPU time negative, taking previous time + 1 : 702490068 for thread: 157
+21/05/2025 07:03:47.984 - [INFO] - Thread CPU time negative, taking previous time + 1 : 203947841 for thread: 158
+Cumulative: 11.82/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00283.warc.wet (278.07 MB)
+21/05/2025 07:03:52.150 - [INFO] - Thread CPU time negative, taking previous time + 1 : 682677128 for thread: 159
+21/05/2025 07:03:57.366 - [INFO] - Thread CPU time negative, taking previous time + 1 : 950843253 for thread: 160
+21/05/2025 07:04:01.532 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1096743233 for thread: 161
+Cumulative: 12.09/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00375.warc.wet (273.35 MB)
+21/05/2025 07:04:03.616 - [INFO] - Thread CPU time negative, taking previous time + 1 : 496897821 for thread: 162
+21/05/2025 07:04:08.811 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1076654052 for thread: 163
+Cumulative: 12.36/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00281.warc.wet (274.55 MB)
+21/05/2025 07:04:17.152 - [INFO] - Thread CPU time negative, taking previous time + 1 : 699566042 for thread: 165
+21/05/2025 07:04:19.232 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7395365735 for thread: 164
+21/05/2025 07:04:21.311 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1119320295 for thread: 166
+21/05/2025 07:04:25.479 - [INFO] - Thread CPU time negative, taking previous time + 1 : 430325731 for thread: 167
+Cumulative: 12.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00074.warc.wet (275.13 MB)
+21/05/2025 07:04:29.642 - [INFO] - Thread CPU time negative, taking previous time + 1 : 600509360 for thread: 168
+21/05/2025 07:04:33.800 - [INFO] - Thread CPU time negative, taking previous time + 1 : 461186650 for thread: 169
+Cumulative: 12.90/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00178.warc.wet (276.47 MB)
+21/05/2025 07:04:37.969 - [INFO] - Thread CPU time negative, taking previous time + 1 : 373897981 for thread: 170
+21/05/2025 07:04:42.135 - [INFO] - Thread CPU time negative, taking previous time + 1 : 477559492 for thread: 171
+21/05/2025 07:04:46.304 - [INFO] - Thread CPU time negative, taking previous time + 1 : 581570990 for thread: 172
+Cumulative: 13.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00071.warc.wet (269.87 MB)
+21/05/2025 07:04:49.424 - [INFO] - Thread CPU time negative, taking previous time + 1 : 520985142 for thread: 173
+21/05/2025 07:04:57.769 - [INFO] - Thread CPU time negative, taking previous time + 1 : 244255643 for thread: 175
+Cumulative: 13.43/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00311.warc.wet (272.04 MB)
+21/05/2025 07:05:00.893 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7717255857 for thread: 174
+21/05/2025 07:05:01.936 - [INFO] - Thread CPU time negative, taking previous time + 1 : 605736758 for thread: 176
+21/05/2025 07:05:05.059 - [INFO] - Thread CPU time negative, taking previous time + 1 : 441471909 for thread: 177
+Cumulative: 13.70/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00111.warc.wet (270.57 MB)
+21/05/2025 07:05:09.226 - [INFO] - Thread CPU time negative, taking previous time + 1 : 527734956 for thread: 178
+21/05/2025 07:05:13.390 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1023965758 for thread: 179
+21/05/2025 07:05:16.515 - [INFO] - Thread CPU time negative, taking previous time + 1 : 585416296 for thread: 180
+Cumulative: 13.96/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00015.warc.wet (264.88 MB)
+21/05/2025 07:05:20.680 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1127811755 for thread: 181
+21/05/2025 07:05:23.806 - [INFO] - Thread CPU time negative, taking previous time + 1 : 620258141 for thread: 182
+21/05/2025 07:05:27.972 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1084206594 for thread: 183
+Cumulative: 14.22/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00123.warc.wet (274.18 MB)
+21/05/2025 07:05:31.089 - [INFO] - Thread CPU time negative, taking previous time + 1 : 197674176 for thread: 184
+Cumulative: 14.49/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00262.warc.wet (275.37 MB)
+21/05/2025 07:05:39.434 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1086685111 for thread: 186
+21/05/2025 07:05:41.516 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7297358519 for thread: 185
+21/05/2025 07:05:43.598 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1100539375 for thread: 187
+21/05/2025 07:05:46.723 - [INFO] - Thread CPU time negative, taking previous time + 1 : 952750331 for thread: 188
+Cumulative: 14.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00006.warc.wet (271.73 MB)
+21/05/2025 07:05:49.844 - [INFO] - Thread CPU time negative, taking previous time + 1 : 401878775 for thread: 189
+21/05/2025 07:05:54.000 - [INFO] - Thread CPU time negative, taking previous time + 1 : 941437890 for thread: 190
+21/05/2025 07:05:57.118 - [INFO] - Thread CPU time negative, taking previous time + 1 : 799498401 for thread: 191
+Cumulative: 15.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00200.warc.wet (277.90 MB)
+21/05/2025 07:06:00.241 - [INFO] - Thread CPU time negative, taking previous time + 1 : 308961582 for thread: 192
+21/05/2025 07:06:04.402 - [INFO] - Thread CPU time negative, taking previous time + 1 : 446967545 for thread: 193
+Cumulative: 15.29/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00185.warc.wet (273.70 MB)
+21/05/2025 07:06:08.552 - [INFO] - Thread CPU time negative, taking previous time + 1 : 894953474 for thread: 194
+21/05/2025 07:06:11.675 - [INFO] - Thread CPU time negative, taking previous time + 1 : 392530989 for thread: 195
+Cumulative: 15.56/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00082.warc.wet (278.24 MB)
+21/05/2025 07:06:20.016 - [INFO] - Thread CPU time negative, taking previous time + 1 : 870091081 for thread: 197
+21/05/2025 07:06:23.150 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8087591595 for thread: 196
+21/05/2025 07:06:23.150 - [INFO] - Thread CPU time negative, taking previous time + 1 : 230422903 for thread: 198
+21/05/2025 07:06:27.317 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1108148342 for thread: 199
+Cumulative: 15.83/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00263.warc.wet (273.31 MB)
+21/05/2025 07:06:30.444 - [INFO] - Thread CPU time negative, taking previous time + 1 : 585880977 for thread: 200
+21/05/2025 07:06:34.612 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1101350606 for thread: 201
+21/05/2025 07:06:37.737 - [INFO] - Thread CPU time negative, taking previous time + 1 : 554645461 for thread: 202
+Cumulative: 16.10/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00338.warc.wet (273.34 MB)
+21/05/2025 07:06:41.891 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1084000107 for thread: 203
+21/05/2025 07:06:45.009 - [INFO] - Thread CPU time negative, taking previous time + 1 : 583584426 for thread: 204
+Cumulative: 16.36/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00198.warc.wet (276.67 MB)
+21/05/2025 07:06:49.177 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1099034439 for thread: 205
+21/05/2025 07:06:56.486 - [INFO] - Thread CPU time negative, taking previous time + 1 : 543580391 for thread: 207
+Cumulative: 16.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00143.warc.wet (275.56 MB)
+21/05/2025 07:06:58.574 - [INFO] - Thread CPU time negative, taking previous time + 1 : 6786946451 for thread: 206
+21/05/2025 07:06:59.614 - [INFO] - Thread CPU time negative, taking previous time + 1 : 186649862 for thread: 208
+21/05/2025 07:07:03.775 - [INFO] - Thread CPU time negative, taking previous time + 1 : 853930976 for thread: 209
+21/05/2025 07:07:06.891 - [INFO] - Thread CPU time negative, taking previous time + 1 : 327195364 for thread: 210
+Cumulative: 16.90/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00354.warc.wet (276.97 MB)
+21/05/2025 07:07:11.041 - [INFO] - Thread CPU time negative, taking previous time + 1 : 814187148 for thread: 211
+21/05/2025 07:07:14.152 - [INFO] - Thread CPU time negative, taking previous time + 1 : 300917917 for thread: 212
+Cumulative: 17.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00122.warc.wet (273.44 MB)
+21/05/2025 07:07:18.299 - [INFO] - Thread CPU time negative, taking previous time + 1 : 782645008 for thread: 213
+21/05/2025 07:07:21.415 - [INFO] - Thread CPU time negative, taking previous time + 1 : 241071736 for thread: 214
+Cumulative: 17.44/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00017.warc.wet (271.90 MB)
+21/05/2025 07:07:29.931 - [INFO] - Thread CPU time negative, taking previous time + 1 : 635858519 for thread: 216
+21/05/2025 07:07:34.161 - [INFO] - Thread CPU time negative, taking previous time + 1 : 997082749 for thread: 217
+21/05/2025 07:07:37.298 - [INFO] - Thread CPU time negative, taking previous time + 1 : 303102312 for thread: 218
+Cumulative: 17.71/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00175.warc.wet (275.63 MB)
+21/05/2025 07:07:41.479 - [INFO] - Thread CPU time negative, taking previous time + 1 : 620500992 for thread: 219
+21/05/2025 07:07:45.650 - [INFO] - Thread CPU time negative, taking previous time + 1 : 965022128 for thread: 220
+21/05/2025 07:07:48.784 - [INFO] - Thread CPU time negative, taking previous time + 1 : 262772362 for thread: 221
+Cumulative: 17.98/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00041.warc.wet (272.16 MB)
+21/05/2025 07:07:52.964 - [INFO] - Thread CPU time negative, taking previous time + 1 : 625330292 for thread: 222
+21/05/2025 07:07:57.227 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1024498668 for thread: 223
+Cumulative: 18.24/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00020.warc.wet (279.35 MB)
+21/05/2025 07:08:00.356 - [INFO] - Thread CPU time negative, taking previous time + 1 : 258064649 for thread: 224
+21/05/2025 07:08:04.534 - [INFO] - Thread CPU time negative, taking previous time + 1 : 672695898 for thread: 225
+Cumulative: 18.51/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00270.warc.wet (271.09 MB)
+21/05/2025 07:08:13.295 - [INFO] - Thread CPU time negative, taking previous time + 1 : 444133106 for thread: 227
+21/05/2025 07:08:18.913 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8521924644 for thread: 226
+21/05/2025 07:08:20.134 - [INFO] - Thread CPU time negative, taking previous time + 1 : 918167267 for thread: 228
+21/05/2025 07:08:26.485 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1160705045 for thread: 229
+Cumulative: 18.78/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00372.warc.wet (273.59 MB)
+21/05/2025 07:08:30.846 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1021933365 for thread: 230
+21/05/2025 07:08:35.768 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1105229525 for thread: 231
+Cumulative: 19.05/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00052.warc.wet (271.64 MB)
+21/05/2025 07:08:40.372 - [INFO] - Thread CPU time negative, taking previous time + 1 : 726983123 for thread: 232
+21/05/2025 07:08:40.372 - [INFO] - Thread CPU time negative, taking previous time + 1 : 57532833127 for thread: 215
+21/05/2025 07:08:46.680 - [INFO] - Thread CPU time negative, taking previous time + 1 : 262100221 for thread: 234
+21/05/2025 07:08:49.810 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7974689377 for thread: 233
+Cumulative: 19.31/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00152.warc.wet (276.07 MB)
+21/05/2025 07:08:51.895 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1159492777 for thread: 235
+21/05/2025 07:08:55.020 - [INFO] - Thread CPU time negative, taking previous time + 1 : 253289989 for thread: 236
+21/05/2025 07:08:59.187 - [INFO] - Thread CPU time negative, taking previous time + 1 : 470172607 for thread: 237
+Cumulative: 19.58/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00343.warc.wet (279.27 MB)
+21/05/2025 07:09:03.356 - [INFO] - Thread CPU time negative, taking previous time + 1 : 883684001 for thread: 238
+21/05/2025 07:09:06.481 - [INFO] - Thread CPU time negative, taking previous time + 1 : 306287208 for thread: 239
+21/05/2025 07:09:10.648 - [INFO] - Thread CPU time negative, taking previous time + 1 : 630643697 for thread: 240
+Cumulative: 19.85/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00312.warc.wet (277.20 MB)
+21/05/2025 07:09:18.989 - [INFO] - Thread CPU time negative, taking previous time + 1 : 557248775 for thread: 242
+21/05/2025 07:09:24.193 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1020702113 for thread: 243
+Cumulative: 20.12/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00370.warc.wet (278.63 MB)
+21/05/2025 07:09:27.315 - [INFO] - Thread CPU time negative, taking previous time + 1 : 349091225 for thread: 244
+21/05/2025 07:09:31.481 - [INFO] - Thread CPU time negative, taking previous time + 1 : 515838925 for thread: 245
+21/05/2025 07:09:35.647 - [INFO] - Thread CPU time negative, taking previous time + 1 : 899136682 for thread: 246
+Cumulative: 20.40/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00333.warc.wet (267.85 MB)
+21/05/2025 07:09:39.810 - [INFO] - Thread CPU time negative, taking previous time + 1 : 714005552 for thread: 247
+21/05/2025 07:09:43.971 - [INFO] - Thread CPU time negative, taking previous time + 1 : 654602832 for thread: 248
+Cumulative: 20.66/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00199.warc.wet (272.82 MB)
+21/05/2025 07:09:48.134 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1072778128 for thread: 249
+21/05/2025 07:09:51.263 - [INFO] - Thread CPU time negative, taking previous time + 1 : 468160040 for thread: 250
+21/05/2025 07:09:55.433 - [INFO] - Thread CPU time negative, taking previous time + 1 : 919371779 for thread: 251
+Cumulative: 20.92/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00088.warc.wet (277.25 MB)
+21/05/2025 07:10:03.764 - [INFO] - Thread CPU time negative, taking previous time + 1 : 679973944 for thread: 253
+21/05/2025 07:10:05.846 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7360188503 for thread: 252
+21/05/2025 07:10:07.927 - [INFO] - Thread CPU time negative, taking previous time + 1 : 285561100 for thread: 254
+Cumulative: 21.20/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00327.warc.wet (278.95 MB)
+21/05/2025 07:10:12.076 - [INFO] - Thread CPU time negative, taking previous time + 1 : 519555959 for thread: 255
+21/05/2025 07:10:16.222 - [INFO] - Thread CPU time negative, taking previous time + 1 : 827852405 for thread: 256
+Cumulative: 21.47/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00323.warc.wet (270.80 MB)
+21/05/2025 07:10:20.377 - [INFO] - Thread CPU time negative, taking previous time + 1 : 989809388 for thread: 257
+21/05/2025 07:10:23.498 - [INFO] - Thread CPU time negative, taking previous time + 1 : 363532245 for thread: 258
+21/05/2025 07:10:27.664 - [INFO] - Thread CPU time negative, taking previous time + 1 : 808953690 for thread: 259
+Cumulative: 21.73/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00189.warc.wet (276.06 MB)
+21/05/2025 07:10:30.791 - [INFO] - Thread CPU time negative, taking previous time + 1 : 172907602 for thread: 260
+21/05/2025 07:10:34.951 - [INFO] - Thread CPU time negative, taking previous time + 1 : 186498252 for thread: 261
+21/05/2025 07:10:40.167 - [INFO] - Thread CPU time negative, taking previous time + 1 : 927315311 for thread: 262
+Cumulative: 22.00/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00241.warc.wet (270.86 MB)
+21/05/2025 07:10:48.512 - [INFO] - Thread CPU time negative, taking previous time + 1 : 677922622 for thread: 264
+21/05/2025 07:10:51.634 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7988676500 for thread: 263
+Cumulative: 22.27/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00307.warc.wet (278.95 MB)
+21/05/2025 07:10:52.681 - [INFO] - Thread CPU time negative, taking previous time + 1 : 655898081 for thread: 265
+21/05/2025 07:10:56.834 - [INFO] - Thread CPU time negative, taking previous time + 1 : 419978267 for thread: 266
+21/05/2025 07:11:00.979 - [INFO] - Thread CPU time negative, taking previous time + 1 : 881700009 for thread: 267
+Cumulative: 22.54/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00287.warc.wet (270.50 MB)
+21/05/2025 07:11:05.127 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1046292411 for thread: 268
+21/05/2025 07:11:09.283 - [INFO] - Thread CPU time negative, taking previous time + 1 : 707955760 for thread: 269
+Cumulative: 22.80/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00155.warc.wet (272.17 MB)
+21/05/2025 07:11:13.435 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1146588807 for thread: 270
+21/05/2025 07:11:16.553 - [INFO] - Thread CPU time negative, taking previous time + 1 : 621857632 for thread: 271
+21/05/2025 07:11:20.699 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1061898131 for thread: 272
+Cumulative: 23.07/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00090.warc.wet (266.25 MB)
+21/05/2025 07:11:30.071 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1086985757 for thread: 274
+21/05/2025 07:11:31.262 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7618244199 for thread: 273
+21/05/2025 07:11:34.391 - [INFO] - Thread CPU time negative, taking previous time + 1 : 605787590 for thread: 275
+Cumulative: 23.33/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00093.warc.wet (270.22 MB)
+21/05/2025 07:11:38.559 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1051850158 for thread: 276
+21/05/2025 07:11:41.685 - [INFO] - Thread CPU time negative, taking previous time + 1 : 458052109 for thread: 277
+Cumulative: 23.59/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00028.warc.wet (269.44 MB)
+21/05/2025 07:11:45.849 - [INFO] - Thread CPU time negative, taking previous time + 1 : 814470935 for thread: 278
+21/05/2025 07:11:50.016 - [INFO] - Thread CPU time negative, taking previous time + 1 : 465073226 for thread: 279
+21/05/2025 07:11:54.182 - [INFO] - Thread CPU time negative, taking previous time + 1 : 931264469 for thread: 280
+Cumulative: 23.86/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00229.warc.wet (278.65 MB)
+21/05/2025 07:11:57.307 - [INFO] - Thread CPU time negative, taking previous time + 1 : 687958230 for thread: 281
+21/05/2025 07:12:01.475 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1037953722 for thread: 282
+21/05/2025 07:12:04.601 - [INFO] - Thread CPU time negative, taking previous time + 1 : 556446421 for thread: 283
+Cumulative: 24.13/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00257.warc.wet (276.73 MB)
+21/05/2025 07:12:12.925 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1066954162 for thread: 285
+21/05/2025 07:12:16.048 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8218219767 for thread: 284
+Cumulative: 24.40/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00065.warc.wet (275.91 MB)
+21/05/2025 07:12:17.089 - [INFO] - Thread CPU time negative, taking previous time + 1 : 930351917 for thread: 286
+21/05/2025 07:12:20.209 - [INFO] - Thread CPU time negative, taking previous time + 1 : 431576903 for thread: 287
+21/05/2025 07:12:24.363 - [INFO] - Thread CPU time negative, taking previous time + 1 : 987243282 for thread: 288
+Cumulative: 24.67/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00219.warc.wet (277.45 MB)
+21/05/2025 07:12:27.467 - [INFO] - Thread CPU time negative, taking previous time + 1 : 437787987 for thread: 289
+21/05/2025 07:12:31.615 - [INFO] - Thread CPU time negative, taking previous time + 1 : 934415834 for thread: 290
+21/05/2025 07:12:34.733 - [INFO] - Thread CPU time negative, taking previous time + 1 : 419403898 for thread: 291
+Cumulative: 24.94/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00117.warc.wet (271.21 MB)
+21/05/2025 07:12:38.900 - [INFO] - Thread CPU time negative, taking previous time + 1 : 909187348 for thread: 292
+21/05/2025 07:12:42.026 - [INFO] - Thread CPU time negative, taking previous time + 1 : 436177528 for thread: 293
+21/05/2025 07:12:45.141 - [INFO] - Thread CPU time negative, taking previous time + 1 : 351087932 for thread: 294
+Cumulative: 25.20/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00373.warc.wet (277.26 MB)
+21/05/2025 07:12:53.465 - [INFO] - Thread CPU time negative, taking previous time + 1 : 538411381 for thread: 296
+21/05/2025 07:12:56.591 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8072412953 for thread: 295
+Cumulative: 25.47/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00054.warc.wet (276.84 MB)
+21/05/2025 07:12:57.631 - [INFO] - Thread CPU time negative, taking previous time + 1 : 781203679 for thread: 297
+21/05/2025 07:13:00.756 - [INFO] - Thread CPU time negative, taking previous time + 1 : 483823853 for thread: 298
+21/05/2025 07:13:04.922 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1017756581 for thread: 299
+Cumulative: 25.74/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00278.warc.wet (272.04 MB)
+21/05/2025 07:13:08.049 - [INFO] - Thread CPU time negative, taking previous time + 1 : 452735903 for thread: 300
+21/05/2025 07:13:12.217 - [INFO] - Thread CPU time negative, taking previous time + 1 : 919937122 for thread: 301
+21/05/2025 07:13:15.342 - [INFO] - Thread CPU time negative, taking previous time + 1 : 463096467 for thread: 302
+Cumulative: 26.01/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00139.warc.wet (272.49 MB)
+21/05/2025 07:13:19.509 - [INFO] - Thread CPU time negative, taking previous time + 1 : 991872842 for thread: 303
+21/05/2025 07:13:22.635 - [INFO] - Thread CPU time negative, taking previous time + 1 : 500936517 for thread: 304
+Cumulative: 26.28/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00115.warc.wet (278.48 MB)
+21/05/2025 07:13:26.803 - [INFO] - Thread CPU time negative, taking previous time + 1 : 986469162 for thread: 305
+21/05/2025 07:13:34.099 - [INFO] - Thread CPU time negative, taking previous time + 1 : 318118445 for thread: 307
+Cumulative: 26.55/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00147.warc.wet (282.97 MB)
+21/05/2025 07:13:37.220 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7650000596 for thread: 306
+21/05/2025 07:13:38.258 - [INFO] - Thread CPU time negative, taking previous time + 1 : 676340931 for thread: 308
+21/05/2025 07:13:41.382 - [INFO] - Thread CPU time negative, taking previous time + 1 : 551108282 for thread: 309
+21/05/2025 07:13:45.547 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1098011737 for thread: 310
+Cumulative: 26.82/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00280.warc.wet (280.99 MB)
+21/05/2025 07:13:48.674 - [INFO] - Thread CPU time negative, taking previous time + 1 : 585306295 for thread: 311
+21/05/2025 07:13:51.801 - [INFO] - Thread CPU time negative, taking previous time + 1 : 141032347 for thread: 312
+21/05/2025 07:13:55.968 - [INFO] - Thread CPU time negative, taking previous time + 1 : 682910349 for thread: 313
+Cumulative: 27.10/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00215.warc.wet (273.22 MB)
+21/05/2025 07:13:59.091 - [INFO] - Thread CPU time negative, taking previous time + 1 : 201025524 for thread: 314
+21/05/2025 07:14:03.257 - [INFO] - Thread CPU time negative, taking previous time + 1 : 699186846 for thread: 315
+Cumulative: 27.37/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00066.warc.wet (269.49 MB)
+21/05/2025 07:14:11.815 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1177162361 for thread: 317
+21/05/2025 07:14:14.943 - [INFO] - Thread CPU time negative, taking previous time + 1 : 562922375 for thread: 318
+Cumulative: 27.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00269.warc.wet (276.14 MB)
+21/05/2025 07:14:19.115 - [INFO] - Thread CPU time negative, taking previous time + 1 : 906631872 for thread: 319
+21/05/2025 07:14:22.244 - [INFO] - Thread CPU time negative, taking previous time + 1 : 230346934 for thread: 320
+21/05/2025 07:14:26.414 - [INFO] - Thread CPU time negative, taking previous time + 1 : 584937563 for thread: 321
+Cumulative: 27.90/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00179.warc.wet (277.59 MB)
+21/05/2025 07:14:30.589 - [INFO] - Thread CPU time negative, taking previous time + 1 : 940829227 for thread: 322
+21/05/2025 07:14:33.733 - [INFO] - Thread CPU time negative, taking previous time + 1 : 300666942 for thread: 323
+21/05/2025 07:14:37.972 - [INFO] - Thread CPU time negative, taking previous time + 1 : 615326900 for thread: 324
+Cumulative: 28.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00044.warc.wet (269.25 MB)
+21/05/2025 07:14:42.150 - [INFO] - Thread CPU time negative, taking previous time + 1 : 915457064 for thread: 325
+21/05/2025 07:14:45.285 - [INFO] - Thread CPU time negative, taking previous time + 1 : 250753598 for thread: 326
+Cumulative: 28.43/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00334.warc.wet (273.43 MB)
+21/05/2025 07:14:53.655 - [INFO] - Thread CPU time negative, taking previous time + 1 : 509794900 for thread: 328
+21/05/2025 07:14:56.910 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7819334562 for thread: 327
+21/05/2025 07:14:57.956 - [INFO] - Thread CPU time negative, taking previous time + 1 : 703227691 for thread: 329
+Cumulative: 28.70/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00036.warc.wet (275.01 MB)
+21/05/2025 07:15:01.088 - [INFO] - Thread CPU time negative, taking previous time + 1 : 377457969 for thread: 330
+21/05/2025 07:15:05.397 - [INFO] - Thread CPU time negative, taking previous time + 1 : 701093683 for thread: 331
+21/05/2025 07:15:10.106 - [INFO] - Thread CPU time negative, taking previous time + 1 : 724886349 for thread: 332
+21/05/2025 07:15:11.190 - [INFO] - Thread CPU time negative, taking previous time + 1 : 56845014239 for thread: 316
+Cumulative: 28.97/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00304.warc.wet (274.36 MB)
+21/05/2025 07:15:16.401 - [INFO] - Thread CPU time negative, taking previous time + 1 : 372898595 for thread: 334
+21/05/2025 07:15:19.528 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7294958816 for thread: 333
+21/05/2025 07:15:21.609 - [INFO] - Thread CPU time negative, taking previous time + 1 : 864038834 for thread: 335
+Cumulative: 29.24/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00057.warc.wet (279.83 MB)
+21/05/2025 07:15:25.771 - [INFO] - Thread CPU time negative, taking previous time + 1 : 888350870 for thread: 336
+21/05/2025 07:15:29.928 - [INFO] - Thread CPU time negative, taking previous time + 1 : 619403997 for thread: 337
+21/05/2025 07:15:34.077 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1046890761 for thread: 338
+Cumulative: 29.51/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00208.warc.wet (273.61 MB)
+21/05/2025 07:15:37.191 - [INFO] - Thread CPU time negative, taking previous time + 1 : 459439562 for thread: 339
+21/05/2025 07:15:41.347 - [INFO] - Thread CPU time negative, taking previous time + 1 : 771804122 for thread: 340
+Cumulative: 29.78/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00376.warc.wet (268.15 MB)
+21/05/2025 07:15:51.057 - [INFO] - Thread CPU time negative, taking previous time + 1 : 860426150 for thread: 342
+21/05/2025 07:15:54.232 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8225648228 for thread: 341
+21/05/2025 07:15:56.312 - [INFO] - Thread CPU time negative, taking previous time + 1 : 797560650 for thread: 343
+Cumulative: 30.04/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00180.warc.wet (272.59 MB)
+21/05/2025 07:16:00.479 - [INFO] - Thread CPU time negative, taking previous time + 1 : 835576007 for thread: 344
+21/05/2025 07:16:03.597 - [INFO] - Thread CPU time negative, taking previous time + 1 : 165251147 for thread: 345
+Cumulative: 30.30/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00124.warc.wet (274.03 MB)
+21/05/2025 07:16:12.961 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1051895650 for thread: 347
+21/05/2025 07:16:16.085 - [INFO] - Thread CPU time negative, taking previous time + 1 : 523798267 for thread: 348
+Cumulative: 30.57/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00099.warc.wet (269.88 MB)
+21/05/2025 07:16:20.243 - [INFO] - Thread CPU time negative, taking previous time + 1 : 894414823 for thread: 349
+21/05/2025 07:16:23.352 - [INFO] - Thread CPU time negative, taking previous time + 1 : 282449351 for thread: 350
+21/05/2025 07:16:27.507 - [INFO] - Thread CPU time negative, taking previous time + 1 : 690050112 for thread: 351
+Cumulative: 30.84/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00023.warc.wet (277.97 MB)
+21/05/2025 07:16:35.905 - [INFO] - Thread CPU time negative, taking previous time + 1 : 226044250 for thread: 353
+21/05/2025 07:16:39.037 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7717761937 for thread: 352
+21/05/2025 07:16:41.123 - [INFO] - Thread CPU time negative, taking previous time + 1 : 985820083 for thread: 354
+Cumulative: 31.11/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00291.warc.wet (280.58 MB)
+21/05/2025 07:16:45.275 - [INFO] - Thread CPU time negative, taking previous time + 1 : 991221755 for thread: 355
+21/05/2025 07:16:48.400 - [INFO] - Thread CPU time negative, taking previous time + 1 : 341576672 for thread: 356
+21/05/2025 07:16:52.567 - [INFO] - Thread CPU time negative, taking previous time + 1 : 738917235 for thread: 357
+Cumulative: 31.38/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00244.warc.wet (266.06 MB)
+21/05/2025 07:16:56.732 - [INFO] - Thread CPU time negative, taking previous time + 1 : 676186335 for thread: 358
+21/05/2025 07:17:00.895 - [INFO] - Thread CPU time negative, taking previous time + 1 : 322684719 for thread: 359
+Cumulative: 31.64/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00348.warc.wet (269.81 MB)
+21/05/2025 07:17:05.059 - [INFO] - Thread CPU time negative, taking previous time + 1 : 614558450 for thread: 360
+21/05/2025 07:17:09.215 - [INFO] - Thread CPU time negative, taking previous time + 1 : 992297885 for thread: 361
+21/05/2025 07:17:12.340 - [INFO] - Thread CPU time negative, taking previous time + 1 : 402122965 for thread: 362
+Cumulative: 31.90/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00163.warc.wet (272.27 MB)
+21/05/2025 07:17:21.728 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1162089297 for thread: 364
+21/05/2025 07:17:24.857 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8201941943 for thread: 363
+21/05/2025 07:17:25.896 - [INFO] - Thread CPU time negative, taking previous time + 1 : 605325284 for thread: 365
+Cumulative: 32.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00042.warc.wet (269.42 MB)
+21/05/2025 07:17:30.049 - [INFO] - Thread CPU time negative, taking previous time + 1 : 592979317 for thread: 366
+21/05/2025 07:17:34.207 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1046681286 for thread: 367
+Cumulative: 32.43/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00098.warc.wet (273.71 MB)
+21/05/2025 07:17:37.331 - [INFO] - Thread CPU time negative, taking previous time + 1 : 374776035 for thread: 368
+21/05/2025 07:17:41.489 - [INFO] - Thread CPU time negative, taking previous time + 1 : 352901451 for thread: 369
+21/05/2025 07:17:44.606 - [INFO] - Thread CPU time negative, taking previous time + 1 : 265313912 for thread: 370
+Cumulative: 32.70/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00193.warc.wet (279.37 MB)
+21/05/2025 07:17:48.755 - [INFO] - Thread CPU time negative, taking previous time + 1 : 779372072 for thread: 371
+21/05/2025 07:17:52.901 - [INFO] - Thread CPU time negative, taking previous time + 1 : 896750364 for thread: 372
+Cumulative: 32.97/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00316.warc.wet (273.02 MB)
+21/05/2025 07:17:57.052 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1131131196 for thread: 373
+21/05/2025 07:18:04.339 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1004574513 for thread: 375
+Cumulative: 33.24/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00195.warc.wet (272.40 MB)
+21/05/2025 07:18:07.464 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8245001615 for thread: 374
+21/05/2025 07:18:07.464 - [INFO] - Thread CPU time negative, taking previous time + 1 : 269069622 for thread: 376
+21/05/2025 07:18:11.624 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1088094086 for thread: 377
+21/05/2025 07:18:14.735 - [INFO] - Thread CPU time negative, taking previous time + 1 : 579686342 for thread: 378
+Cumulative: 33.51/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00047.warc.wet (271.69 MB)
+21/05/2025 07:18:18.902 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1079156546 for thread: 379
+21/05/2025 07:18:22.020 - [INFO] - Thread CPU time negative, taking previous time + 1 : 623240920 for thread: 380
+21/05/2025 07:18:26.186 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1135207457 for thread: 381
+Cumulative: 33.77/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00301.warc.wet (278.27 MB)
+21/05/2025 07:18:29.301 - [INFO] - Thread CPU time negative, taking previous time + 1 : 270271192 for thread: 382
+21/05/2025 07:18:33.455 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1146484981 for thread: 383
+Cumulative: 34.04/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00059.warc.wet (276.90 MB)
+21/05/2025 07:18:40.764 - [INFO] - Thread CPU time negative, taking previous time + 1 : 280488812 for thread: 385
+21/05/2025 07:18:43.896 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7863171537 for thread: 384
+21/05/2025 07:18:44.938 - [INFO] - Thread CPU time negative, taking previous time + 1 : 615710621 for thread: 386
+Cumulative: 34.31/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00031.warc.wet (260.81 MB)
+21/05/2025 07:18:49.104 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1153788914 for thread: 387
+21/05/2025 07:18:52.231 - [INFO] - Thread CPU time negative, taking previous time + 1 : 707680529 for thread: 388
+21/05/2025 07:18:55.357 - [INFO] - Thread CPU time negative, taking previous time + 1 : 175043618 for thread: 389
+Cumulative: 34.57/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00248.warc.wet (271.71 MB)
+21/05/2025 07:18:59.524 - [INFO] - Thread CPU time negative, taking previous time + 1 : 766485823 for thread: 390
+21/05/2025 07:19:02.649 - [INFO] - Thread CPU time negative, taking previous time + 1 : 258397562 for thread: 391
+Cumulative: 34.83/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00288.warc.wet (270.87 MB)
+21/05/2025 07:19:06.805 - [INFO] - Thread CPU time negative, taking previous time + 1 : 738799437 for thread: 392
+21/05/2025 07:19:09.923 - [INFO] - Thread CPU time negative, taking previous time + 1 : 211815685 for thread: 393
+21/05/2025 07:19:14.074 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1139368469 for thread: 394
+Cumulative: 35.10/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00212.warc.wet (275.38 MB)
+21/05/2025 07:19:21.362 - [INFO] - Thread CPU time negative, taking previous time + 1 : 567579278 for thread: 396
+21/05/2025 07:19:24.485 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7770318799 for thread: 395
+21/05/2025 07:19:25.525 - [INFO] - Thread CPU time negative, taking previous time + 1 : 431151691 for thread: 397
+Cumulative: 35.37/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00081.warc.wet (266.39 MB)
+21/05/2025 07:19:28.642 - [INFO] - Thread CPU time negative, taking previous time + 1 : 285537111 for thread: 398
+21/05/2025 07:19:32.800 - [INFO] - Thread CPU time negative, taking previous time + 1 : 822064951 for thread: 399
+Cumulative: 35.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00324.warc.wet (272.80 MB)
+21/05/2025 07:19:35.926 - [INFO] - Thread CPU time negative, taking previous time + 1 : 302627978 for thread: 400
+21/05/2025 07:19:40.090 - [INFO] - Thread CPU time negative, taking previous time + 1 : 814038972 for thread: 401
+21/05/2025 07:19:43.217 - [INFO] - Thread CPU time negative, taking previous time + 1 : 298290162 for thread: 402
+Cumulative: 35.89/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00148.warc.wet (271.85 MB)
+21/05/2025 07:19:47.374 - [INFO] - Thread CPU time negative, taking previous time + 1 : 782015905 for thread: 403
+21/05/2025 07:19:50.486 - [INFO] - Thread CPU time negative, taking previous time + 1 : 307970781 for thread: 404
+21/05/2025 07:19:54.632 - [INFO] - Thread CPU time negative, taking previous time + 1 : 853962861 for thread: 405
+Cumulative: 36.16/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00226.warc.wet (267.90 MB)
+21/05/2025 07:20:02.954 - [INFO] - Thread CPU time negative, taking previous time + 1 : 981573587 for thread: 407
+21/05/2025 07:20:06.117 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8258182792 for thread: 406
+Cumulative: 36.42/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00160.warc.wet (270.70 MB)
+21/05/2025 07:20:07.159 - [INFO] - Thread CPU time negative, taking previous time + 1 : 186238927 for thread: 408
+21/05/2025 07:20:12.371 - [INFO] - Thread CPU time negative, taking previous time + 1 : 868707269 for thread: 409
+21/05/2025 07:20:16.520 - [INFO] - Thread CPU time negative, taking previous time + 1 : 670368180 for thread: 410
+Cumulative: 36.69/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00379.warc.wet (282.60 MB)
+21/05/2025 07:20:20.673 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1099877640 for thread: 411
+21/05/2025 07:20:23.782 - [INFO] - Thread CPU time negative, taking previous time + 1 : 414655227 for thread: 412
+21/05/2025 07:20:27.936 - [INFO] - Thread CPU time negative, taking previous time + 1 : 642090076 for thread: 413
+Cumulative: 36.96/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00258.warc.wet (268.89 MB)
+21/05/2025 07:20:31.050 - [INFO] - Thread CPU time negative, taking previous time + 1 : 505667850 for thread: 414
+21/05/2025 07:20:35.198 - [INFO] - Thread CPU time negative, taking previous time + 1 : 545434110 for thread: 415
+Cumulative: 37.22/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00308.warc.wet (272.12 MB)
+21/05/2025 07:20:39.366 - [INFO] - Thread CPU time negative, taking previous time + 1 : 941942557 for thread: 416
+21/05/2025 07:20:47.694 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1056844600 for thread: 418
+Cumulative: 37.49/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00173.warc.wet (275.53 MB)
+21/05/2025 07:20:49.772 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7336172049 for thread: 417
+21/05/2025 07:20:50.812 - [INFO] - Thread CPU time negative, taking previous time + 1 : 272067773 for thread: 419
+21/05/2025 07:20:54.972 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1086752767 for thread: 420
+21/05/2025 07:20:58.085 - [INFO] - Thread CPU time negative, taking previous time + 1 : 438576292 for thread: 421
+Cumulative: 37.76/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00196.warc.wet (263.61 MB)
+21/05/2025 07:21:02.234 - [INFO] - Thread CPU time negative, taking previous time + 1 : 647878353 for thread: 422
+21/05/2025 07:21:06.391 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1098141571 for thread: 423
+Cumulative: 38.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00114.warc.wet (278.71 MB)
+21/05/2025 07:21:09.503 - [INFO] - Thread CPU time negative, taking previous time + 1 : 362210974 for thread: 424
+21/05/2025 07:21:13.659 - [INFO] - Thread CPU time negative, taking previous time + 1 : 744891179 for thread: 425
+21/05/2025 07:21:17.826 - [INFO] - Thread CPU time negative, taking previous time + 1 : 367511924 for thread: 426
+Cumulative: 38.29/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00271.warc.wet (276.90 MB)
+21/05/2025 07:21:26.399 - [INFO] - Thread CPU time negative, taking previous time + 1 : 787115512 for thread: 428
+21/05/2025 07:21:30.611 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1109424459 for thread: 429
+Cumulative: 38.56/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00245.warc.wet (276.03 MB)
+21/05/2025 07:21:33.747 - [INFO] - Thread CPU time negative, taking previous time + 1 : 318658022 for thread: 430
+21/05/2025 07:21:37.916 - [INFO] - Thread CPU time negative, taking previous time + 1 : 502889407 for thread: 431
+21/05/2025 07:21:42.073 - [INFO] - Thread CPU time negative, taking previous time + 1 : 803345298 for thread: 432
+Cumulative: 38.83/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00384.warc.wet (269.36 MB)
+21/05/2025 07:21:46.231 - [INFO] - Thread CPU time negative, taking previous time + 1 : 835571414 for thread: 433
+21/05/2025 07:21:51.667 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1168591121 for thread: 434
+Cumulative: 39.09/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00176.warc.wet (277.84 MB)
+21/05/2025 07:21:56.144 - [INFO] - Thread CPU time negative, taking previous time + 1 : 741063122 for thread: 435
+21/05/2025 07:22:00.537 - [INFO] - Thread CPU time negative, taking previous time + 1 : 719664276 for thread: 436
+21/05/2025 07:22:06.172 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1190785344 for thread: 437
+Cumulative: 39.36/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00243.warc.wet (276.54 MB)
+21/05/2025 07:22:16.805 - [INFO] - Thread CPU time negative, taking previous time + 1 : 410000114 for thread: 439
+21/05/2025 07:22:19.195 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7745406762 for thread: 438
+21/05/2025 07:22:22.649 - [INFO] - Thread CPU time negative, taking previous time + 1 : 858610765 for thread: 440
+Cumulative: 39.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00138.warc.wet (273.75 MB)
+21/05/2025 07:22:28.608 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1166694779 for thread: 441
+21/05/2025 07:22:33.214 - [INFO] - Thread CPU time negative, taking previous time + 1 : 824948081 for thread: 442
+21/05/2025 07:22:37.879 - [INFO] - Thread CPU time negative, taking previous time + 1 : 283481861 for thread: 443
+Cumulative: 39.90/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00050.warc.wet (276.60 MB)
+21/05/2025 07:22:41.213 - [INFO] - Thread CPU time negative, taking previous time + 1 : 58329809115 for thread: 427
+21/05/2025 07:22:42.256 - [INFO] - Thread CPU time negative, taking previous time + 1 : 809964722 for thread: 444
+21/05/2025 07:22:49.540 - [INFO] - Thread CPU time negative, taking previous time + 1 : 884990447 for thread: 446
+Cumulative: 40.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00137.warc.wet (276.50 MB)
+21/05/2025 07:22:53.760 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8237149652 for thread: 445
+21/05/2025 07:22:55.902 - [INFO] - Thread CPU time negative, taking previous time + 1 : 897958547 for thread: 447
+21/05/2025 07:23:00.073 - [INFO] - Thread CPU time negative, taking previous time + 1 : 279975439 for thread: 448
+21/05/2025 07:23:04.241 - [INFO] - Thread CPU time negative, taking previous time + 1 : 417007973 for thread: 449
+Cumulative: 40.44/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00107.warc.wet (270.88 MB)
+21/05/2025 07:23:08.413 - [INFO] - Thread CPU time negative, taking previous time + 1 : 410773461 for thread: 450
+21/05/2025 07:23:12.575 - [INFO] - Thread CPU time negative, taking previous time + 1 : 835649327 for thread: 451
+Cumulative: 40.70/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00344.warc.wet (270.49 MB)
+21/05/2025 07:23:21.953 - [INFO] - Thread CPU time negative, taking previous time + 1 : 873626788 for thread: 453
+21/05/2025 07:23:24.193 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8234151330 for thread: 452
+21/05/2025 07:23:26.273 - [INFO] - Thread CPU time negative, taking previous time + 1 : 726887071 for thread: 454
+Cumulative: 40.97/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00362.warc.wet (280.83 MB)
+21/05/2025 07:23:30.430 - [INFO] - Thread CPU time negative, taking previous time + 1 : 686553673 for thread: 455
+21/05/2025 07:23:34.594 - [INFO] - Thread CPU time negative, taking previous time + 1 : 730740410 for thread: 456
+21/05/2025 07:23:38.757 - [INFO] - Thread CPU time negative, taking previous time + 1 : 662498261 for thread: 457
+Cumulative: 41.24/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00284.warc.wet (276.26 MB)
+21/05/2025 07:23:42.921 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1023507158 for thread: 458
+21/05/2025 07:23:47.087 - [INFO] - Thread CPU time negative, taking previous time + 1 : 522149954 for thread: 459
+Cumulative: 41.51/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00016.warc.wet (274.16 MB)
+21/05/2025 07:23:51.254 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1010752042 for thread: 460
+21/05/2025 07:23:54.370 - [INFO] - Thread CPU time negative, taking previous time + 1 : 931943139 for thread: 461
+21/05/2025 07:23:57.490 - [INFO] - Thread CPU time negative, taking previous time + 1 : 453887364 for thread: 462
+Cumulative: 41.78/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00351.warc.wet (267.99 MB)
+21/05/2025 07:24:06.867 - [INFO] - Thread CPU time negative, taking previous time + 1 : 888382600 for thread: 464
+21/05/2025 07:24:08.952 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7866776175 for thread: 463
+21/05/2025 07:24:11.032 - [INFO] - Thread CPU time negative, taking previous time + 1 : 972933584 for thread: 465
+Cumulative: 42.04/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00135.warc.wet (277.48 MB)
+21/05/2025 07:24:15.192 - [INFO] - Thread CPU time negative, taking previous time + 1 : 955376537 for thread: 466
+21/05/2025 07:24:19.346 - [INFO] - Thread CPU time negative, taking previous time + 1 : 621105013 for thread: 467
+Cumulative: 42.31/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00172.warc.wet (277.05 MB)
+21/05/2025 07:24:23.491 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1031502801 for thread: 468
+21/05/2025 07:24:26.616 - [INFO] - Thread CPU time negative, taking previous time + 1 : 402416982 for thread: 469
+21/05/2025 07:24:30.781 - [INFO] - Thread CPU time negative, taking previous time + 1 : 487809220 for thread: 470
+Cumulative: 42.58/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00146.warc.wet (274.33 MB)
+21/05/2025 07:24:33.894 - [INFO] - Thread CPU time negative, taking previous time + 1 : 240904233 for thread: 471
+21/05/2025 07:24:38.043 - [INFO] - Thread CPU time negative, taking previous time + 1 : 203232480 for thread: 472
+21/05/2025 07:24:43.243 - [INFO] - Thread CPU time negative, taking previous time + 1 : 948828309 for thread: 473
+Cumulative: 42.85/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00079.warc.wet (283.57 MB)
+21/05/2025 07:24:51.590 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1083897446 for thread: 475
+21/05/2025 07:24:54.722 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8332608368 for thread: 474
+21/05/2025 07:24:55.760 - [INFO] - Thread CPU time negative, taking previous time + 1 : 654323462 for thread: 476
+Cumulative: 43.13/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00346.warc.wet (276.29 MB)
+21/05/2025 07:24:59.910 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1087492300 for thread: 477
+21/05/2025 07:25:05.098 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1116928725 for thread: 478
+Cumulative: 43.40/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00242.warc.wet (270.70 MB)
+21/05/2025 07:25:08.217 - [INFO] - Thread CPU time negative, taking previous time + 1 : 359362772 for thread: 479
+21/05/2025 07:25:13.421 - [INFO] - Thread CPU time negative, taking previous time + 1 : 875460530 for thread: 480
+21/05/2025 07:25:16.538 - [INFO] - Thread CPU time negative, taking previous time + 1 : 262453182 for thread: 481
+Cumulative: 43.66/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00306.warc.wet (278.04 MB)
+21/05/2025 07:25:20.694 - [INFO] - Thread CPU time negative, taking previous time + 1 : 717944756 for thread: 482
+21/05/2025 07:25:24.856 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1093901300 for thread: 483
+Cumulative: 43.93/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00339.warc.wet (280.20 MB)
+21/05/2025 07:25:27.980 - [INFO] - Thread CPU time negative, taking previous time + 1 : 544411611 for thread: 484
+21/05/2025 07:25:32.147 - [INFO] - Thread CPU time negative, taking previous time + 1 : 984441415 for thread: 485
+21/05/2025 07:25:35.273 - [INFO] - Thread CPU time negative, taking previous time + 1 : 451624912 for thread: 486
+Cumulative: 44.21/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00371.warc.wet (275.23 MB)
+21/05/2025 07:25:39.432 - [INFO] - Thread CPU time negative, taking previous time + 1 : 934267748 for thread: 487
+21/05/2025 07:25:45.692 - [INFO] - Thread CPU time negative, taking previous time + 1 : 481383064 for thread: 489
+Cumulative: 44.48/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00224.warc.wet (278.93 MB)
+21/05/2025 07:25:48.816 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7769164953 for thread: 488
+21/05/2025 07:25:49.859 - [INFO] - Thread CPU time negative, taking previous time + 1 : 639508588 for thread: 490
+21/05/2025 07:25:52.980 - [INFO] - Thread CPU time negative, taking previous time + 1 : 502628809 for thread: 491
+21/05/2025 07:25:57.146 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1012988517 for thread: 492
+Cumulative: 44.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00261.warc.wet (272.20 MB)
+21/05/2025 07:26:00.268 - [INFO] - Thread CPU time negative, taking previous time + 1 : 459199840 for thread: 493
+21/05/2025 07:26:04.413 - [INFO] - Thread CPU time negative, taking previous time + 1 : 930457011 for thread: 494
+Cumulative: 45.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00264.warc.wet (278.36 MB)
+21/05/2025 07:26:12.738 - [INFO] - Thread CPU time negative, taking previous time + 1 : 954609850 for thread: 496
+21/05/2025 07:26:14.823 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7566722884 for thread: 495
+21/05/2025 07:26:15.863 - [INFO] - Thread CPU time negative, taking previous time + 1 : 288909592 for thread: 497
+Cumulative: 45.29/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00363.warc.wet (278.14 MB)
+21/05/2025 07:26:20.011 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1135171014 for thread: 498
+21/05/2025 07:26:23.134 - [INFO] - Thread CPU time negative, taking previous time + 1 : 542810825 for thread: 499
+21/05/2025 07:26:27.294 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1056321574 for thread: 500
+Cumulative: 45.56/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00077.warc.wet (272.21 MB)
+21/05/2025 07:26:30.413 - [INFO] - Thread CPU time negative, taking previous time + 1 : 543606906 for thread: 501
+21/05/2025 07:26:34.580 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1035949299 for thread: 502
+21/05/2025 07:26:37.706 - [INFO] - Thread CPU time negative, taking previous time + 1 : 516474240 for thread: 503
+Cumulative: 45.82/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00329.warc.wet (272.67 MB)
+21/05/2025 07:26:41.868 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1035151537 for thread: 504
+21/05/2025 07:26:44.993 - [INFO] - Thread CPU time negative, taking previous time + 1 : 514972699 for thread: 505
+Cumulative: 46.09/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00154.warc.wet (274.29 MB)
+21/05/2025 07:26:53.331 - [INFO] - Thread CPU time negative, taking previous time + 1 : 272376395 for thread: 507
+21/05/2025 07:26:56.453 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8193418978 for thread: 506
+21/05/2025 07:26:57.490 - [INFO] - Thread CPU time negative, taking previous time + 1 : 978846830 for thread: 508
+Cumulative: 46.36/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00213.warc.wet (269.72 MB)
+21/05/2025 07:27:00.607 - [INFO] - Thread CPU time negative, taking previous time + 1 : 459254783 for thread: 509
+21/05/2025 07:27:04.761 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1019798014 for thread: 510
+Cumulative: 46.62/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00118.warc.wet (278.56 MB)
+21/05/2025 07:27:07.871 - [INFO] - Thread CPU time negative, taking previous time + 1 : 528233446 for thread: 511
+21/05/2025 07:27:12.016 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1017377858 for thread: 512
+21/05/2025 07:27:15.129 - [INFO] - Thread CPU time negative, taking previous time + 1 : 513614828 for thread: 513
+Cumulative: 46.89/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00022.warc.wet (275.89 MB)
+21/05/2025 07:27:18.243 - [INFO] - Thread CPU time negative, taking previous time + 1 : 364199486 for thread: 514
+21/05/2025 07:27:22.392 - [INFO] - Thread CPU time negative, taking previous time + 1 : 936373086 for thread: 515
+21/05/2025 07:27:25.506 - [INFO] - Thread CPU time negative, taking previous time + 1 : 346023076 for thread: 516
+Cumulative: 47.16/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00187.warc.wet (269.99 MB)
+21/05/2025 07:27:33.811 - [INFO] - Thread CPU time negative, taking previous time + 1 : 735048786 for thread: 518
+21/05/2025 07:27:36.943 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7964183655 for thread: 517
+Cumulative: 47.43/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00331.warc.wet (274.87 MB)
+21/05/2025 07:27:37.983 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1122828388 for thread: 519
+21/05/2025 07:27:41.106 - [INFO] - Thread CPU time negative, taking previous time + 1 : 954116022 for thread: 520
+21/05/2025 07:27:45.265 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1098739093 for thread: 521
+Cumulative: 47.70/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00355.warc.wet (280.18 MB)
+21/05/2025 07:27:48.382 - [INFO] - Thread CPU time negative, taking previous time + 1 : 585382520 for thread: 522
+21/05/2025 07:27:52.525 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1045731104 for thread: 523
+21/05/2025 07:27:55.638 - [INFO] - Thread CPU time negative, taking previous time + 1 : 527494119 for thread: 524
+Cumulative: 47.97/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00342.warc.wet (270.55 MB)
+21/05/2025 07:27:58.749 - [INFO] - Thread CPU time negative, taking previous time + 1 : 329475052 for thread: 525
+21/05/2025 07:28:02.897 - [INFO] - Thread CPU time negative, taking previous time + 1 : 510420499 for thread: 526
+21/05/2025 07:28:07.070 - [INFO] - Thread CPU time negative, taking previous time + 1 : 798348785 for thread: 527
+Cumulative: 48.23/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00129.warc.wet (278.64 MB)
+21/05/2025 07:28:17.522 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1047891026 for thread: 529
+21/05/2025 07:28:19.608 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7287040091 for thread: 528
+Cumulative: 48.51/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00223.warc.wet (281.31 MB)
+21/05/2025 07:28:20.649 - [INFO] - Thread CPU time negative, taking previous time + 1 : 273643101 for thread: 530
+21/05/2025 07:28:24.812 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1081822855 for thread: 531
+21/05/2025 07:28:27.940 - [INFO] - Thread CPU time negative, taking previous time + 1 : 582750775 for thread: 532
+Cumulative: 48.78/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00182.warc.wet (272.14 MB)
+21/05/2025 07:28:32.105 - [INFO] - Thread CPU time negative, taking previous time + 1 : 981742066 for thread: 533
+21/05/2025 07:28:35.230 - [INFO] - Thread CPU time negative, taking previous time + 1 : 242665251 for thread: 534
+21/05/2025 07:28:39.380 - [INFO] - Thread CPU time negative, taking previous time + 1 : 700333344 for thread: 535
+Cumulative: 49.05/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00277.warc.wet (286.21 MB)
+21/05/2025 07:28:46.644 - [INFO] - Thread CPU time negative, taking previous time + 1 : 530935402 for thread: 537
+Cumulative: 49.33/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00096.warc.wet (270.24 MB)
+21/05/2025 07:28:56.297 - [INFO] - Thread CPU time negative, taking previous time + 1 : 925531136 for thread: 539
+21/05/2025 07:29:00.466 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1175638420 for thread: 540
+Cumulative: 49.59/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00191.warc.wet (274.56 MB)
+21/05/2025 07:29:03.593 - [INFO] - Thread CPU time negative, taking previous time + 1 : 381376326 for thread: 541
+21/05/2025 07:29:07.760 - [INFO] - Thread CPU time negative, taking previous time + 1 : 632223467 for thread: 542
+21/05/2025 07:29:11.929 - [INFO] - Thread CPU time negative, taking previous time + 1 : 842422414 for thread: 543
+Cumulative: 49.86/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00347.warc.wet (278.89 MB)
+21/05/2025 07:29:17.771 - [INFO] - Thread CPU time negative, taking previous time + 1 : 992240157 for thread: 544
+21/05/2025 07:29:23.548 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1135943082 for thread: 545
+21/05/2025 07:29:28.231 - [INFO] - Thread CPU time negative, taking previous time + 1 : 832217991 for thread: 546
+Cumulative: 50.13/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00276.warc.wet (276.88 MB)
+21/05/2025 07:29:32.680 - [INFO] - Thread CPU time negative, taking previous time + 1 : 295531210 for thread: 547
+21/05/2025 07:29:38.184 - [INFO] - Thread CPU time negative, taking previous time + 1 : 912373175 for thread: 548
+Cumulative: 50.40/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00267.warc.wet (276.82 MB)
+21/05/2025 07:29:49.647 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1187151515 for thread: 550
+21/05/2025 07:29:54.511 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1027811915 for thread: 551
+Cumulative: 50.67/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00112.warc.wet (269.47 MB)
+21/05/2025 07:29:59.183 - [INFO] - Thread CPU time negative, taking previous time + 1 : 506659435 for thread: 552
+21/05/2025 07:30:05.091 - [INFO] - Thread CPU time negative, taking previous time + 1 : 413847493 for thread: 553
+21/05/2025 07:30:09.509 - [INFO] - Thread CPU time negative, taking previous time + 1 : 57359115784 for thread: 538
+21/05/2025 07:30:10.551 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1151177021 for thread: 554
+Cumulative: 50.93/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00246.warc.wet (276.02 MB)
+21/05/2025 07:30:16.804 - [INFO] - Thread CPU time negative, taking previous time + 1 : 682689969 for thread: 556
+21/05/2025 07:30:19.927 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8156525886 for thread: 555
+21/05/2025 07:30:20.964 - [INFO] - Thread CPU time negative, taking previous time + 1 : 650202978 for thread: 557
+Cumulative: 51.20/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00181.warc.wet (269.57 MB)
+21/05/2025 07:30:25.108 - [INFO] - Thread CPU time negative, taking previous time + 1 : 965146875 for thread: 558
+21/05/2025 07:30:28.230 - [INFO] - Thread CPU time negative, taking previous time + 1 : 486038243 for thread: 559
+21/05/2025 07:30:32.397 - [INFO] - Thread CPU time negative, taking previous time + 1 : 984673344 for thread: 560
+Cumulative: 51.47/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00313.warc.wet (268.46 MB)
+21/05/2025 07:30:35.524 - [INFO] - Thread CPU time negative, taking previous time + 1 : 463863285 for thread: 561
+21/05/2025 07:30:38.650 - [INFO] - Thread CPU time negative, taking previous time + 1 : 305977523 for thread: 562
+Cumulative: 51.73/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00024.warc.wet (276.91 MB)
+21/05/2025 07:30:46.988 - [INFO] - Thread CPU time negative, taking previous time + 1 : 830925075 for thread: 564
+21/05/2025 07:30:50.117 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8015189412 for thread: 563
+21/05/2025 07:30:50.117 - [INFO] - Thread CPU time negative, taking previous time + 1 : 151396125 for thread: 565
+Cumulative: 52.00/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00000.warc.wet (275.64 MB)
+21/05/2025 07:30:54.278 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1035353896 for thread: 566
+21/05/2025 07:30:57.403 - [INFO] - Thread CPU time negative, taking previous time + 1 : 136583212 for thread: 567
+21/05/2025 07:31:01.568 - [INFO] - Thread CPU time negative, taking previous time + 1 : 695564129 for thread: 568
+Cumulative: 52.27/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00060.warc.wet (275.70 MB)
+21/05/2025 07:31:04.693 - [INFO] - Thread CPU time negative, taking previous time + 1 : 152293796 for thread: 569
+21/05/2025 07:31:08.852 - [INFO] - Thread CPU time negative, taking previous time + 1 : 666162436 for thread: 570
+21/05/2025 07:31:13.002 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1083929190 for thread: 571
+Cumulative: 52.54/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00209.warc.wet (282.28 MB)
+21/05/2025 07:31:16.115 - [INFO] - Thread CPU time negative, taking previous time + 1 : 563420490 for thread: 572
+21/05/2025 07:31:20.277 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1081041821 for thread: 573
+Cumulative: 52.81/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00206.warc.wet (271.95 MB)
+21/05/2025 07:31:27.583 - [INFO] - Thread CPU time negative, taking previous time + 1 : 569811863 for thread: 575
+21/05/2025 07:31:30.715 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7770944552 for thread: 574
+21/05/2025 07:31:31.756 - [INFO] - Thread CPU time negative, taking previous time + 1 : 978683891 for thread: 576
+Cumulative: 53.08/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00274.warc.wet (269.84 MB)
+21/05/2025 07:31:34.883 - [INFO] - Thread CPU time negative, taking previous time + 1 : 788070206 for thread: 577
+21/05/2025 07:31:39.044 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1106814788 for thread: 578
+21/05/2025 07:31:43.203 - [INFO] - Thread CPU time negative, taking previous time + 1 : 643640792 for thread: 579
+Cumulative: 53.34/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00048.warc.wet (275.59 MB)
+21/05/2025 07:31:47.369 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1128693230 for thread: 580
+21/05/2025 07:31:50.496 - [INFO] - Thread CPU time negative, taking previous time + 1 : 503021167 for thread: 581
+Cumulative: 53.61/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00220.warc.wet (267.65 MB)
+21/05/2025 07:31:54.662 - [INFO] - Thread CPU time negative, taking previous time + 1 : 925214160 for thread: 582
+21/05/2025 07:31:57.789 - [INFO] - Thread CPU time negative, taking previous time + 1 : 331384044 for thread: 583
+21/05/2025 07:32:01.953 - [INFO] - Thread CPU time negative, taking previous time + 1 : 783577819 for thread: 584
+Cumulative: 53.87/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00340.warc.wet (274.22 MB)
+21/05/2025 07:32:11.324 - [INFO] - Thread CPU time negative, taking previous time + 1 : 909709016 for thread: 586
+21/05/2025 07:32:13.413 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8257668266 for thread: 585
+21/05/2025 07:32:15.501 - [INFO] - Thread CPU time negative, taking previous time + 1 : 619665687 for thread: 587
+Cumulative: 54.14/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00378.warc.wet (278.33 MB)
+21/05/2025 07:32:19.672 - [INFO] - Thread CPU time negative, taking previous time + 1 : 143169402 for thread: 588
+21/05/2025 07:32:23.837 - [INFO] - Thread CPU time negative, taking previous time + 1 : 368203026 for thread: 589
+21/05/2025 07:32:28.005 - [INFO] - Thread CPU time negative, taking previous time + 1 : 636521185 for thread: 590
+Cumulative: 54.41/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00201.warc.wet (275.24 MB)
+21/05/2025 07:32:32.160 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1027638545 for thread: 591
+21/05/2025 07:32:36.327 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1060073395 for thread: 592
+Cumulative: 54.68/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00161.warc.wet (274.13 MB)
+21/05/2025 07:32:39.447 - [INFO] - Thread CPU time negative, taking previous time + 1 : 843404465 for thread: 593
+21/05/2025 07:32:43.613 - [INFO] - Thread CPU time negative, taking previous time + 1 : 848928169 for thread: 594
+21/05/2025 07:32:47.769 - [INFO] - Thread CPU time negative, taking previous time + 1 : 951998584 for thread: 595
+Cumulative: 54.95/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00008.warc.wet (276.63 MB)
+21/05/2025 07:32:56.093 - [INFO] - Thread CPU time negative, taking previous time + 1 : 284012075 for thread: 597
+21/05/2025 07:32:59.203 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7485026695 for thread: 596
+21/05/2025 07:33:00.244 - [INFO] - Thread CPU time negative, taking previous time + 1 : 397882011 for thread: 598
+Cumulative: 55.22/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00320.warc.wet (272.39 MB)
+21/05/2025 07:33:03.365 - [INFO] - Thread CPU time negative, taking previous time + 1 : 180865238 for thread: 599
+21/05/2025 07:33:07.533 - [INFO] - Thread CPU time negative, taking previous time + 1 : 589956801 for thread: 600
+Cumulative: 55.48/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00205.warc.wet (272.70 MB)
+21/05/2025 07:33:11.697 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1018451489 for thread: 601
+21/05/2025 07:33:14.820 - [INFO] - Thread CPU time negative, taking previous time + 1 : 439277610 for thread: 602
+21/05/2025 07:33:18.989 - [INFO] - Thread CPU time negative, taking previous time + 1 : 779722939 for thread: 603
+Cumulative: 55.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00186.warc.wet (278.45 MB)
+21/05/2025 07:33:23.158 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1159493496 for thread: 604
+21/05/2025 07:33:27.325 - [INFO] - Thread CPU time negative, taking previous time + 1 : 635319463 for thread: 605
+21/05/2025 07:33:30.450 - [INFO] - Thread CPU time negative, taking previous time + 1 : 330783868 for thread: 606
+Cumulative: 56.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00120.warc.wet (276.48 MB)
+21/05/2025 07:33:40.888 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1094654038 for thread: 608
+21/05/2025 07:33:41.931 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7778798927 for thread: 607
+Cumulative: 56.29/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00021.warc.wet (279.38 MB)
+21/05/2025 07:33:44.018 - [INFO] - Thread CPU time negative, taking previous time + 1 : 576154492 for thread: 609
+21/05/2025 07:33:48.184 - [INFO] - Thread CPU time negative, taking previous time + 1 : 968466376 for thread: 610
+21/05/2025 07:33:51.307 - [INFO] - Thread CPU time negative, taking previous time + 1 : 416114999 for thread: 611
+Cumulative: 56.57/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00285.warc.wet (275.91 MB)
+21/05/2025 07:33:55.469 - [INFO] - Thread CPU time negative, taking previous time + 1 : 784943707 for thread: 612
+21/05/2025 07:34:02.755 - [INFO] - Thread CPU time negative, taking previous time + 1 : 407621912 for thread: 614
+Cumulative: 56.84/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00136.warc.wet (275.85 MB)
+21/05/2025 07:34:06.902 - [INFO] - Thread CPU time negative, taking previous time + 1 : 838871314 for thread: 615
+21/05/2025 07:34:11.070 - [INFO] - Thread CPU time negative, taking previous time + 1 : 843389530 for thread: 616
+Cumulative: 57.10/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00225.warc.wet (272.49 MB)
+21/05/2025 07:34:20.474 - [INFO] - Thread CPU time negative, taking previous time + 1 : 596391237 for thread: 618
+21/05/2025 07:34:22.560 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8168409820 for thread: 617
+21/05/2025 07:34:23.602 - [INFO] - Thread CPU time negative, taking previous time + 1 : 289116269 for thread: 619
+Cumulative: 57.37/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00058.warc.wet (272.26 MB)
+21/05/2025 07:34:27.769 - [INFO] - Thread CPU time negative, taking previous time + 1 : 677956087 for thread: 620
+21/05/2025 07:34:30.893 - [INFO] - Thread CPU time negative, taking previous time + 1 : 235510098 for thread: 621
+21/05/2025 07:34:35.059 - [INFO] - Thread CPU time negative, taking previous time + 1 : 758098417 for thread: 622
+Cumulative: 57.64/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00250.warc.wet (274.88 MB)
+21/05/2025 07:34:38.185 - [INFO] - Thread CPU time negative, taking previous time + 1 : 245076728 for thread: 623
+21/05/2025 07:34:42.347 - [INFO] - Thread CPU time negative, taking previous time + 1 : 690479996 for thread: 624
+Cumulative: 57.91/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00317.warc.wet (272.51 MB)
+21/05/2025 07:34:46.515 - [INFO] - Thread CPU time negative, taking previous time + 1 : 900716276 for thread: 625
+21/05/2025 07:34:49.637 - [INFO] - Thread CPU time negative, taking previous time + 1 : 420264802 for thread: 626
+21/05/2025 07:34:52.759 - [INFO] - Thread CPU time negative, taking previous time + 1 : 240464672 for thread: 627
+Cumulative: 58.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00366.warc.wet (274.65 MB)
+21/05/2025 07:35:01.071 - [INFO] - Thread CPU time negative, taking previous time + 1 : 719967401 for thread: 629
+21/05/2025 07:35:04.181 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7883436776 for thread: 628
+21/05/2025 07:35:05.224 - [INFO] - Thread CPU time negative, taking previous time + 1 : 643323951 for thread: 630
+Cumulative: 58.44/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00299.warc.wet (275.67 MB)
+21/05/2025 07:35:08.350 - [INFO] - Thread CPU time negative, taking previous time + 1 : 889077308 for thread: 631
+21/05/2025 07:35:12.512 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1042509285 for thread: 632
+21/05/2025 07:35:15.638 - [INFO] - Thread CPU time negative, taking previous time + 1 : 518199350 for thread: 633
+Cumulative: 58.71/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00292.warc.wet (281.23 MB)
+21/05/2025 07:35:19.805 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1050695529 for thread: 634
+21/05/2025 07:35:22.928 - [INFO] - Thread CPU time negative, taking previous time + 1 : 566499923 for thread: 635
+Cumulative: 58.98/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00253.warc.wet (271.47 MB)
+21/05/2025 07:35:27.078 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1090338742 for thread: 636
+21/05/2025 07:35:30.189 - [INFO] - Thread CPU time negative, taking previous time + 1 : 594315821 for thread: 637
+21/05/2025 07:35:34.341 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1078956027 for thread: 638
+Cumulative: 59.25/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00085.warc.wet (271.19 MB)
+21/05/2025 07:35:41.647 - [INFO] - Thread CPU time negative, taking previous time + 1 : 542504019 for thread: 640
+21/05/2025 07:35:44.780 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7796606403 for thread: 639
+21/05/2025 07:35:45.823 - [INFO] - Thread CPU time negative, taking previous time + 1 : 875496848 for thread: 641
+Cumulative: 59.51/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00169.warc.wet (281.39 MB)
+21/05/2025 07:35:48.944 - [INFO] - Thread CPU time negative, taking previous time + 1 : 758728840 for thread: 642
+21/05/2025 07:35:52.060 - [INFO] - Thread CPU time negative, taking previous time + 1 : 248655010 for thread: 643
+21/05/2025 07:35:56.229 - [INFO] - Thread CPU time negative, taking previous time + 1 : 750640082 for thread: 644
+Cumulative: 59.79/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00222.warc.wet (276.10 MB)
+21/05/2025 07:35:59.353 - [INFO] - Thread CPU time negative, taking previous time + 1 : 206533050 for thread: 645
+21/05/2025 07:36:03.520 - [INFO] - Thread CPU time negative, taking previous time + 1 : 713133796 for thread: 646
+Cumulative: 60.06/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00251.warc.wet (280.63 MB)
+21/05/2025 07:36:07.683 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1136924600 for thread: 647
+21/05/2025 07:36:10.808 - [INFO] - Thread CPU time negative, taking previous time + 1 : 623559799 for thread: 648
+Cumulative: 60.33/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00013.warc.wet (266.59 MB)
+21/05/2025 07:36:19.195 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1190864526 for thread: 650
+21/05/2025 07:36:22.323 - [INFO] - Thread CPU time negative, taking previous time + 1 : 528307697 for thread: 651
+21/05/2025 07:36:26.505 - [INFO] - Thread CPU time negative, taking previous time + 1 : 871711317 for thread: 652
+Cumulative: 60.59/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00192.warc.wet (271.82 MB)
+21/05/2025 07:36:29.636 - [INFO] - Thread CPU time negative, taking previous time + 1 : 208890011 for thread: 653
+21/05/2025 07:36:33.824 - [INFO] - Thread CPU time negative, taking previous time + 1 : 580041587 for thread: 654
+Cumulative: 60.86/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00361.warc.wet (278.34 MB)
+21/05/2025 07:36:38.079 - [INFO] - Thread CPU time negative, taking previous time + 1 : 941557044 for thread: 655
+21/05/2025 07:36:41.231 - [INFO] - Thread CPU time negative, taking previous time + 1 : 190684935 for thread: 656
+21/05/2025 07:36:45.419 - [INFO] - Thread CPU time negative, taking previous time + 1 : 512203707 for thread: 657
+Cumulative: 61.13/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00171.warc.wet (274.07 MB)
+21/05/2025 07:36:49.599 - [INFO] - Thread CPU time negative, taking previous time + 1 : 842573581 for thread: 658
+21/05/2025 07:36:58.921 - [INFO] - Thread CPU time negative, taking previous time + 1 : 611734998 for thread: 660
+Cumulative: 61.40/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00078.warc.wet (273.15 MB)
+21/05/2025 07:37:04.033 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8568104530 for thread: 659
+21/05/2025 07:37:05.225 - [INFO] - Thread CPU time negative, taking previous time + 1 : 471674098 for thread: 661
+21/05/2025 07:37:11.389 - [INFO] - Thread CPU time negative, taking previous time + 1 : 934914799 for thread: 662
+21/05/2025 07:37:17.610 - [INFO] - Thread CPU time negative, taking previous time + 1 : 783031635 for thread: 663
+Cumulative: 61.66/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00365.warc.wet (275.58 MB)
+21/05/2025 07:37:24.625 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1090231384 for thread: 664
+21/05/2025 07:37:29.601 - [INFO] - Thread CPU time negative, taking previous time + 1 : 402600167 for thread: 665
+21/05/2025 07:37:30.753 - [INFO] - Thread CPU time negative, taking previous time + 1 : 57595148124 for thread: 649
+Cumulative: 61.93/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00007.warc.wet (266.89 MB)
+21/05/2025 07:37:38.051 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1092661435 for thread: 667
+21/05/2025 07:37:40.131 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7900461635 for thread: 666
+21/05/2025 07:37:41.168 - [INFO] - Thread CPU time negative, taking previous time + 1 : 149801511 for thread: 668
+21/05/2025 07:37:46.377 - [INFO] - Thread CPU time negative, taking previous time + 1 : 500411048 for thread: 669
+Cumulative: 62.19/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00272.warc.wet (274.00 MB)
+21/05/2025 07:37:51.587 - [INFO] - Thread CPU time negative, taking previous time + 1 : 855873441 for thread: 670
+21/05/2025 07:37:55.757 - [INFO] - Thread CPU time negative, taking previous time + 1 : 376858296 for thread: 671
+Cumulative: 62.46/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00239.warc.wet (275.71 MB)
+21/05/2025 07:37:59.926 - [INFO] - Thread CPU time negative, taking previous time + 1 : 790013548 for thread: 672
+21/05/2025 07:38:03.041 - [INFO] - Thread CPU time negative, taking previous time + 1 : 166766538 for thread: 673
+Cumulative: 62.73/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00051.warc.wet (275.67 MB)
+21/05/2025 07:38:14.516 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7536275572 for thread: 674
+21/05/2025 07:38:16.602 - [INFO] - Thread CPU time negative, taking previous time + 1 : 777597013 for thread: 676
+21/05/2025 07:38:20.772 - [INFO] - Thread CPU time negative, taking previous time + 1 : 591512402 for thread: 677
+Cumulative: 63.00/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00106.warc.wet (279.39 MB)
+21/05/2025 07:38:23.895 - [INFO] - Thread CPU time negative, taking previous time + 1 : 366477252 for thread: 678
+21/05/2025 07:38:29.092 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1024203128 for thread: 679
+Cumulative: 63.27/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00038.warc.wet (272.74 MB)
+21/05/2025 07:38:32.210 - [INFO] - Thread CPU time negative, taking previous time + 1 : 378029044 for thread: 680
+21/05/2025 07:38:36.363 - [INFO] - Thread CPU time negative, taking previous time + 1 : 753223614 for thread: 681
+21/05/2025 07:38:40.515 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1143485215 for thread: 682
+Cumulative: 63.54/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00188.warc.wet (281.81 MB)
+21/05/2025 07:38:43.633 - [INFO] - Thread CPU time negative, taking previous time + 1 : 577147143 for thread: 683
+21/05/2025 07:38:46.754 - [INFO] - Thread CPU time negative, taking previous time + 1 : 288002182 for thread: 684
+Cumulative: 63.81/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00294.warc.wet (276.29 MB)
+21/05/2025 07:38:56.259 - [INFO] - Thread CPU time negative, taking previous time + 1 : 614435614 for thread: 686
+21/05/2025 07:38:59.384 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8469336764 for thread: 685
+21/05/2025 07:39:00.425 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1016532922 for thread: 687
+21/05/2025 07:39:03.546 - [INFO] - Thread CPU time negative, taking previous time + 1 : 318705979 for thread: 688
+Cumulative: 64.08/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00237.warc.wet (270.56 MB)
+21/05/2025 07:39:06.663 - [INFO] - Thread CPU time negative, taking previous time + 1 : 137521257 for thread: 689
+21/05/2025 07:39:10.829 - [INFO] - Thread CPU time negative, taking previous time + 1 : 188270665 for thread: 690
+Cumulative: 64.35/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00255.warc.wet (275.70 MB)
+21/05/2025 07:39:14.977 - [INFO] - Thread CPU time negative, taking previous time + 1 : 592751496 for thread: 691
+21/05/2025 07:39:19.138 - [INFO] - Thread CPU time negative, taking previous time + 1 : 949215294 for thread: 692
+21/05/2025 07:39:22.254 - [INFO] - Thread CPU time negative, taking previous time + 1 : 382289851 for thread: 693
+Cumulative: 64.62/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00259.warc.wet (275.27 MB)
+21/05/2025 07:39:26.419 - [INFO] - Thread CPU time negative, taking previous time + 1 : 803505802 for thread: 694
+21/05/2025 07:39:30.586 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1149660740 for thread: 695
+Cumulative: 64.89/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00352.warc.wet (278.54 MB)
+21/05/2025 07:39:41.170 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1118804753 for thread: 697
+21/05/2025 07:39:43.257 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8293957283 for thread: 696
+21/05/2025 07:39:44.299 - [INFO] - Thread CPU time negative, taking previous time + 1 : 731601417 for thread: 698
+Cumulative: 65.16/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00315.warc.wet (267.42 MB)
+21/05/2025 07:39:48.462 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1152956359 for thread: 699
+21/05/2025 07:39:51.585 - [INFO] - Thread CPU time negative, taking previous time + 1 : 544862719 for thread: 700
+21/05/2025 07:39:55.754 - [INFO] - Thread CPU time negative, taking previous time + 1 : 963312340 for thread: 701
+Cumulative: 65.42/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00298.warc.wet (272.77 MB)
+21/05/2025 07:39:58.881 - [INFO] - Thread CPU time negative, taking previous time + 1 : 251234143 for thread: 702
+21/05/2025 07:40:03.044 - [INFO] - Thread CPU time negative, taking previous time + 1 : 584385239 for thread: 703
+21/05/2025 07:40:07.212 - [INFO] - Thread CPU time negative, taking previous time + 1 : 953293662 for thread: 704
+Cumulative: 65.69/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00068.warc.wet (275.67 MB)
+21/05/2025 07:40:11.379 - [INFO] - Thread CPU time negative, taking previous time + 1 : 930055695 for thread: 705
+21/05/2025 07:40:14.505 - [INFO] - Thread CPU time negative, taking previous time + 1 : 203916164 for thread: 706
+Cumulative: 65.95/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00353.warc.wet (269.50 MB)
+21/05/2025 07:40:24.919 - [INFO] - Thread CPU time negative, taking previous time + 1 : 401019674 for thread: 708
+21/05/2025 07:40:26.998 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8282545676 for thread: 707
+21/05/2025 07:40:29.079 - [INFO] - Thread CPU time negative, taking previous time + 1 : 667811355 for thread: 709
+Cumulative: 66.22/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00144.warc.wet (273.99 MB)
+21/05/2025 07:40:33.243 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1119197462 for thread: 710
+21/05/2025 07:40:36.370 - [INFO] - Thread CPU time negative, taking previous time + 1 : 581397007 for thread: 711
+21/05/2025 07:40:40.536 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1059446413 for thread: 712
+Cumulative: 66.49/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00053.warc.wet (273.59 MB)
+21/05/2025 07:40:43.665 - [INFO] - Thread CPU time negative, taking previous time + 1 : 522644227 for thread: 713
+21/05/2025 07:40:47.831 - [INFO] - Thread CPU time negative, taking previous time + 1 : 998054803 for thread: 714
+Cumulative: 66.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00119.warc.wet (269.04 MB)
+21/05/2025 07:40:50.956 - [INFO] - Thread CPU time negative, taking previous time + 1 : 783491162 for thread: 715
+21/05/2025 07:40:54.085 - [INFO] - Thread CPU time negative, taking previous time + 1 : 231099026 for thread: 716
+21/05/2025 07:40:58.251 - [INFO] - Thread CPU time negative, taking previous time + 1 : 307555595 for thread: 717
+Cumulative: 67.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00335.warc.wet (278.15 MB)
+21/05/2025 07:41:08.676 - [INFO] - Thread CPU time negative, taking previous time + 1 : 850095772 for thread: 719
+21/05/2025 07:41:10.767 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8283664651 for thread: 718
+21/05/2025 07:41:11.807 - [INFO] - Thread CPU time negative, taking previous time + 1 : 164733041 for thread: 720
+Cumulative: 67.29/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00116.warc.wet (276.50 MB)
+21/05/2025 07:41:15.968 - [INFO] - Thread CPU time negative, taking previous time + 1 : 224246411 for thread: 721
+21/05/2025 07:41:20.136 - [INFO] - Thread CPU time negative, taking previous time + 1 : 700628642 for thread: 722
+Cumulative: 67.56/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00167.warc.wet (273.14 MB)
+21/05/2025 07:41:24.300 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1090641400 for thread: 723
+21/05/2025 07:41:27.427 - [INFO] - Thread CPU time negative, taking previous time + 1 : 455183985 for thread: 724
+21/05/2025 07:41:31.589 - [INFO] - Thread CPU time negative, taking previous time + 1 : 884641775 for thread: 725
+Cumulative: 67.82/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00289.warc.wet (279.14 MB)
+21/05/2025 07:41:34.701 - [INFO] - Thread CPU time negative, taking previous time + 1 : 260771165 for thread: 726
+21/05/2025 07:41:38.853 - [INFO] - Thread CPU time negative, taking previous time + 1 : 706056185 for thread: 727
+21/05/2025 07:41:42.999 - [INFO] - Thread CPU time negative, taking previous time + 1 : 847209828 for thread: 728
+Cumulative: 68.10/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00286.warc.wet (277.20 MB)
+21/05/2025 07:41:52.365 - [INFO] - Thread CPU time negative, taking previous time + 1 : 928323727 for thread: 730
+21/05/2025 07:41:53.406 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7484942375 for thread: 729
+21/05/2025 07:41:55.483 - [INFO] - Thread CPU time negative, taking previous time + 1 : 593466714 for thread: 731
+Cumulative: 68.37/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00004.warc.wet (271.08 MB)
+21/05/2025 07:41:59.627 - [INFO] - Thread CPU time negative, taking previous time + 1 : 945166479 for thread: 732
+21/05/2025 07:42:02.737 - [INFO] - Thread CPU time negative, taking previous time + 1 : 345606302 for thread: 733
+Cumulative: 68.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00230.warc.wet (273.24 MB)
+21/05/2025 07:42:06.886 - [INFO] - Thread CPU time negative, taking previous time + 1 : 764649302 for thread: 734
+21/05/2025 07:42:10.008 - [INFO] - Thread CPU time negative, taking previous time + 1 : 171736064 for thread: 735
+21/05/2025 07:42:14.174 - [INFO] - Thread CPU time negative, taking previous time + 1 : 649150999 for thread: 736
+Cumulative: 68.90/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00174.warc.wet (274.07 MB)
+21/05/2025 07:42:18.341 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1052603780 for thread: 737
+21/05/2025 07:42:21.467 - [INFO] - Thread CPU time negative, taking previous time + 1 : 406875528 for thread: 738
+Cumulative: 69.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00037.warc.wet (278.21 MB)
+21/05/2025 07:42:29.807 - [INFO] - Thread CPU time negative, taking previous time + 1 : 229266365 for thread: 740
+21/05/2025 07:42:32.936 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7896870457 for thread: 739
+21/05/2025 07:42:33.979 - [INFO] - Thread CPU time negative, taking previous time + 1 : 627455204 for thread: 741
+21/05/2025 07:42:37.105 - [INFO] - Thread CPU time negative, taking previous time + 1 : 449054867 for thread: 742
+Cumulative: 69.44/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00140.warc.wet (280.63 MB)
+21/05/2025 07:42:41.266 - [INFO] - Thread CPU time negative, taking previous time + 1 : 597070357 for thread: 743
+21/05/2025 07:42:44.389 - [INFO] - Thread CPU time negative, taking previous time + 1 : 140365332 for thread: 744
+Cumulative: 69.71/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00383.warc.wet (274.85 MB)
+21/05/2025 07:42:48.557 - [INFO] - Thread CPU time negative, taking previous time + 1 : 629422639 for thread: 745
+21/05/2025 07:42:51.679 - [INFO] - Thread CPU time negative, taking previous time + 1 : 122321242 for thread: 746
+21/05/2025 07:42:55.846 - [INFO] - Thread CPU time negative, taking previous time + 1 : 637457405 for thread: 747
+Cumulative: 69.98/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00073.warc.wet (275.08 MB)
+21/05/2025 07:42:58.972 - [INFO] - Thread CPU time negative, taking previous time + 1 : 502687034 for thread: 748
+21/05/2025 07:43:03.138 - [INFO] - Thread CPU time negative, taking previous time + 1 : 640557418 for thread: 749
+Cumulative: 70.25/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00310.warc.wet (279.04 MB)
+21/05/2025 07:43:11.474 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1099150089 for thread: 751
+21/05/2025 07:43:14.598 - [INFO] - Thread CPU time negative, taking previous time + 1 : 427361608 for thread: 752
+21/05/2025 07:43:14.598 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8307053900 for thread: 750
+Cumulative: 70.52/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00086.warc.wet (279.53 MB)
+21/05/2025 07:43:17.707 - [INFO] - Thread CPU time negative, taking previous time + 1 : 246095608 for thread: 753
+21/05/2025 07:43:21.860 - [INFO] - Thread CPU time negative, taking previous time + 1 : 859276391 for thread: 754
+21/05/2025 07:43:24.985 - [INFO] - Thread CPU time negative, taking previous time + 1 : 364155937 for thread: 755
+Cumulative: 70.79/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00305.warc.wet (280.12 MB)
+21/05/2025 07:43:29.152 - [INFO] - Thread CPU time negative, taking previous time + 1 : 866686242 for thread: 756
+21/05/2025 07:43:32.275 - [INFO] - Thread CPU time negative, taking previous time + 1 : 388486226 for thread: 757
+21/05/2025 07:43:36.435 - [INFO] - Thread CPU time negative, taking previous time + 1 : 895718111 for thread: 758
+Cumulative: 71.07/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00101.warc.wet (277.74 MB)
+21/05/2025 07:43:39.562 - [INFO] - Thread CPU time negative, taking previous time + 1 : 351417395 for thread: 759
+21/05/2025 07:43:47.888 - [INFO] - Thread CPU time negative, taking previous time + 1 : 689769164 for thread: 761
+Cumulative: 71.34/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00046.warc.wet (275.67 MB)
+21/05/2025 07:43:49.969 - [INFO] - Thread CPU time negative, taking previous time + 1 : 6939775378 for thread: 760
+21/05/2025 07:43:52.049 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1062925081 for thread: 762
+21/05/2025 07:43:55.168 - [INFO] - Thread CPU time negative, taking previous time + 1 : 969246424 for thread: 763
+Cumulative: 71.61/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00165.warc.wet (281.04 MB)
+21/05/2025 07:43:58.277 - [INFO] - Thread CPU time negative, taking previous time + 1 : 410867099 for thread: 764
+21/05/2025 07:44:02.439 - [INFO] - Thread CPU time negative, taking previous time + 1 : 907648112 for thread: 765
+21/05/2025 07:44:05.553 - [INFO] - Thread CPU time negative, taking previous time + 1 : 412916982 for thread: 766
+Cumulative: 71.88/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00233.warc.wet (282.22 MB)
+21/05/2025 07:44:09.710 - [INFO] - Thread CPU time negative, taking previous time + 1 : 885846880 for thread: 767
+21/05/2025 07:44:12.835 - [INFO] - Thread CPU time negative, taking previous time + 1 : 327530386 for thread: 768
+Cumulative: 72.16/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00153.warc.wet (278.74 MB)
+21/05/2025 07:44:21.255 - [INFO] - Thread CPU time negative, taking previous time + 1 : 899187615 for thread: 770
+21/05/2025 07:44:25.440 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1193162210 for thread: 771
+21/05/2025 07:44:28.575 - [INFO] - Thread CPU time negative, taking previous time + 1 : 427016096 for thread: 772
+Cumulative: 72.43/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00303.warc.wet (270.29 MB)
+21/05/2025 07:44:32.751 - [INFO] - Thread CPU time negative, taking previous time + 1 : 833913562 for thread: 773
+21/05/2025 07:44:35.891 - [INFO] - Thread CPU time negative, taking previous time + 1 : 207940917 for thread: 774
+Cumulative: 72.69/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00356.warc.wet (271.47 MB)
+21/05/2025 07:44:40.069 - [INFO] - Thread CPU time negative, taking previous time + 1 : 539319893 for thread: 775
+21/05/2025 07:44:44.347 - [INFO] - Thread CPU time negative, taking previous time + 1 : 933199778 for thread: 776
+21/05/2025 07:44:47.493 - [INFO] - Thread CPU time negative, taking previous time + 1 : 230797544 for thread: 777
+Cumulative: 72.96/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00002.warc.wet (273.77 MB)
+21/05/2025 07:44:51.685 - [INFO] - Thread CPU time negative, taking previous time + 1 : 569740876 for thread: 778
+21/05/2025 07:44:55.885 - [INFO] - Thread CPU time negative, taking previous time + 1 : 948313748 for thread: 779
+Cumulative: 73.23/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00202.warc.wet (274.82 MB)
+21/05/2025 07:45:04.352 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1184641426 for thread: 781
+21/05/2025 07:45:07.576 - [INFO] - Thread CPU time negative, taking previous time + 1 : 360141796 for thread: 782
+Cumulative: 73.50/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00231.warc.wet (282.36 MB)
+21/05/2025 07:45:11.759 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1005821677 for thread: 783
+21/05/2025 07:45:14.934 - [INFO] - Thread CPU time negative, taking previous time + 1 : 451281932 for thread: 784
+21/05/2025 07:45:19.227 - [INFO] - Thread CPU time negative, taking previous time + 1 : 786585798 for thread: 785
+21/05/2025 07:45:21.311 - [INFO] - Thread CPU time negative, taking previous time + 1 : 56811669117 for thread: 769
+Cumulative: 73.77/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00025.warc.wet (274.48 MB)
+21/05/2025 07:45:22.351 - [INFO] - Thread CPU time negative, taking previous time + 1 : 563182035 for thread: 786
+21/05/2025 07:45:29.663 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1049736572 for thread: 788
+21/05/2025 07:45:31.752 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7645406173 for thread: 787
+Cumulative: 74.04/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00055.warc.wet (269.30 MB)
+21/05/2025 07:45:32.791 - [INFO] - Thread CPU time negative, taking previous time + 1 : 370183216 for thread: 789
+21/05/2025 07:45:35.913 - [INFO] - Thread CPU time negative, taking previous time + 1 : 205570042 for thread: 790
+21/05/2025 07:45:40.075 - [INFO] - Thread CPU time negative, taking previous time + 1 : 285307644 for thread: 791
+Cumulative: 74.30/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00067.warc.wet (276.36 MB)
+21/05/2025 07:45:44.243 - [INFO] - Thread CPU time negative, taking previous time + 1 : 920144059 for thread: 792
+21/05/2025 07:45:47.368 - [INFO] - Thread CPU time negative, taking previous time + 1 : 327541554 for thread: 793
+21/05/2025 07:45:51.532 - [INFO] - Thread CPU time negative, taking previous time + 1 : 765331313 for thread: 794
+Cumulative: 74.57/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00018.warc.wet (277.99 MB)
+21/05/2025 07:45:59.865 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1041205020 for thread: 796
+21/05/2025 07:46:01.948 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7359216620 for thread: 795
+21/05/2025 07:46:02.988 - [INFO] - Thread CPU time negative, taking previous time + 1 : 264674404 for thread: 797
+Cumulative: 74.84/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00228.warc.wet (272.67 MB)
+21/05/2025 07:46:07.150 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1078592919 for thread: 798
+21/05/2025 07:46:10.277 - [INFO] - Thread CPU time negative, taking previous time + 1 : 458517466 for thread: 799
+Cumulative: 75.11/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00190.warc.wet (282.21 MB)
+21/05/2025 07:46:15.488 - [INFO] - Thread CPU time negative, taking previous time + 1 : 700350095 for thread: 800
+21/05/2025 07:46:19.652 - [INFO] - Thread CPU time negative, taking previous time + 1 : 361036451 for thread: 801
+21/05/2025 07:46:23.800 - [INFO] - Thread CPU time negative, taking previous time + 1 : 735410840 for thread: 802
+Cumulative: 75.39/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00035.warc.wet (275.22 MB)
+21/05/2025 07:46:26.915 - [INFO] - Thread CPU time negative, taking previous time + 1 : 445520037 for thread: 803
+21/05/2025 07:46:31.081 - [INFO] - Thread CPU time negative, taking previous time + 1 : 412199722 for thread: 804
+21/05/2025 07:46:35.240 - [INFO] - Thread CPU time negative, taking previous time + 1 : 764160964 for thread: 805
+Cumulative: 75.65/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00108.warc.wet (276.06 MB)
+21/05/2025 07:46:44.663 - [INFO] - Thread CPU time negative, taking previous time + 1 : 531532395 for thread: 807
+21/05/2025 07:46:46.751 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7269957641 for thread: 806
+Cumulative: 75.92/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00235.warc.wet (275.02 MB)
+21/05/2025 07:46:48.836 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1069299269 for thread: 808
+21/05/2025 07:46:51.956 - [INFO] - Thread CPU time negative, taking previous time + 1 : 455860490 for thread: 809
+21/05/2025 07:46:56.121 - [INFO] - Thread CPU time negative, taking previous time + 1 : 915300335 for thread: 810
+Cumulative: 76.19/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00012.warc.wet (274.90 MB)
+21/05/2025 07:46:59.247 - [INFO] - Thread CPU time negative, taking previous time + 1 : 257048390 for thread: 811
+21/05/2025 07:47:03.408 - [INFO] - Thread CPU time negative, taking previous time + 1 : 603314470 for thread: 812
+21/05/2025 07:47:07.552 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1094704736 for thread: 813
+Cumulative: 76.46/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00358.warc.wet (273.13 MB)
+21/05/2025 07:47:10.676 - [INFO] - Thread CPU time negative, taking previous time + 1 : 627434020 for thread: 814
+21/05/2025 07:47:14.826 - [INFO] - Thread CPU time negative, taking previous time + 1 : 583490063 for thread: 815
+Cumulative: 76.73/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00091.warc.wet (272.70 MB)
+21/05/2025 07:47:18.981 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1019210243 for thread: 816
+21/05/2025 07:47:27.318 - [INFO] - Thread CPU time negative, taking previous time + 1 : 280433956 for thread: 818
+Cumulative: 76.99/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00150.warc.wet (278.77 MB)
+21/05/2025 07:47:30.446 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7822348193 for thread: 817
+21/05/2025 07:47:31.485 - [INFO] - Thread CPU time negative, taking previous time + 1 : 571466990 for thread: 819
+21/05/2025 07:47:38.772 - [INFO] - Thread CPU time negative, taking previous time + 1 : 473354896 for thread: 821
+Cumulative: 77.27/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00238.warc.wet (267.31 MB)
+21/05/2025 07:47:42.937 - [INFO] - Thread CPU time negative, taking previous time + 1 : 880754678 for thread: 822
+21/05/2025 07:47:46.064 - [INFO] - Thread CPU time negative, taking previous time + 1 : 273173682 for thread: 823
+21/05/2025 07:47:50.230 - [INFO] - Thread CPU time negative, taking previous time + 1 : 674140007 for thread: 824
+Cumulative: 77.53/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00134.warc.wet (280.34 MB)
+21/05/2025 07:47:54.388 - [INFO] - Thread CPU time negative, taking previous time + 1 : 740012239 for thread: 825
+21/05/2025 07:47:57.507 - [INFO] - Thread CPU time negative, taking previous time + 1 : 436406107 for thread: 826
+Cumulative: 77.80/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00033.warc.wet (269.86 MB)
+21/05/2025 07:48:07.136 - [INFO] - Thread CPU time negative, taking previous time + 1 : 405085208 for thread: 828
+21/05/2025 07:48:09.221 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7961859303 for thread: 827
+21/05/2025 07:48:11.306 - [INFO] - Thread CPU time negative, taking previous time + 1 : 433993981 for thread: 829
+Cumulative: 78.06/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00319.warc.wet (275.63 MB)
+21/05/2025 07:48:15.473 - [INFO] - Thread CPU time negative, taking previous time + 1 : 839453831 for thread: 830
+21/05/2025 07:48:19.637 - [INFO] - Thread CPU time negative, taking previous time + 1 : 903446842 for thread: 831
+21/05/2025 07:48:22.757 - [INFO] - Thread CPU time negative, taking previous time + 1 : 289727496 for thread: 832
+Cumulative: 78.33/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00322.warc.wet (273.01 MB)
+21/05/2025 07:48:26.924 - [INFO] - Thread CPU time negative, taking previous time + 1 : 693843159 for thread: 833
+21/05/2025 07:48:31.088 - [INFO] - Thread CPU time negative, taking previous time + 1 : 721058673 for thread: 834
+Cumulative: 78.60/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00368.warc.wet (279.51 MB)
+21/05/2025 07:48:35.254 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1111213434 for thread: 835
+21/05/2025 07:48:38.379 - [INFO] - Thread CPU time negative, taking previous time + 1 : 518429121 for thread: 836
+21/05/2025 07:48:42.524 - [INFO] - Thread CPU time negative, taking previous time + 1 : 952770894 for thread: 837
+Cumulative: 78.87/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00364.warc.wet (278.01 MB)
+21/05/2025 07:48:49.807 - [INFO] - Thread CPU time negative, taking previous time + 1 : 777148702 for thread: 839
+21/05/2025 07:48:52.931 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8020106670 for thread: 838
+21/05/2025 07:48:53.971 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1136606585 for thread: 840
+Cumulative: 79.15/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00089.warc.wet (277.36 MB)
+21/05/2025 07:48:57.098 - [INFO] - Thread CPU time negative, taking previous time + 1 : 961983535 for thread: 841
+21/05/2025 07:49:01.259 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1033265489 for thread: 842
+Cumulative: 79.42/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00121.warc.wet (279.68 MB)
+21/05/2025 07:49:04.385 - [INFO] - Thread CPU time negative, taking previous time + 1 : 451713148 for thread: 843
+21/05/2025 07:49:08.550 - [INFO] - Thread CPU time negative, taking previous time + 1 : 959401047 for thread: 844
+21/05/2025 07:49:11.675 - [INFO] - Thread CPU time negative, taking previous time + 1 : 462179076 for thread: 845
+Cumulative: 79.69/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00184.warc.wet (275.96 MB)
+21/05/2025 07:49:15.834 - [INFO] - Thread CPU time negative, taking previous time + 1 : 943906474 for thread: 846
+21/05/2025 07:49:18.958 - [INFO] - Thread CPU time negative, taking previous time + 1 : 370883891 for thread: 847
+21/05/2025 07:49:23.119 - [INFO] - Thread CPU time negative, taking previous time + 1 : 857440413 for thread: 848
+Cumulative: 79.96/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00282.warc.wet (273.80 MB)
+21/05/2025 07:49:30.427 - [INFO] - Thread CPU time negative, taking previous time + 1 : 326655175 for thread: 850
+21/05/2025 07:49:33.565 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7573925963 for thread: 849
+Cumulative: 80.23/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00127.warc.wet (267.57 MB)
+21/05/2025 07:49:34.607 - [INFO] - Thread CPU time negative, taking previous time + 1 : 706834111 for thread: 851
+21/05/2025 07:49:37.725 - [INFO] - Thread CPU time negative, taking previous time + 1 : 598896237 for thread: 852
+21/05/2025 07:49:41.891 - [INFO] - Thread CPU time negative, taking previous time + 1 : 771942659 for thread: 853
+Cumulative: 80.49/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00014.warc.wet (267.12 MB)
+21/05/2025 07:49:45.017 - [INFO] - Thread CPU time negative, taking previous time + 1 : 272290803 for thread: 854
+21/05/2025 07:49:49.175 - [INFO] - Thread CPU time negative, taking previous time + 1 : 774042057 for thread: 855
+21/05/2025 07:49:52.285 - [INFO] - Thread CPU time negative, taking previous time + 1 : 281206015 for thread: 856
+Cumulative: 80.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00382.warc.wet (270.09 MB)
+21/05/2025 07:49:56.442 - [INFO] - Thread CPU time negative, taking previous time + 1 : 776822634 for thread: 857
+21/05/2025 07:49:59.563 - [INFO] - Thread CPU time negative, taking previous time + 1 : 247163571 for thread: 858
+Cumulative: 81.01/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00019.warc.wet (274.28 MB)
+21/05/2025 07:50:03.724 - [INFO] - Thread CPU time negative, taking previous time + 1 : 752606358 for thread: 859
+21/05/2025 07:50:12.052 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1136118347 for thread: 861
+Cumulative: 81.28/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00247.warc.wet (273.75 MB)
+21/05/2025 07:50:14.134 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7390618621 for thread: 860
+21/05/2025 07:50:15.174 - [INFO] - Thread CPU time negative, taking previous time + 1 : 436275461 for thread: 862
+21/05/2025 07:50:18.297 - [INFO] - Thread CPU time negative, taking previous time + 1 : 277807873 for thread: 863
+21/05/2025 07:50:22.456 - [INFO] - Thread CPU time negative, taking previous time + 1 : 786307403 for thread: 864
+Cumulative: 81.55/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00207.warc.wet (271.98 MB)
+21/05/2025 07:50:25.582 - [INFO] - Thread CPU time negative, taking previous time + 1 : 245325264 for thread: 865
+21/05/2025 07:50:29.749 - [INFO] - Thread CPU time negative, taking previous time + 1 : 785709238 for thread: 866
+21/05/2025 07:50:32.875 - [INFO] - Thread CPU time negative, taking previous time + 1 : 234501273 for thread: 867
+Cumulative: 81.81/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00125.warc.wet (278.76 MB)
+21/05/2025 07:50:37.042 - [INFO] - Thread CPU time negative, taking previous time + 1 : 762298096 for thread: 868
+21/05/2025 07:50:40.168 - [INFO] - Thread CPU time negative, taking previous time + 1 : 243690256 for thread: 869
+Cumulative: 82.08/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00265.warc.wet (277.80 MB)
+21/05/2025 07:50:48.500 - [INFO] - Thread CPU time negative, taking previous time + 1 : 645200483 for thread: 871
+21/05/2025 07:50:50.587 - [INFO] - Thread CPU time negative, taking previous time + 1 : 6892422826 for thread: 870
+21/05/2025 07:50:51.632 - [INFO] - Thread CPU time negative, taking previous time + 1 : 315587603 for thread: 872
+Cumulative: 82.36/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00273.warc.wet (278.53 MB)
+21/05/2025 07:50:55.796 - [INFO] - Thread CPU time negative, taking previous time + 1 : 859662800 for thread: 873
+21/05/2025 07:50:58.906 - [INFO] - Thread CPU time negative, taking previous time + 1 : 317275115 for thread: 874
+21/05/2025 07:51:03.066 - [INFO] - Thread CPU time negative, taking previous time + 1 : 812359865 for thread: 875
+Cumulative: 82.63/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00328.warc.wet (272.76 MB)
+21/05/2025 07:51:06.186 - [INFO] - Thread CPU time negative, taking previous time + 1 : 322111591 for thread: 876
+21/05/2025 07:51:10.344 - [INFO] - Thread CPU time negative, taking previous time + 1 : 820174748 for thread: 877
+21/05/2025 07:51:13.464 - [INFO] - Thread CPU time negative, taking previous time + 1 : 271498174 for thread: 878
+Cumulative: 82.89/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00170.warc.wet (278.67 MB)
+21/05/2025 07:51:21.931 - [INFO] - Thread CPU time negative, taking previous time + 1 : 776733655 for thread: 880
+Cumulative: 83.17/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00109.warc.wet (274.54 MB)
+21/05/2025 07:51:26.110 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1006458745 for thread: 881
+21/05/2025 07:51:29.248 - [INFO] - Thread CPU time negative, taking previous time + 1 : 305601858 for thread: 882
+21/05/2025 07:51:33.422 - [INFO] - Thread CPU time negative, taking previous time + 1 : 608662553 for thread: 883
+Cumulative: 83.43/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00133.warc.wet (277.31 MB)
+21/05/2025 07:51:37.606 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1019193458 for thread: 884
+21/05/2025 07:51:40.744 - [INFO] - Thread CPU time negative, taking previous time + 1 : 314110015 for thread: 885
+21/05/2025 07:51:44.911 - [INFO] - Thread CPU time negative, taking previous time + 1 : 660755143 for thread: 886
+Cumulative: 83.71/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00211.warc.wet (275.13 MB)
+21/05/2025 07:51:49.084 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1108713299 for thread: 887
+21/05/2025 07:51:52.498 - [INFO] - Thread CPU time negative, taking previous time + 1 : 478951194 for thread: 888
+Cumulative: 83.97/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00236.warc.wet (266.46 MB)
+21/05/2025 07:51:58.123 - [INFO] - Thread CPU time negative, taking previous time + 1 : 771243702 for thread: 889
+21/05/2025 07:52:09.796 - [INFO] - Thread CPU time negative, taking previous time + 1 : 748965474 for thread: 891
+Cumulative: 84.23/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00083.warc.wet (276.25 MB)
+21/05/2025 07:52:11.914 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8253912666 for thread: 890
+21/05/2025 07:52:12.963 - [INFO] - Thread CPU time negative, taking previous time + 1 : 208212856 for thread: 892
+21/05/2025 07:52:18.954 - [INFO] - Thread CPU time negative, taking previous time + 1 : 949152670 for thread: 893
+21/05/2025 07:52:23.503 - [INFO] - Thread CPU time negative, taking previous time + 1 : 290564145 for thread: 894
+Cumulative: 84.50/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00105.warc.wet (277.84 MB)
+21/05/2025 07:52:27.834 - [INFO] - Thread CPU time negative, taking previous time + 1 : 593829624 for thread: 895
+21/05/2025 07:52:29.946 - [INFO] - Thread CPU time negative, taking previous time + 1 : 57823513867 for thread: 879
+21/05/2025 07:52:34.127 - [INFO] - Thread CPU time negative, taking previous time + 1 : 437335768 for thread: 897
+Cumulative: 84.78/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00095.warc.wet (267.31 MB)
+21/05/2025 07:52:38.301 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7758265974 for thread: 896
+21/05/2025 07:52:39.343 - [INFO] - Thread CPU time negative, taking previous time + 1 : 951158905 for thread: 898
+21/05/2025 07:52:42.468 - [INFO] - Thread CPU time negative, taking previous time + 1 : 615178577 for thread: 899
+21/05/2025 07:52:46.640 - [INFO] - Thread CPU time negative, taking previous time + 1 : 324935485 for thread: 900
+Cumulative: 85.04/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00032.warc.wet (276.01 MB)
+21/05/2025 07:52:51.853 - [INFO] - Thread CPU time negative, taking previous time + 1 : 689854900 for thread: 901
+21/05/2025 07:52:54.972 - [INFO] - Thread CPU time negative, taking previous time + 1 : 497314448 for thread: 902
+Cumulative: 85.31/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00084.warc.wet (274.40 MB)
+21/05/2025 07:52:59.133 - [INFO] - Thread CPU time negative, taking previous time + 1 : 849727224 for thread: 903
+21/05/2025 07:53:02.261 - [INFO] - Thread CPU time negative, taking previous time + 1 : 310482258 for thread: 904
+Cumulative: 85.57/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00092.warc.wet (278.87 MB)
+21/05/2025 07:53:10.613 - [INFO] - Thread CPU time negative, taking previous time + 1 : 814855672 for thread: 906
+21/05/2025 07:53:13.744 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8064098389 for thread: 905
+21/05/2025 07:53:13.744 - [INFO] - Thread CPU time negative, taking previous time + 1 : 192157598 for thread: 907
+21/05/2025 07:53:17.910 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1045865259 for thread: 908
+Cumulative: 85.85/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00197.warc.wet (278.98 MB)
+21/05/2025 07:53:21.035 - [INFO] - Thread CPU time negative, taking previous time + 1 : 474011859 for thread: 909
+21/05/2025 07:53:25.189 - [INFO] - Thread CPU time negative, taking previous time + 1 : 877155626 for thread: 910
+21/05/2025 07:53:28.312 - [INFO] - Thread CPU time negative, taking previous time + 1 : 383323776 for thread: 911
+Cumulative: 86.12/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00360.warc.wet (273.03 MB)
+21/05/2025 07:53:32.466 - [INFO] - Thread CPU time negative, taking previous time + 1 : 911832824 for thread: 912
+21/05/2025 07:53:36.621 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1027885762 for thread: 913
+Cumulative: 86.39/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00164.warc.wet (270.63 MB)
+21/05/2025 07:53:39.746 - [INFO] - Thread CPU time negative, taking previous time + 1 : 510673470 for thread: 914
+21/05/2025 07:53:43.912 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1034474151 for thread: 915
+Cumulative: 86.65/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00043.warc.wet (275.55 MB)
+21/05/2025 07:53:51.211 - [INFO] - Thread CPU time negative, taking previous time + 1 : 469568219 for thread: 917
+21/05/2025 07:53:54.346 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7734977792 for thread: 916
+21/05/2025 07:53:55.386 - [INFO] - Thread CPU time negative, taking previous time + 1 : 878699802 for thread: 918
+21/05/2025 07:53:58.508 - [INFO] - Thread CPU time negative, taking previous time + 1 : 739869250 for thread: 919
+Cumulative: 86.92/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00249.warc.wet (268.92 MB)
+21/05/2025 07:54:01.630 - [INFO] - Thread CPU time negative, taking previous time + 1 : 211232828 for thread: 920
+21/05/2025 07:54:05.794 - [INFO] - Thread CPU time negative, taking previous time + 1 : 726782949 for thread: 921
+Cumulative: 87.18/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00027.warc.wet (274.58 MB)
+21/05/2025 07:54:08.916 - [INFO] - Thread CPU time negative, taking previous time + 1 : 172575424 for thread: 922
+21/05/2025 07:54:13.084 - [INFO] - Thread CPU time negative, taking previous time + 1 : 660525735 for thread: 923
+Cumulative: 87.45/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00332.warc.wet (277.83 MB)
+21/05/2025 07:54:20.367 - [INFO] - Thread CPU time negative, taking previous time + 1 : 637226199 for thread: 925
+Cumulative: 87.72/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00217.warc.wet (271.91 MB)
+21/05/2025 07:54:28.692 - [INFO] - Thread CPU time negative, taking previous time + 1 : 688693557 for thread: 927
+21/05/2025 07:54:30.781 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7321768803 for thread: 926
+21/05/2025 07:54:32.864 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1077404692 for thread: 928
+21/05/2025 07:54:35.986 - [INFO] - Thread CPU time negative, taking previous time + 1 : 216265309 for thread: 929
+Cumulative: 87.99/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00056.warc.wet (279.02 MB)
+21/05/2025 07:54:40.148 - [INFO] - Thread CPU time negative, taking previous time + 1 : 712140916 for thread: 930
+21/05/2025 07:54:43.274 - [INFO] - Thread CPU time negative, taking previous time + 1 : 181283902 for thread: 931
+21/05/2025 07:54:47.440 - [INFO] - Thread CPU time negative, taking previous time + 1 : 700459430 for thread: 932
+Cumulative: 88.26/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00045.warc.wet (278.86 MB)
+21/05/2025 07:54:50.565 - [INFO] - Thread CPU time negative, taking previous time + 1 : 179796238 for thread: 933
+21/05/2025 07:54:54.731 - [INFO] - Thread CPU time negative, taking previous time + 1 : 654769810 for thread: 934
+Cumulative: 88.53/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00005.warc.wet (272.52 MB)
+21/05/2025 07:54:58.899 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1143270879 for thread: 935
+21/05/2025 07:55:00.984 - [INFO] - Thread CPU time negative, taking previous time + 1 : 419325622 for thread: 936
+Cumulative: 88.80/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00330.warc.wet (268.47 MB)
+21/05/2025 07:55:09.336 - [INFO] - Thread CPU time negative, taking previous time + 1 : 808593760 for thread: 938
+21/05/2025 07:55:12.468 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8136655495 for thread: 937
+21/05/2025 07:55:13.508 - [INFO] - Thread CPU time negative, taking previous time + 1 : 726503864 for thread: 939
+21/05/2025 07:55:16.628 - [INFO] - Thread CPU time negative, taking previous time + 1 : 625837899 for thread: 940
+Cumulative: 89.06/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00080.warc.wet (274.72 MB)
+21/05/2025 07:55:20.781 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1101664753 for thread: 941
+21/05/2025 07:55:23.901 - [INFO] - Thread CPU time negative, taking previous time + 1 : 597571401 for thread: 942
+21/05/2025 07:55:28.064 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1110812586 for thread: 943
+Cumulative: 89.33/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00003.warc.wet (282.27 MB)
+21/05/2025 07:55:31.187 - [INFO] - Thread CPU time negative, taking previous time + 1 : 608033046 for thread: 944
+21/05/2025 07:55:35.354 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1127004915 for thread: 945
+Cumulative: 89.60/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00309.warc.wet (275.89 MB)
+21/05/2025 07:55:38.480 - [INFO] - Thread CPU time negative, taking previous time + 1 : 560444385 for thread: 946
+21/05/2025 07:55:42.644 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1089004481 for thread: 947
+Cumulative: 89.87/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00232.warc.wet (274.46 MB)
+21/05/2025 07:55:49.946 - [INFO] - Thread CPU time negative, taking previous time + 1 : 452584840 for thread: 949
+21/05/2025 07:55:53.076 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7799181544 for thread: 948
+21/05/2025 07:55:54.118 - [INFO] - Thread CPU time negative, taking previous time + 1 : 836303441 for thread: 950
+21/05/2025 07:55:57.243 - [INFO] - Thread CPU time negative, taking previous time + 1 : 711504118 for thread: 951
+Cumulative: 90.14/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00110.warc.wet (271.27 MB)
+21/05/2025 07:56:01.409 - [INFO] - Thread CPU time negative, taking previous time + 1 : 471267160 for thread: 952
+21/05/2025 07:56:05.578 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1012669225 for thread: 953
+Cumulative: 90.41/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00279.warc.wet (275.51 MB)
+21/05/2025 07:56:08.701 - [INFO] - Thread CPU time negative, taking previous time + 1 : 484579413 for thread: 954
+21/05/2025 07:56:12.864 - [INFO] - Thread CPU time negative, taking previous time + 1 : 989119418 for thread: 955
+21/05/2025 07:56:15.989 - [INFO] - Thread CPU time negative, taking previous time + 1 : 427087084 for thread: 956
+Cumulative: 90.67/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00385.warc.wet (271.38 MB)
+21/05/2025 07:56:19.115 - [INFO] - Thread CPU time negative, taking previous time + 1 : 281365357 for thread: 957
+21/05/2025 07:56:23.285 - [INFO] - Thread CPU time negative, taking previous time + 1 : 754129618 for thread: 958
+Cumulative: 90.94/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00359.warc.wet (276.41 MB)
+21/05/2025 07:56:30.580 - [INFO] - Thread CPU time negative, taking previous time + 1 : 175350965 for thread: 960
+21/05/2025 07:56:33.708 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7391270003 for thread: 959
+21/05/2025 07:56:34.747 - [INFO] - Thread CPU time negative, taking previous time + 1 : 549083634 for thread: 961
+21/05/2025 07:56:37.864 - [INFO] - Thread CPU time negative, taking previous time + 1 : 357742967 for thread: 962
+Cumulative: 91.21/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00009.warc.wet (277.72 MB)
+21/05/2025 07:56:42.030 - [INFO] - Thread CPU time negative, taking previous time + 1 : 844392100 for thread: 963
+21/05/2025 07:56:45.156 - [INFO] - Thread CPU time negative, taking previous time + 1 : 343808992 for thread: 964
+Cumulative: 91.48/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00218.warc.wet (272.06 MB)
+21/05/2025 07:56:49.325 - [INFO] - Thread CPU time negative, taking previous time + 1 : 852745963 for thread: 965
+21/05/2025 07:56:52.446 - [INFO] - Thread CPU time negative, taking previous time + 1 : 289853654 for thread: 966
+21/05/2025 07:56:56.612 - [INFO] - Thread CPU time negative, taking previous time + 1 : 522093226 for thread: 967
+Cumulative: 91.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00234.warc.wet (277.50 MB)
+21/05/2025 07:56:59.737 - [INFO] - Thread CPU time negative, taking previous time + 1 : 384737926 for thread: 968
+21/05/2025 07:57:03.902 - [INFO] - Thread CPU time negative, taking previous time + 1 : 579880672 for thread: 969
+Cumulative: 92.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00297.warc.wet (273.33 MB)
+21/05/2025 07:57:12.252 - [INFO] - Thread CPU time negative, taking previous time + 1 : 284635312 for thread: 971
+21/05/2025 07:57:15.387 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7629995504 for thread: 970
+21/05/2025 07:57:16.429 - [INFO] - Thread CPU time negative, taking previous time + 1 : 700402677 for thread: 972
+Cumulative: 92.28/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00132.warc.wet (272.93 MB)
+21/05/2025 07:57:19.557 - [INFO] - Thread CPU time negative, taking previous time + 1 : 473166243 for thread: 973
+21/05/2025 07:57:23.715 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1014922998 for thread: 974
+21/05/2025 07:57:26.836 - [INFO] - Thread CPU time negative, taking previous time + 1 : 465790786 for thread: 975
+Cumulative: 92.55/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00295.warc.wet (269.74 MB)
+21/05/2025 07:57:30.991 - [INFO] - Thread CPU time negative, taking previous time + 1 : 864067009 for thread: 976
+21/05/2025 07:57:34.111 - [INFO] - Thread CPU time negative, taking previous time + 1 : 247239882 for thread: 977
+21/05/2025 07:57:38.279 - [INFO] - Thread CPU time negative, taking previous time + 1 : 416444108 for thread: 978
+Cumulative: 92.81/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00341.warc.wet (282.29 MB)
+21/05/2025 07:57:42.444 - [INFO] - Thread CPU time negative, taking previous time + 1 : 552946533 for thread: 979
+21/05/2025 07:57:50.842 - [INFO] - Thread CPU time negative, taking previous time + 1 : 818705662 for thread: 981
+Cumulative: 93.09/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00300.warc.wet (271.66 MB)
+21/05/2025 07:57:56.062 - [INFO] - Thread CPU time negative, taking previous time + 1 : 804816029 for thread: 982
+21/05/2025 07:58:01.281 - [INFO] - Thread CPU time negative, taking previous time + 1 : 837800711 for thread: 983
+Cumulative: 93.36/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00350.warc.wet (268.84 MB)
+21/05/2025 07:58:05.594 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1052582181 for thread: 984
+21/05/2025 07:58:09.791 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1137785153 for thread: 985
+21/05/2025 07:58:14.347 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1165236644 for thread: 986
+Cumulative: 93.62/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00367.warc.wet (276.92 MB)
+21/05/2025 07:58:18.904 - [INFO] - Thread CPU time negative, taking previous time + 1 : 505819090 for thread: 987
+21/05/2025 07:58:24.747 - [INFO] - Thread CPU time negative, taking previous time + 1 : 728810321 for thread: 988
+21/05/2025 07:58:30.598 - [INFO] - Thread CPU time negative, taking previous time + 1 : 927320351 for thread: 989
+Cumulative: 93.89/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00063.warc.wet (273.93 MB)
+21/05/2025 07:58:36.308 - [INFO] - Thread CPU time negative, taking previous time + 1 : 760160258 for thread: 990
+Cumulative: 94.16/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00240.warc.wet (269.05 MB)
+21/05/2025 07:58:46.257 - [INFO] - Thread CPU time negative, taking previous time + 1 : 757179417 for thread: 992
+21/05/2025 07:58:50.095 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8225084093 for thread: 991
+21/05/2025 07:58:51.319 - [INFO] - Thread CPU time negative, taking previous time + 1 : 651621000 for thread: 993
+21/05/2025 07:58:57.796 - [INFO] - Thread CPU time negative, taking previous time + 1 : 937080401 for thread: 994
+Cumulative: 94.42/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00256.warc.wet (273.37 MB)
+21/05/2025 07:59:02.602 - [INFO] - Thread CPU time negative, taking previous time + 1 : 57602899062 for thread: 980
+21/05/2025 07:59:02.602 - [INFO] - Thread CPU time negative, taking previous time + 1 : 191528852 for thread: 995
+21/05/2025 07:59:08.859 - [INFO] - Thread CPU time negative, taking previous time + 1 : 221879801 for thread: 997
+21/05/2025 07:59:11.979 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8105147672 for thread: 996
+Cumulative: 94.69/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00314.warc.wet (274.93 MB)
+21/05/2025 07:59:13.017 - [INFO] - Thread CPU time negative, taking previous time + 1 : 870723205 for thread: 998
+21/05/2025 07:59:17.158 - [INFO] - Thread CPU time negative, taking previous time + 1 : 968822616 for thread: 999
+21/05/2025 07:59:20.283 - [INFO] - Thread CPU time negative, taking previous time + 1 : 831382323 for thread: 1000
+Cumulative: 94.95/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00321.warc.wet (268.28 MB)
+21/05/2025 07:59:24.465 - [INFO] - Thread CPU time negative, taking previous time + 1 : 235969358 for thread: 1001
+21/05/2025 07:59:29.676 - [INFO] - Thread CPU time negative, taking previous time + 1 : 773309315 for thread: 1002
+21/05/2025 07:59:32.802 - [INFO] - Thread CPU time negative, taking previous time + 1 : 163933985 for thread: 1003
+Cumulative: 95.22/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00210.warc.wet (270.31 MB)
+21/05/2025 07:59:36.969 - [INFO] - Thread CPU time negative, taking previous time + 1 : 606881485 for thread: 1004
+Cumulative: 95.48/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00369.warc.wet (279.08 MB)
+21/05/2025 07:59:45.309 - [INFO] - Thread CPU time negative, taking previous time + 1 : 750860664 for thread: 1006
+21/05/2025 07:59:48.446 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8234324107 for thread: 1005
+21/05/2025 07:59:50.526 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1051557425 for thread: 1007
+21/05/2025 07:59:54.680 - [INFO] - Thread CPU time negative, taking previous time + 1 : 706267096 for thread: 1008
+Cumulative: 95.75/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00345.warc.wet (271.44 MB)
+21/05/2025 07:59:58.839 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1080996188 for thread: 1009
+21/05/2025 08:00:02.989 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1138278667 for thread: 1010
+21/05/2025 08:00:06.109 - [INFO] - Thread CPU time negative, taking previous time + 1 : 491341238 for thread: 1011
+Cumulative: 96.02/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00318.warc.wet (275.32 MB)
+21/05/2025 08:00:10.272 - [INFO] - Thread CPU time negative, taking previous time + 1 : 976975926 for thread: 1012
+21/05/2025 08:00:13.390 - [INFO] - Thread CPU time negative, taking previous time + 1 : 347745528 for thread: 1013
+Cumulative: 96.29/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00131.warc.wet (278.81 MB)
+21/05/2025 08:00:17.548 - [INFO] - Thread CPU time negative, taking previous time + 1 : 690725340 for thread: 1014
+21/05/2025 08:00:22.762 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1138713341 for thread: 1015
+Cumulative: 96.56/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00097.warc.wet (270.37 MB)
+21/05/2025 08:00:31.098 - [INFO] - Thread CPU time negative, taking previous time + 1 : 639803728 for thread: 1017
+21/05/2025 08:00:34.222 - [INFO] - Thread CPU time negative, taking previous time + 1 : 8030160027 for thread: 1016
+21/05/2025 08:00:35.264 - [INFO] - Thread CPU time negative, taking previous time + 1 : 833760686 for thread: 1018
+21/05/2025 08:00:38.391 - [INFO] - Thread CPU time negative, taking previous time + 1 : 560245414 for thread: 1019
+Cumulative: 96.82/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00216.warc.wet (269.06 MB)
+21/05/2025 08:00:42.557 - [INFO] - Thread CPU time negative, taking previous time + 1 : 976235327 for thread: 1020
+21/05/2025 08:00:45.679 - [INFO] - Thread CPU time negative, taking previous time + 1 : 322035596 for thread: 1021
+Cumulative: 97.09/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00145.warc.wet (269.11 MB)
+21/05/2025 08:00:49.847 - [INFO] - Thread CPU time negative, taking previous time + 1 : 480897088 for thread: 1022
+21/05/2025 08:00:54.011 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1100926972 for thread: 1023
+21/05/2025 08:00:57.135 - [INFO] - Thread CPU time negative, taking previous time + 1 : 942428865 for thread: 1024
+Cumulative: 97.35/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00151.warc.wet (273.42 MB)
+21/05/2025 08:01:01.300 - [INFO] - Thread CPU time negative, taking previous time + 1 : 979843040 for thread: 1025
+21/05/2025 08:01:04.425 - [INFO] - Thread CPU time negative, taking previous time + 1 : 266652698 for thread: 1026
+Cumulative: 97.62/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00158.warc.wet (269.07 MB)
+21/05/2025 08:01:14.929 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1165169599 for thread: 1028
+21/05/2025 08:01:15.972 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7393911453 for thread: 1027
+21/05/2025 08:01:18.051 - [INFO] - Thread CPU time negative, taking previous time + 1 : 372238207 for thread: 1029
+21/05/2025 08:01:22.202 - [INFO] - Thread CPU time negative, taking previous time + 1 : 450550566 for thread: 1030
+Cumulative: 97.88/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00221.warc.wet (274.63 MB)
+21/05/2025 08:01:26.369 - [INFO] - Thread CPU time negative, taking previous time + 1 : 936091567 for thread: 1031
+21/05/2025 08:01:29.495 - [INFO] - Thread CPU time negative, taking previous time + 1 : 353881753 for thread: 1032
+Cumulative: 98.15/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00275.warc.wet (272.51 MB)
+21/05/2025 08:01:33.656 - [INFO] - Thread CPU time negative, taking previous time + 1 : 765445513 for thread: 1033
+21/05/2025 08:01:36.779 - [INFO] - Thread CPU time negative, taking previous time + 1 : 133310720 for thread: 1034
+21/05/2025 08:01:40.945 - [INFO] - Thread CPU time negative, taking previous time + 1 : 573014602 for thread: 1035
+Cumulative: 98.41/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00214.warc.wet (272.17 MB)
+21/05/2025 08:01:44.068 - [INFO] - Thread CPU time negative, taking previous time + 1 : 369723513 for thread: 1036
+Cumulative: 98.68/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00100.warc.wet (275.86 MB)
+21/05/2025 08:01:53.436 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1135408040 for thread: 1038
+21/05/2025 08:01:55.520 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7909979320 for thread: 1037
+21/05/2025 08:01:57.610 - [INFO] - Thread CPU time negative, taking previous time + 1 : 226986866 for thread: 1039
+21/05/2025 08:02:01.776 - [INFO] - Thread CPU time negative, taking previous time + 1 : 830748320 for thread: 1040
+Cumulative: 98.95/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00337.warc.wet (279.43 MB)
+21/05/2025 08:02:09.070 - [INFO] - Thread CPU time negative, taking previous time + 1 : 269902253 for thread: 1042
+21/05/2025 08:02:13.235 - [INFO] - Thread CPU time negative, taking previous time + 1 : 725897049 for thread: 1043
+Cumulative: 99.22/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00159.warc.wet (280.22 MB)
+21/05/2025 08:02:16.361 - [INFO] - Thread CPU time negative, taking previous time + 1 : 154120688 for thread: 1044
+21/05/2025 08:02:21.561 - [INFO] - Thread CPU time negative, taking previous time + 1 : 1123028881 for thread: 1045
+21/05/2025 08:02:24.674 - [INFO] - Thread CPU time negative, taking previous time + 1 : 618296453 for thread: 1046
+Cumulative: 99.49/100.00 GB
+Processing: CC-MAIN-20250126135402-20250126165402-00072.warc.wet (271.93 MB)
+21/05/2025 08:02:27.785 - [INFO] - Thread CPU time negative, taking previous time + 1 : 855981629 for thread: 1047
+21/05/2025 08:02:36.112 - [INFO] - Thread CPU time negative, taking previous time + 1 : 302963012 for thread: 1049
+Cumulative: 99.76/100.00 GB
+Next file would exceed limit, but processing it anyway...
+Processing: CC-MAIN-20250126135402-20250126165402-00142.warc.wet (274.97 MB)
+21/05/2025 08:02:39.239 - [INFO] - Thread CPU time negative, taking previous time + 1 : 7617288948 for thread: 1048
+21/05/2025 08:02:40.281 - [INFO] - Thread CPU time negative, taking previous time + 1 : 636817247 for thread: 1050
+21/05/2025 08:02:43.401 - [INFO] - Thread CPU time negative, taking previous time + 1 : 503753468 for thread: 1051
+Cumulative: 100.03/100.00 GB
+21/05/2025 08:02:47.560 - [INFO] - Thread CPU time negative, taking previous time + 1 : 585259863 for thread: 1052
+Indexing completed for 373 files (100.03 GB input) in 3989423 ms.
+Final size: 100.03 GB (0.03 GB over limit)
+Benchmark for dataset: CommonCrawl-2025-05
+Indexing Time In MS: 3989423
+Index Size In MB: 35132
+0 SHORT
+0 INT
+21/05/2025 08:02:48.619 - [INFO] - Thread CPU time negative, taking previous time + 1 : 3697297356383 for thread: 1
+21/05/2025 08:02:48.631 - [INFO] - JoularJX finished monitoring application with ID 11637
+21/05/2025 08:02:48.631 - [INFO] - Program consumed 656176.88 joules
+21/05/2025 08:02:48.655 - [INFO] - Energy consumption of methods and filtered methods written to files
